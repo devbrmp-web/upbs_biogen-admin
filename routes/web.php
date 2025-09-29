@@ -28,16 +28,15 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->midd
 Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
     ->prefix('admin')->name('admin.')
     ->group(function () {
-        if (app()->environment('testing')) {
-            Route::get('/dashboard', fn() => response('OK', 200))->name('dashboard');
-        } else {
-            Route::get('/dashboard', fn() => view('dashboards.analytics'))->name('dashboard');
-        }
-        
-        // Pindahkan rute catch-all Reback ke dalam grup admin
-        Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
-        Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
-        Route::get('{any}', [RoutingController::class, 'root'])->name('any');
+        // Dashboard
+        Route::view('/dashboard', 'dashboards.analytics')->name('dashboard');
+
+        // Categories: read-only index
+        Route::get('/categories', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('categories.index');
+
+        // Products: index and show only
+        Route::get('/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
+        Route::get('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'show'])->name('products.show');
     });
 
 // Root publik sementara

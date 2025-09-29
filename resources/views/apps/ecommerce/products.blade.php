@@ -11,11 +11,7 @@
                         <span><i class="bx bx-search-alt"></i></span>
                         <input type="search" class="form-control" id="search" placeholder="Search ..." />
                     </div>
-                    <div>
-                        <a href="{{ route('third', ['apps', 'ecommerce', 'product-add'])}}" class="btn btn-primary d-flex align-items-center">
-                            <i class="bx bx-plus me-1"></i>Add Product
-                        </a>
-                    </div>
+                    <!-- Removed Add Product button to keep read-only list -->
                 </div>
                 <!-- end row -->
             </div>
@@ -33,314 +29,62 @@
                         </thead>
                         <!-- end thead-->
                         <tbody>
+                            @forelse($products as $product)
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-1(1).png" alt="product-1(1)" class="img-fluid avatar-sm" /></a>
+                                            @if($product->image_path)
+                                                <a href="{{ route('admin.products.show', $product) }}"><img src="/{{ $product->image_path }}" alt="{{ $product->name }}" class="img-fluid avatar-sm" /></a>
+                                            @else
+                                                <a href="{{ route('admin.products.show', $product) }}">
+                                                    <div class="avatar-sm">
+                                                        <span class="avatar-title bg-light text-secondary rounded">
+                                                            <i class="bx bx-image"></i>
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            @endif
                                         </div>
                                         <div class="flex-grow-1">
                                             <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">G15
-                                                    Gaming
-                                                    Laptop</a>
+                                                <a href="{{ route('admin.products.show', $product) }}" class="text-reset">{{ $product->name }}</a>
                                             </h5>
-                                            <span class="fs-13">Power Your
-                                                Laptop with
-                                                a
-                                                Long-Lasting
-                                                and
-                                                Fast-Charging
-                                                Battery.</span>
+                                            @if($product->description)
+                                                <span class="fs-13">{{ Str::limit($product->description, 80) }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
-                                <td>Computer</td>
-                                <td>$240.59</td>
-                                <td class="text-primary">
-                                    <i class="bx bxs-circle text-primary me-1"></i>Limited
+                                <td>{{ $product->category?->name }}</td>
+                                <td>{{ number_format($product->price) }}</td>
+                                <td class="{{ $product->stock > 0 ? 'text-success' : 'text-danger' }}">
+                                    @if($product->stock > 0)
+                                        <i class="bx bxs-circle text-success me-1"></i>In Stock ({{ $product->stock }})
+                                    @else
+                                        <i class="bx bxs-circle text-danger me-1"></i>Out of Stock
+                                    @endif
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
+                                    <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-soft-primary" title="View">
+                                        <i class="bx bx-show fs-18"></i>
+                                    </a>
                                 </td>
                             </tr>
+                            @empty
                             <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-2.png" alt="product-2" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Sony
-                                                    Alpha
-                                                    ILCE
-                                                    6000Y
-                                                    24.3 MP
-                                                    Mirrorless
-                                                    Digital
-                                                    SLR
-                                                    Camera</a>
-                                            </h5>
-                                            <span class="fs-13">Capture
-                                                special
-                                                moments and
-                                                portraits to
-                                                remember and
-                                                share.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Camera</td>
-                                <td>$135.99</td>
-                                <td class="text-primary">
-                                    <i class="bx bxs-circle text-primary me-1"></i>Limited
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
+                                <td colspan="5" class="text-center">No products found</td>
                             </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-3.png" alt="product-3" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Sony
-                                                    Over-Ear
-                                                    Wireless
-                                                    Headphone
-                                                    with
-                                                    Mic</a>
-                                            </h5>
-                                            <span class="fs-13">Headphones
-                                                are a pair
-                                                of small
-                                                loudspeaker
-                                                drivers worn
-                                                on or around
-                                                the head
-                                                over a
-                                                user's
-                                                ears.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Headphones</td>
-                                <td>$99.49</td>
-                                <td class="text-success">
-                                    <i class="bx bxs-circle text-success me-1"></i>In Stock
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-4.png" alt="product-4" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Apple
-                                                    iPad Pro
-                                                    with
-                                                    Apple M1
-                                                    chip.</a>
-                                            </h5>
-                                            <span class="fs-13">The new
-                                                iPad mini
-                                                and
-                                                iPad.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Mobile</td>
-                                <td>$27.59</td>
-                                <td class="text-danger">
-                                    <i class="bx bxs-circle text-danger me-1"></i>Out of Stock
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-5.png" alt="product-5" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Adam
-                                                    ROMA
-                                                    USB-C /
-                                                    USB-A
-                                                    3.1
-                                                    (2-in-1
-                                                    Flash
-                                                    Drive) –
-                                                    128GB</a>
-                                            </h5>
-                                            <span class="fs-13">A USB flash
-                                                drive is a
-                                                data storage
-                                                device that
-                                                includes
-                                                flash memory
-                                                with an
-                                                integrated
-                                                USB
-                                                interface.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Pendrive</td>
-                                <td>$350.19</td>
-                                <td class="text-primary">
-                                    <i class="bx bxs-circle text-primary me-1"></i>Limited
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-6.png" alt="product-4" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Apple
-                                                    iPHone
-                                                    13.</a>
-                                            </h5>
-                                            <span class="fs-13">The new
-                                                iPHone 1 and
-                                                iPad.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Mobile</td>
-                                <td>$75.59</td>
-                                <td class="text-danger">
-                                    <i class="bx bxs-circle text-danger me-1"></i>Out of Stock
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 me-3">
-                                            <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}"><img src="/images/products/product-1(2).png" alt="product-1(1)" class="img-fluid avatar-sm" /></a>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h5 class="mt-0 mb-1">
-                                                <a href="{{ route('third', ['apps', 'ecommerce', 'product-details'])}}" class="text-reset">Apple
-                                                    Mac</a>
-                                            </h5>
-                                            <span class="fs-13">Power Your
-                                                Laptop with
-                                                a
-                                                Long-Lasting
-                                                and
-                                                Fast-Charging
-                                                Battery.</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Computer</td>
-                                <td>$350.00</td>
-                                <td class="text-primary">
-                                    <i class="bx bxs-circle text-primary me-1"></i>Limited
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-soft-secondary me-1">
-                                        <i class="bx bx-edit fs-18"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-soft-danger">
-                                        <i class="bx bx-trash fs-18"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                            @endforelse
                         </tbody>
-                        <!-- end tbody -->
                     </table>
-                    <!-- end table -->
                 </div>
-                <!-- table responsive -->
-                <div class="align-items-center justify-content-between row g-0 text-center text-sm-start p-3 border-top">
-                    <div class="col-sm">
-                        <div class="text-muted">
-                            Showing
-                            <span class="fw-semibold">7</span>
-                            of
-                            <span class="fw-semibold">15</span>
-                            Results
-                        </div>
-                    </div>
-                    <div class="col-sm-auto mt-3 mt-sm-0">
-                        <ul class="pagination pagination-rounded m-0">
-                            <li class="page-item">
-                                <a href="#" class="page-link"><i class="bx bx-left-arrow-alt"></i></a>
-                            </li>
-                            <li class="page-item active">
-                                <a href="#" class="page-link">1</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="#" class="page-link">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="#" class="page-link">3</a>
-                            </li>
-                            <li class="page-item">
-                                <a href="#" class="page-link"><i class="bx bx-right-arrow-alt"></i></a>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="card-footer">
+                    {{ $products->links() }}
                 </div>
             </div>
-            <!-- end card body -->
         </div>
-        <!-- end card -->
     </div>
-    <!-- end col -->
 </div>
 
 @endsection
