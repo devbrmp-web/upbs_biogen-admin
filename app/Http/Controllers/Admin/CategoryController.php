@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category; // add model import
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -25,7 +28,7 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        abort(404);
+        return view('admin.categories.create');
     }
 
     /**
@@ -34,9 +37,27 @@ class CategoryController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store()
+    public function store(Request $request)
     {
-        abort(404);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100', 'unique:categories,name'],
+            'file' => ['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,webp'],
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('categories', 'public');
+            $imagePath = 'storage/'.$path; // e.g., storage/categories/filename.jpg
+        }
+
+        // Create category (slug will be auto-generated uniquely by model)
+        $category = Category::create([
+            'name' => $validated['name'],
+            'image_path' => $imagePath,
+        ]);
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Category created successfully.');
     }
 
     /**
@@ -45,9 +66,9 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\View\View
      */
-    public function edit()
+    public function edit(Category $category)
     {
-        abort(404);
+        return view('admin.categories.edit', compact('category'));
     }
 
     /**
@@ -57,9 +78,24 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update()
+    public function update(Request $request, Category $category)
     {
-        abort(404);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100', Rule::unique('categories', 'name')->ignore($category->id)],
+            'file' => ['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,webp'],
+        ]);
+
+        $category->name = $validated['name'];
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('categories', 'public');
+            $category->image_path = 'storage/'.$path;
+        }
+
+        $category->save();
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Category updated successfully.');
     }
 
     /**
@@ -68,8 +104,11 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy()
+    public function destroy(Category $category)
     {
-        abort(404);
+        $category->delete();
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Category deleted successfully');
     }
 }

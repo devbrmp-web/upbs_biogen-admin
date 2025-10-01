@@ -42,6 +42,15 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.products.index') }}">
+                    <span class="nav-icon">
+                        <iconify-icon icon="gridicons:product"></iconify-icon>
+                    </span>
+                    <span class="nav-text"> Products </span>
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link" href="#">
                     <span class="nav-icon">
                         <iconify-icon icon="iconamoon:invoice-duotone"></iconify-icon>
