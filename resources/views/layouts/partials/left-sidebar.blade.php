@@ -33,23 +33,21 @@
             <li class="menu-title">Management</li>
 
             <li class="nav-item">
-                <a class="nav-link menu-arrow" href="#sidebarProducts" data-bs-toggle="collapse" role="button"
-                   aria-expanded="false" aria-controls="sidebarProducts">
+                <a class="nav-link" href="{{ route('admin.categories.index') }}">
                     <span class="nav-icon">
-                        <iconify-icon icon="iconamoon:shopping-bag-duotone"></iconify-icon>
+                        <iconify-icon icon="iconamoon:category"></iconify-icon>
+                    </span>
+                    <span class="nav-text"> Categories </span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.products.index') }}">
+                    <span class="nav-icon">
+                        <iconify-icon icon="gridicons:product"></iconify-icon>
                     </span>
                     <span class="nav-text"> Products </span>
                 </a>
-                <div class="collapse" id="sidebarProducts">
-                    <ul class="nav sub-navbar-nav">
-                        <li class="sub-nav-item">
-                            <a class="sub-nav-link" href="#">Manage Categories</a>
-                        </li>
-                        <li class="sub-nav-item">
-                            <a class="sub-nav-link" href="#">Manage Products</a>
-                        </li>
-                    </ul>
-                </div>
             </li>
 
             <li class="nav-item">

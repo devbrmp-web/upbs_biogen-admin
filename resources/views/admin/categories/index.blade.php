@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Products List', 'subTitle' => 'Ecommerce'])
+@extends('layouts.vertical', ['title' => 'Categories List', 'subTitle' => 'Management'])
 
 @section('content')
 
@@ -7,25 +7,13 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between gap-3">
-                    <form class="d-flex flex-wrap gap-2 align-items-center" method="GET" action="{{ route('admin.products.index') }}">
-                        <div class="search-bar">
-                            <span><i class="bx bx-search-alt"></i></span>
-                            <input type="search" class="form-control" name="q" value="{{ request('q') }}" placeholder="Search ..." />
-                        </div>
-                        <div>
-                            <select class="form-select" name="category_id">
-                                <option value="">All Categories</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat->id }}" @selected(request('category_id') == $cat->id)>{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <!-- Status filter removed; status is computed and displayed only -->
-                        <button type="submit" class="btn btn-outline-primary">Filter</button>
-                    </form>
+                    <div class="search-bar">
+                        <span><i class="bx bx-search-alt"></i></span>
+                        <input type="search" class="form-control" id="search" placeholder="Search ..." />
+                    </div>
                     <div>
-                        <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('admin.products.create') }}" class="btn btn-primary">
-                            + Add Product
+                        <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('admin.categories.create') }}" class="btn btn-primary">
+                            + Add Category
                         </a>
                     </div>
                 </div>
@@ -36,35 +24,21 @@
                     <table class="table text-nowrap mb-0">
                         <thead class="bg-light bg-opacity-50">
                             <tr>
-                                <th>Product Name</th>
-                                <th>Description</th>
-                                <th>Price</th>
-                                <th>Categories</th>
                                 <th>Image</th>
-                                <th>Stock</th>
-                                <th>Status</th>
+                                <th>Name</th>
+                                <th>Slug</th>
+                                <th>Created</th>
+                                <th>Updated</th>
                                 <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <!-- end thead-->
                         <tbody>
-                            @forelse($products as $product)
+                            @foreach($categories as $c)
                             <tr>
                                 <td>
-                                    <a href="{{ route('admin.products.show', $product) }}" class="text-reset">{{ $product->name }}</a>
-                                </td>
-                                <td>
-                                    @if($product->description)
-                                        <span class="fs-13">{{ Str::limit($product->description, 80) }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                                <td>{{ $product->category?->name ?? '-' }}</td>
-                                <td>
-                                    @if($product->image_path)
-                                        <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}" class="img-fluid avatar-sm" />
+                                    @if($c->image_path)
+                                        <img src="{{ asset($c->image_path) }}" alt="{{ $c->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
                                     @else
                                         <div class="avatar-sm">
                                             <span class="avatar-title bg-light text-secondary rounded">
@@ -73,39 +47,27 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td>{{ number_format($product->total_stock, 2) }}</td>
-                                <td>
-                                    @php($status = $product->stock_status)
-                                    @if($status === 'Tersedia')
-                                        <span class="text-success">{{ $status }}</span>
-                                    @elseif($status === 'Restock')
-                                        <span class="text-warning">{{ $status }}</span>
-                                    @else
-                                        <span class="text-danger">{{ $status }}</span>
-                                    @endif
-                                </td>
+                                <td>{{ $c->name }}</td>
+                                <td>{{ $c->slug }}</td>
+                                <td>{{ $c->created_at?->format('Y-m-d H:i') }}</td>
+                                <td>{{ $c->updated_at?->format('Y-m-d H:i') }}</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-light" title="View"><i class="bx bx-show"></i></a>
-                                        <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-sm btn-light" title="Edit"><i class="bx bx-pencil"></i></a>
-                                        <form id="product-delete-form-{{ $product->id }}" action="{{ route('admin.products.destroy', $product) }}" method="POST" class="d-inline">
+                                        <a href="{{ route('admin.categories.edit', $c) }}" class="btn btn-sm btn-light" title="Edit"><i class="bx bx-pencil"></i></a>
+                                        <form id="delete-form-{{ $c->id }}" action="{{ route('admin.categories.destroy', $c) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" data-delete-form="product-delete-form-{{ $product->id }}" class="btn btn-sm btn-danger js-delete-btn" title="Delete"><i class="bx bx-trash"></i></button>
+                                            <button type="button" data-delete-form="delete-form-{{ $c->id }}" class="btn btn-sm btn-danger js-delete-btn" title="Delete"><i class="bx bx-trash"></i></button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
-                            @empty
-                            <tr>
-                                <td colspan="8" class="text-center">No products found</td>
-                            </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
                 <div class="card-footer">
-                    {{ $products->links() }}
+                    {{ $categories->links() }}
                 </div>
             </div>
         </div>
@@ -115,16 +77,16 @@
 @endsection
 
 @push('modals')
-<!-- Reback styled confirmation modal for Products -->
+<!-- Reback styled confirmation modal -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Delete Product</h5>
+        <h5 class="modal-title">Delete Category</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-0">Are you sure you want to delete this product? This action cannot be undone.</p>
+        <p class="mb-0">Are you sure you want to delete this category? This action cannot be undone.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -176,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#confirmDeleteModal').modal('show');
                 } else {
                     // Last resort: direct confirmation
-                    if (confirm('Are you sure you want to delete this product?')) {
+                    if (confirm('Are you sure you want to delete this category?')) {
                         const form = document.getElementById(targetFormId);
                         if (form) form.submit();
                     }

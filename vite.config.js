@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/scss/app.scss',
                 'resources/scss/icons.scss',
                 'node_modules/dropzone/dist/dropzone.css',
+                'node_modules/dropzone/dist/dropzone-min.js',
                 'node_modules/gridjs/dist/theme/mermaid.min.css',
                 'node_modules/flatpickr/dist/flatpickr.min.css',
                 'node_modules/quill/dist/quill.bubble.css',

@@ -28,16 +28,31 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->midd
 Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
     ->prefix('admin')->name('admin.')
     ->group(function () {
-        if (app()->environment('testing')) {
-            Route::get('/dashboard', fn() => response('OK', 200))->name('dashboard');
-        } else {
-            Route::get('/dashboard', fn() => view('dashboards.analytics'))->name('dashboard');
-        }
-        
-        // Pindahkan rute catch-all Reback ke dalam grup admin
-        Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
-        Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
-        Route::get('{any}', [RoutingController::class, 'root'])->name('any');
+        // Dashboard
+        Route::view('/dashboard', 'dashboards.analytics')->name('dashboard');
+
+        // Categories: read-only index
+        Route::get('/categories', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('categories.index');
+        // Categories: create (signed) and store
+        Route::middleware('signed')->group(function () {
+            Route::get('/categories/create', [\App\Http\Controllers\Admin\CategoryController::class, 'create'])->middleware('signed')->name('categories.create');
+        });
+        Route::post('/categories', [\App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('categories.store');
+        // Categories: edit
+        Route::get('/categories/{category}/edit', [\App\Http\Controllers\Admin\CategoryController::class, 'edit'])->name('categories.edit');
+        // Categories: update
+        Route::put('/categories/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
+        // Categories: destroy
+        Route::delete('/categories/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
+
+        // Products
+        Route::get('/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
+        Route::get('/products/create', [\App\Http\Controllers\Admin\ProductController::class, 'create'])->middleware('signed')->name('products.create');
+        Route::post('/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'show'])->name('products.show');
+        Route::get('/products/{product}/edit', [\App\Http\Controllers\Admin\ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'destroy'])->name('products.destroy');
     });
 
 // Root publik sementara
