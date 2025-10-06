@@ -11,21 +11,34 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Pastikan kolom tersedia
         Schema::table('users', function (Blueprint $table) {
-            // Cek apakah kolom role_id sudah ada
             if (!Schema::hasColumn('users', 'role_id')) {
                 $table->unsignedBigInteger('role_id')->nullable()->after('password_hash');
             }
-            
-            // Tambahkan foreign key
-            if (!Schema::hasColumn('users', 'role_id_foreign')) {
-                $table->foreign('role_id')
-                    ->references('id')
-                    ->on('roles')
-                    ->nullOnDelete()
-                    ->cascadeOnUpdate();
-            }
         });
+
+        // Tambahkan foreign key hanya jika belum ada (cek via information_schema)
+        if (Schema::hasColumn('users', 'role_id')) {
+            $fkExists = DB::select(<<<SQL
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'users'
+                  AND COLUMN_NAME = 'role_id'
+                  AND REFERENCED_TABLE_NAME IS NOT NULL
+            SQL);
+
+            if (count($fkExists) === 0) {
+                Schema::table('users', function (Blueprint $table) {
+                    $table->foreign('role_id')
+                        ->references('id')
+                        ->on('roles')
+                        ->nullOnDelete()
+                        ->cascadeOnUpdate();
+                });
+            }
+        }
     }
 
     /**
@@ -34,16 +47,37 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Drop foreign key jika ada
+            // Drop foreign key jika ada (cek via information_schema)
             if (Schema::hasColumn('users', 'role_id')) {
-                $table->dropForeign(['role_id']);
-            }
-            
-            // Drop kolom hanya jika migrasi ini yang menambahkannya
-            if (Schema::getConnection()->getDoctrineSchemaManager()->listTableDetails('users')->hasColumn('role_id') &&
-                !Schema::hasColumn('users', 'role_id_foreign')) {
-                $table->dropColumn('role_id');
+                $fkExists = DB::select(<<<SQL
+                    SELECT CONSTRAINT_NAME
+                    FROM information_schema.KEY_COLUMN_USAGE
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'users'
+                      AND COLUMN_NAME = 'role_id'
+                      AND REFERENCED_TABLE_NAME IS NOT NULL
+                SQL);
+                if (count($fkExists) > 0) {
+                    $table->dropForeign(['role_id']);
+                }
             }
         });
+
+        // Drop kolom hanya jika tidak ada FK yang menempel
+        if (Schema::hasColumn('users', 'role_id')) {
+            $fkExists = DB::select(<<<SQL
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'users'
+                  AND COLUMN_NAME = 'role_id'
+                  AND REFERENCED_TABLE_NAME IS NOT NULL
+            SQL);
+            if (count($fkExists) === 0) {
+                Schema::table('users', function (Blueprint $table) {
+                    $table->dropColumn('role_id');
+                });
+            }
+        }
     }
 };

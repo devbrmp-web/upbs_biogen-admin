@@ -28,5 +28,8 @@
 @include("layouts.partials/footer-scripts")
 @vite(['resources/js/app.js'])
 
+@stack('modals')
+@stack('scripts')
+
 </body>
 </html>

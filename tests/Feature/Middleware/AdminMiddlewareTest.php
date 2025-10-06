@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Middleware;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -10,45 +9,43 @@ use Tests\TestCase;
 class AdminMiddlewareTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Gunakan artisan db:seed untuk memastikan roles sudah ada
-        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\RoleSeeder']);
+        // 1 = super_admin, 2 = admin
+        $this->seed(\Database\Seeders\RoleSeeder::class);
     }
 
     public function test_non_admin_gets_403(): void
     {
-        // Create user with viewer role
-        $user = User::factory()->create(['role_id' => 3]);
-        
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['role_id' => null]);
+
         $this->actingAs($user);
-        $this->get('/admin/dashboard')->assertForbidden();
+        $this->get(route('admin.dashboard'))->assertForbidden(); // 403
     }
 
     public function test_admin_can_access_dashboard(): void
     {
-        // Create user with admin role (ID 2 sesuai RoleSeeder)
-        $user = User::factory()->create(['role_id' => 2]);
-        
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['role_id' => 2]);
+
         $this->actingAs($user);
-        $this->get('/admin/dashboard')->assertStatus(200);
+        $this->get(route('admin.dashboard'))->assertOk(); // 200
     }
-    
+
     public function test_super_admin_can_access_dashboard(): void
     {
-        // Create user with super_admin role (ID 1 sesuai RoleSeeder)
-        $user = User::factory()->create(['role_id' => 1]);
-        
+        /** @var \App\Models\User $user */
+        $user = User::factory()->createOne(['role_id' => 1]);
+
         $this->actingAs($user);
-        $this->get('/admin/dashboard')->assertStatus(200);
+        $this->get(route('admin.dashboard'))->assertOk(); // 200
     }
-    
+
     public function test_guest_redirected_to_login(): void
     {
-        // Guest user should be redirected to login
-        $this->get('/admin/dashboard')->assertRedirect(route('login'));
+        $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
     }
 }
