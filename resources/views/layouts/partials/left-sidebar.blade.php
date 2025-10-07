@@ -33,20 +33,20 @@
             <li class="menu-title">Management</li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.categories.index') }}">
+                <a class="nav-link" href="{{ route('admin.commodities.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="iconamoon:category"></iconify-icon>
                     </span>
-                    <span class="nav-text"> Categories </span>
+                    <span class="nav-text"> Commodities </span>
                 </a>
             </li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.products.index') }}">
+                <a class="nav-link" href="{{ route('admin.varieties.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="gridicons:product"></iconify-icon>
                     </span>
-                    <span class="nav-text"> Products </span>
+                    <span class="nav-text"> Varieties </span>
                 </a>
             </li>
 

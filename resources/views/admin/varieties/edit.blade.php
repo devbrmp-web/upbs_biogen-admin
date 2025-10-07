@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Create Category', 'subTitle' => 'Management'])
+@extends('layouts.vertical', ['title' => 'Edit Variety', 'subTitle' => 'Management'])
 
 @section('css')
     @vite(['node_modules/dropzone/dist/dropzone.css'])
@@ -10,7 +10,7 @@
     <div class="col">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title mb-3">New Category</h4>
+                <h4 class="card-title mb-3">Edit Variety</h4>
 
                 @if ($errors->any())
                     <div class="alert alert-danger">
@@ -22,30 +22,56 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data" id="categoryImageForm">
+                <form action="{{ route('admin.varieties.update', $variety) }}" method="POST" enctype="multipart/form-data" id="varietyImageForm">
                     @csrf
+                    @method('PUT')
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $variety->name) }}" required maxlength="100" />
+                                @error('name')<div class="text-danger small">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="commodity_id" class="form-label">Commodity</label>
+                                <select class="form-select" id="commodity_id" name="commodity_id" required>
+                                    <option value="">Select Commodity</option>
+                                    @foreach($commodities as $commodity)
+                                        <option value="{{ $commodity->id }}" @selected(old('commodity_id', $variety->commodity_id) == $commodity->id)>
+                                            {{ $commodity->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('commodity_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required maxlength="100" />
-                                @error('name')<div class="text-danger small">{{ $message }}</div>@enderror
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" maxlength="1000">{{ old('description', $variety->description) }}</textarea>
+                                @error('description')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-lg-12">
                             <div class="mb-3">
                                 <label class="form-label">Image</label>
                                 <div class="dropzone">
                                     <div class="fallback">
-                                        <input id="categoryImageInput" name="file" type="file" accept="image/*">
+                                        <input id="varietyImageInput" name="image" type="file" accept="image/*">
                                     </div>
                                     <div class="dz-message needsclick">
                                         <i class="h1 bx bx-cloud-upload"></i>
                                         <h3>Drop files here or click to upload.</h3>
-                                        <span class="text-muted fs-13">
-                                            Hanya 1 gambar (jpg, jpeg, png, webp) maksimal 2MB.
-                                        </span>
+                                        <span class="text-muted fs-13">Select one image only (jpg, jpeg, png, webp) maximum 2MB.</span>
                                     </div>
                                 </div>
                                 @error('file')<div class="text-danger small">{{ $message }}</div>@enderror
@@ -54,17 +80,23 @@
                                         <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
                                     </div>
                                 </div>
-                                <small class="text-muted">Pilih satu gambar saja (jpg, jpeg, png, webp) maksimal 2MB.</small>
+                                @if($variety->image)
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Current Image:</small>
+                                        <div class="border rounded p-2 d-inline-block">
+                                            <img src="{{ asset('storage/' . $variety->image) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
+                                        </div>
+                                    </div>
+                                @endif
+                                <small class="text-muted">Only 1 image (jpg, jpeg, png, webp) maximum 2MB.</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-light">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Save Category</button>
+                        <a href="{{ route('admin.varieties.index') }}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Variety</button>
                     </div>
-
-                    
                 </form>
             </div>
         </div>
@@ -74,8 +106,8 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function(){
-        const form = document.getElementById('categoryImageForm');
-        const input = document.getElementById('categoryImageInput');
+        const form = document.getElementById('varietyImageForm');
+        const input = document.getElementById('varietyImageInput');
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
 

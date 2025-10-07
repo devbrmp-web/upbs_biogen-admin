@@ -1,4 +1,4 @@
-@extends('layouts.vertical', ['title' => 'Categories List', 'subTitle' => 'Management'])
+@extends('layouts.vertical', ['title' => 'Commodities List', 'subTitle' => 'Management'])
 
 @section('content')
 
@@ -9,11 +9,11 @@
                 <div class="d-flex flex-wrap justify-content-between gap-3">
                     <div class="search-bar">
                         <span><i class="bx bx-search-alt"></i></span>
-                        <input type="search" class="form-control" id="search" placeholder="Search ..." />
+                        <input type="search" class="form-control" id="search" placeholder="Search commodities..." />
                     </div>
                     <div>
-                        <a href="{{ \Illuminate\Support\Facades\URL::signedRoute('admin.categories.create') }}" class="btn btn-primary">
-                            + Add Category
+                        <a href="{{ route('admin.commodities.create') }}" class="btn btn-primary">
+                            + Add Commodity
                         </a>
                     </div>
                 </div>
@@ -27,6 +27,7 @@
                                 <th>Image</th>
                                 <th>Name</th>
                                 <th>Slug</th>
+                                <th>Varieties Count</th>
                                 <th>Created</th>
                                 <th>Updated</th>
                                 <th class="text-end">Action</th>
@@ -34,11 +35,11 @@
                         </thead>
                         <!-- end thead-->
                         <tbody>
-                            @foreach($categories as $c)
+                            @forelse($commodities as $commodity)
                             <tr>
                                 <td>
-                                    @if($c->image_path)
-                                        <img src="{{ asset($c->image_path) }}" alt="{{ $c->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
+                                    @if($commodity->image_url)
+                                            <img src="{{ asset('storage/' . $commodity->image_url) }}" alt="{{ $commodity->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
                                     @else
                                         <div class="avatar-sm">
                                             <span class="avatar-title bg-light text-secondary rounded">
@@ -47,28 +48,45 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td>{{ $c->name }}</td>
-                                <td>{{ $c->slug }}</td>
-                                <td>{{ $c->created_at?->format('Y-m-d H:i') }}</td>
-                                <td>{{ $c->updated_at?->format('Y-m-d H:i') }}</td>
+                                <td>{{ $commodity->name }}</td>
+                                <td>
+                                    <code class="text-muted">{{ $commodity->slug }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ $commodity->varieties_count ?? 0 }}</span>
+                                </td>
+                                <td>{{ $commodity->created_at?->format('Y-m-d H:i') }}</td>
+                                <td>{{ $commodity->updated_at?->format('Y-m-d H:i') }}</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.categories.edit', $c) }}" class="btn btn-sm btn-light" title="Edit"><i class="bx bx-pencil"></i></a>
-                                        <form id="delete-form-{{ $c->id }}" action="{{ route('admin.categories.destroy', $c) }}" method="POST" class="d-inline">
+                                        <a href="{{ route('admin.commodities.show', $commodity) }}" class="btn btn-sm btn-info" title="View"><i class="bx bx-show"></i></a>
+                                        <a href="{{ route('admin.commodities.edit', $commodity) }}" class="btn btn-sm btn-light" title="Edit"><i class="bx bx-pencil"></i></a>
+                                        <form id="delete-form-{{ $commodity->id }}" action="{{ route('admin.commodities.destroy', $commodity) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" data-delete-form="delete-form-{{ $c->id }}" class="btn btn-sm btn-danger js-delete-btn" title="Delete"><i class="bx bx-trash"></i></button>
+                                            <button type="button" data-delete-form="delete-form-{{ $commodity->id }}" class="btn btn-sm btn-danger js-delete-btn" title="Delete"><i class="bx bx-trash"></i></button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bx bx-package fs-1 d-block mb-2"></i>
+                                        No commodities found
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
+                @if(isset($commodities) && method_exists($commodities, 'links'))
                 <div class="card-footer">
-                    {{ $categories->links() }}
+                    {{ $commodities->links('custom.pagination') }}
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -77,16 +95,16 @@
 @endsection
 
 @push('modals')
-<!-- Reback styled confirmation modal -->
+<!-- Confirmation modal -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Delete Category</h5>
+        <h5 class="modal-title">Delete Commodity</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-0">Are you sure you want to delete this category? This action cannot be undone.</p>
+        <p class="mb-0">Are you sure you want to delete this commodity? This action cannot be undone.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -104,20 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEl = document.getElementById('confirmDeleteModal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     
-    console.log('Modal elements found:', {modalEl, confirmBtn, bootstrap: typeof bootstrap});
-    
     if (!modalEl || !confirmBtn) {
         console.error('Modal elements not found');
         return;
     }
     
-    // Initialize Bootstrap modal with fallback
+    // Initialize Bootstrap modal
     let bsModal = null;
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         bsModal = new bootstrap.Modal(modalEl);
-        console.log('Bootstrap modal initialized');
-    } else {
-        console.error('Bootstrap not available');
     }
     
     // Handle delete button clicks
@@ -125,23 +138,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = e.target.closest('.js-delete-btn');
         if (btn) {
             e.preventDefault();
-            console.log('Delete button clicked:', btn);
             
             targetFormId = btn.getAttribute('data-delete-form');
-            console.log('Target form ID:', targetFormId);
             
             if (bsModal) {
                 bsModal.show();
+            } else if (typeof $ !== 'undefined') {
+                $('#confirmDeleteModal').modal('show');
             } else {
-                // Fallback: use jQuery if Bootstrap modal fails
-                if (typeof $ !== 'undefined') {
-                    $('#confirmDeleteModal').modal('show');
-                } else {
-                    // Last resort: direct confirmation
-                    if (confirm('Are you sure you want to delete this category?')) {
-                        const form = document.getElementById(targetFormId);
-                        if (form) form.submit();
-                    }
+                if (confirm('Are you sure you want to delete this commodity?')) {
+                    const form = document.getElementById(targetFormId);
+                    if (form) form.submit();
                 }
             }
         }
@@ -149,16 +156,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle confirm button click
     confirmBtn.addEventListener('click', function() {
-        console.log('Confirm delete clicked, target form:', targetFormId);
-        
         if (targetFormId) {
             const form = document.getElementById(targetFormId);
-            console.log('Form found:', form);
-            
             if (form) {
                 form.submit();
-            } else {
-                console.error('Form not found:', targetFormId);
             }
             
             if (bsModal) {
