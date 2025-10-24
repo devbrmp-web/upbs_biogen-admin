@@ -22,8 +22,8 @@ class SeedLot extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:3',
-        'price_per_unit' => 'decimal:2',
+        'quantity' => 'integer',
+        'price_per_unit' => 'float',
         'is_sellable' => 'boolean',
         'production_year' => 'integer',
     ];
@@ -65,7 +65,8 @@ class SeedLot extends Model
      */
     public function getTotalValueAttribute(): float
     {
-        return $this->quantity * $this->price_per_unit;
+        // Ensure numeric operands to avoid TypeError when price_per_unit is cast as decimal (string)
+        return (float) $this->quantity * (float) $this->price_per_unit;
     }
 
     /**

@@ -71,11 +71,11 @@
                             </tr>
                             <tr>
                                 <td class="fw-semibold">BS Stock:</td>
-                                <td>{{ number_format($variety->stock_bs_kg ?? 0, 3) }} kg</td>
+                                <td>{{ number_format($variety->stock_bs_kg ?? 0, 0) }} kg</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">FS Stock:</td>
-                                <td>{{ number_format($variety->stock_fs_kg ?? 0, 3) }} kg</td>
+                                <td>{{ number_format($variety->stock_fs_kg ?? 0, 0) }} kg</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Planlet (per botol):</td>
@@ -83,11 +83,11 @@
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Total Stock:</td>
-                                <td><strong>{{ number_format(($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0), 3) }} kg</strong></td>
+                                <td><strong>{{ number_format($variety->total_stock ?? 0, 0) }} kg</strong></td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Min. Limit:</td>
-                                <td>{{ number_format($variety->minimum_limit ?? 0, 3) }} kg</td>
+                                <td>{{ number_format($variety->minimum_limit ?? 0, 0) }} kg</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Description:</td>
@@ -136,24 +136,23 @@
                 <div class="row text-center">
                     <div class="col-6">
                         <div class="border-end">
-                            <h5 class="text-primary mb-1">{{ number_format($variety->stock_bs_kg ?? 0, 3) }}</h5>
+                            <h5 class="text-primary mb-1">{{ number_format($variety->stock_bs_kg ?? 0, 0) }}</h5>
                             <small class="text-muted">BS Stock (kg)</small>
                         </div>
                     </div>
                     <div class="col-6">
-                        <h5 class="text-success mb-1">{{ number_format($variety->stock_fs_kg ?? 0, 3) }}</h5>
+                        <h5 class="text-success mb-1">{{ number_format($variety->stock_fs_kg ?? 0, 0) }}</h5>
                         <small class="text-muted">FS Stock (kg)</small>
                     </div>
                 </div>
                 <hr class="my-3">
                 <div class="text-center">
-                    <h4 class="text-dark mb-1">{{ number_format(($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0), 3) }}</h4>
+                    <h4 class="text-dark mb-1">{{ number_format($variety->total_stock ?? 0, 0) }}</h4>
                     <small class="text-muted">Total Stock (kg)</small>
                 </div>
-                @php($totalBsFs = ($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0))
-                @if(($variety->minimum_limit ?? 0) > 0 && $totalBsFs <= ($variety->minimum_limit ?? 0))
+                @if(($variety->minimum_limit ?? 0) > 0 && ($variety->total_stock ?? 0) <= ($variety->minimum_limit ?? 0))
                     <div class="alert alert-warning mt-3 mb-0 py-2">
-                        <small><i class="bx bx-warning"></i> Stock below minimum limit!</small>
+                        <small><i class="bx bx-warning"></i> Restock</small>
                     </div>
                 @endif
             </div>
@@ -195,7 +194,7 @@
                                     <span class="badge bg-secondary">{{ $seedLot->seedClass->name ?? 'N/A' }}</span>
                                 </td>
                                 <td>{{ $seedLot->production_year }}</td>
-                                <td>{{ number_format($seedLot->quantity, 2) }} {{ $seedLot->unit }}</td>
+                                <td>{{ number_format($seedLot->quantity, 0) }} {{ $seedLot->unit }}</td>
                                 <td>Rp {{ number_format($seedLot->price_per_unit, 0, ',', '.') }}</td>
                                 <td><strong>Rp {{ number_format($seedLot->total_value, 0, ',', '.') }}</strong></td>
                                 <td>

@@ -83,10 +83,10 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" class="form-control @error('quantity') is-invalid @enderror" 
-                                       id="quantity" name="quantity" value="{{ old('quantity') }}" 
-                                       min="0" required>
+                                <label for="quantity" class="form-label">Quantity (bilangan bulat) <span class="text-danger">*</span></label>
+                                <input type="number" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
+                                id="quantity" name="quantity" value="{{ old('quantity') }}"
+                                placeholder="Masukkan jumlah sebagai bilangan bulat (tanpa desimal)" />
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

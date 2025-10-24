@@ -59,7 +59,7 @@
                             <tr>
                                 <td class="fw-semibold">Quantity:</td>
                                 <td>
-                                    <span class="fs-5 fw-semibold">{{ number_format($seedLot->quantity, 2) }}</span> 
+                                    <span class="fs-5 fw-semibold">{{ number_format($seedLot->quantity, 0) }}</span> 
                                     <span class="text-muted">{{ $seedLot->unit }}</span>
                                 </td>
                             </tr>
@@ -74,7 +74,7 @@
                                 <td class="fw-semibold">Total Value:</td>
                                 <td>
                                     <span class="fs-4 fw-bold text-primary">
-                                        Rp {{ number_format($seedLot->quantity * $seedLot->price_per_unit, 0, ',', '.') }}
+                                        Rp {{ number_format($seedLot->total_value, 0, ',', '.') }}
                                     </span>
                                 </td>
                             </tr>
@@ -138,7 +138,7 @@
                 <div class="row text-center">
                     <div class="col-6">
                         <div class="border rounded p-2">
-                            <div class="fs-4 fw-bold text-primary">{{ number_format($seedLot->quantity, 1) }}</div>
+                            <div class="fs-4 fw-bold text-primary">{{ number_format($seedLot->quantity, 0) }}</div>
                             <div class="small text-muted">{{ $seedLot->unit }} Available</div>
                         </div>
                     </div>
@@ -155,7 +155,7 @@
                 <div class="text-center">
                     <div class="fs-6 text-muted">Total Inventory Value</div>
                     <div class="fs-3 fw-bold text-primary">
-                        Rp {{ number_format($seedLot->quantity * $seedLot->price_per_unit, 0, ',', '.') }}
+                        Rp {{ number_format($seedLot->total_value, 0, ',', '.') }}
                     </div>
                 </div>
             </div>

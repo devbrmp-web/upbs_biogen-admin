@@ -70,11 +70,11 @@ class VarietyManagementTest extends TestCase
             ->assertSee($variety->name)
             ->assertSee($variety->sku)
             ->assertSee('Rp 50.000')
-            ->assertSee('100.000 kg') // BS stock (formatted with 3 decimals)
-            ->assertSee('50.000 kg')  // FS stock (formatted with 3 decimals)
-            ->assertSee('150.000 kg') // Total stock (formatted with 3 decimals)
+            ->assertSee('100 kg') // BS stock formatted with 0 decimals
+            ->assertSee('50 kg')  // FS stock formatted with 0 decimals
+            ->assertSee('150 kg') // Total stock formatted with 0 decimals
             ->assertSee($seedLot->lot_code)
-            ->assertSee('25.00 kg') // Seed lot quantity (formatted with 2 decimals)
+            ->assertSee('25 kg') // Seed lot quantity formatted with 0 decimals
             ->assertSee('Rp 2.000');
     }
 
@@ -206,10 +206,10 @@ class VarietyManagementTest extends TestCase
             ->get(route('admin.varieties.show', $variety));
 
         $response->assertOk()
-            ->assertSee('75.000 kg') // BS stock (formatted with 3 decimals)
-            ->assertSee('25.000 kg') // FS stock (formatted with 3 decimals)
-            ->assertSee('100.000 kg') // Total stock (75 + 25, formatted with 3 decimals)
-            ->assertSee('20.000 kg'); // Minimum limit (formatted with 3 decimals)
+            ->assertSee('75 kg') // BS stock formatted with 0 decimals
+            ->assertSee('25 kg') // FS stock formatted with 0 decimals
+            ->assertSee('100 kg') // Total stock formatted with 0 decimals
+            ->assertSee('20 kg'); // Minimum limit formatted with 0 decimals
     }
 
     #[Test]
@@ -227,8 +227,8 @@ class VarietyManagementTest extends TestCase
             ->get(route('admin.varieties.show', $variety));
 
         $response->assertOk()
-            ->assertSee('8.000 kg') // Total stock (5 + 3, formatted with 3 decimals)
-            ->assertSee('Stock below minimum limit!'); // Warning indicator
+            ->assertSee('8 kg') // Total stock below minimum formatted with 0 decimals
+            ->assertSee('Restock');
     }
 
     #[Test]

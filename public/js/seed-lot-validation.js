@@ -145,46 +145,30 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function updateQuantityBehavior(seedClassCode) {
         if (!quantityInput) return;
-
-        if (seedClassCode === 'PL') {
-            quantityInput.setAttribute('step', '1');
-            quantityInput.setAttribute('min', '0');
-            showQuantityValidationMessage('Planlet (PL) harus menggunakan jumlah bilangan bulat (tanpa desimal).');
-        } else {
-            quantityInput.setAttribute('step', '0.01');
-            quantityInput.setAttribute('min', '0');
-            hideQuantityValidationMessage();
-        }
+        // Enforce integer-only for ALL seed classes
+        quantityInput.setAttribute('step', '1');
+        quantityInput.setAttribute('min', '0');
+        showQuantityValidationMessage('Quantity harus bilangan bulat (tanpa desimal) untuk semua kelas.');
     }
 
     // Enforce integer input when PL selected; allow decimals otherwise
-    quantityInput.addEventListener('input', function() {
-        const selectedOption = seedClassSelect.options[seedClassSelect.selectedIndex];
-        const seedClassCode = selectedOption.getAttribute('data-code');
-
-        if (seedClassCode === 'PL') {
-            // Keep only digits
-            this.value = this.value.replace(/[^0-9]/g, '');
-        } else {
-            // Allow digits and one decimal point
-            const cleaned = this.value.replace(/[^0-9.]/g, '');
-            // Ensure only one decimal point
-            const parts = cleaned.split('.');
-            if (parts.length > 2) {
-                this.value = parts[0] + '.' + parts.slice(1).join('');
-            } else {
-                this.value = cleaned;
-            }
+    quantityInput.addEventListener('keypress', function(e) {
+        const char = String.fromCharCode(e.which);
+        // Block any non-digit input (including '.')
+        if (!/[0-9]/.test(char)) {
+            e.preventDefault();
         }
+    });
+    quantityInput.addEventListener('input', function() {
+        // Strip non-digits to enforce integer-only
+        this.value = this.value.replace(/[^0-9]/g, '');
     });
 
     function showQuantityValidationMessage(message) {
-        // Remove existing message first
         hideQuantityValidationMessage();
-
         const msgDiv = document.createElement('div');
         msgDiv.className = 'alert alert-warning mt-2 seed-class-quantity-message';
-        msgDiv.innerHTML = `<small><i class="bx bx-info-circle"></i> ${message}</small>`;
+        msgDiv.innerText = message;
         quantityInput.parentNode.appendChild(msgDiv);
     }
 

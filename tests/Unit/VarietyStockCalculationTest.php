@@ -245,41 +245,45 @@ class VarietyStockCalculationTest extends TestCase
     {
         $variety = Variety::create([
             'name' => 'Decimal Variety',
-            'sku' => 'DECIMAL-001',
+            'sku' => 'DEC-001',
             'commodity_id' => $this->commodity->id,
             'price' => 50000.00,
-            'minimum_limit' => 25.5,
+            'minimum_limit' => 25, // integer-only policy
         ]);
 
-        // Create seed lots with decimal quantities
+        // Create BS seed lot
         SeedLot::create([
             'variety_id' => $variety->id,
             'seed_class_id' => $this->bsSeedClass->id,
-            'lot_code' => 'BS-DECIMAL-001',
+            'lot_code' => 'BS-DEC-001',
             'production_year' => 2024,
-            'quantity' => 15.75,
+            'quantity' => 16, // rounded from 15.75 to integer
             'unit' => 'kg',
             'price_per_unit' => 50000.00,
             'is_sellable' => true,
         ]);
 
+        // Create FS seed lot
         SeedLot::create([
             'variety_id' => $variety->id,
             'seed_class_id' => $this->fsSeedClass->id,
-            'lot_code' => 'FS-DECIMAL-001',
+            'lot_code' => 'FS-DEC-001',
             'production_year' => 2024,
-            'quantity' => 12.25,
+            'quantity' => 12, // rounded from 12.25 to integer
             'unit' => 'kg',
-            'price_per_unit' => 60000.00,
+            'price_per_unit' => 50000.00,
             'is_sellable' => true,
         ]);
 
-        // Total: 15.75 + 12.25 = 28.0
-        $this->assertEquals(28.0, $variety->total_stock);
-        
-        // 28.0 > 25.5 (minimum), so should be 'Tersedia'
+        // Total: 16 + 12 = 28
+        // 28 > 25 (minimum), so should be 'Tersedia'
+        $this->assertEquals(28, $variety->total_stock);
         $this->assertEquals('Tersedia', $variety->stock_status);
     }
+
+
+
+
 
     #[Test]
     public function stock_calculations_handle_large_quantities()

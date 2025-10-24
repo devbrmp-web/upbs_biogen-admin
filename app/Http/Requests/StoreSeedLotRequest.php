@@ -25,8 +25,8 @@ class StoreSeedLotRequest extends FormRequest
             'seed_class_id' => 'required|exists:seed_classes,id',
             'lot_code' => 'required|string|max:50|unique:seed_lots,lot_code',
             'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
-            // Default: quantity numeric; akan disesuaikan untuk PL di bawah
-            'quantity' => 'required|numeric|min:0',
+            // Integer-only policy by default
+            'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|in:kg,gram,ton,piece,bottle',
             'price_per_unit' => 'required|numeric|min:0',
             'is_sellable' => 'boolean',
@@ -43,21 +43,21 @@ class StoreSeedLotRequest extends FormRequest
                     case 'FS':
                         // BS and FS should use weight-based units (kg, gram, ton)
                         $rules['unit'] = 'required|string|in:kg,gram,ton';
-                        // Quantity boleh desimal untuk unit berbasis berat
-                        $rules['quantity'] = 'required|numeric|min:0';
+                        // Quantity must be integer for consistency
+                        $rules['quantity'] = 'required|integer|min:0';
                         break;
                     
                     case 'PL':
-                        // Planlet should use bottle units
+                        // Planlet should use bottle/piece units
                         $rules['unit'] = 'required|string|in:bottle,piece';
-                        // PL: quantity harus integer (botol/pcs tidak desimal)
+                        // Quantity must be integer (no decimals)
                         $rules['quantity'] = 'required|integer|min:0';
                         break;
                     
                     default:
                         // Other seed classes can use any unit
                         $rules['unit'] = 'required|string|in:kg,gram,ton,piece,bottle';
-                        $rules['quantity'] = 'required|numeric|min:0';
+                        $rules['quantity'] = 'required|integer|min:0';
                         break;
                 }
             }
@@ -82,7 +82,7 @@ class StoreSeedLotRequest extends FormRequest
             'production_year.min' => 'Production year must be at least 2000.',
             'production_year.max' => 'Production year cannot be more than next year.',
             'quantity.required' => 'Quantity is required.',
-            'quantity.numeric' => 'Quantity must be a number.',
+            // Integer-only policy across all seed classes
             'quantity.integer' => 'Quantity must be an integer for this seed class.',
             'quantity.min' => 'Quantity must be at least 0.',
             'unit.required' => 'Unit is required.',
@@ -100,7 +100,7 @@ class StoreSeedLotRequest extends FormRequest
                     case 'BS':
                     case 'FS':
                         $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: kg, gram, ton.';
-                        $messages['quantity.numeric'] = 'Quantity must be a number (decimal allowed) for weight-based classes.';
+                        $messages['quantity.integer'] = 'Quantity must be an integer (no decimals) for weight-based seed classes.';
                         break;
                     
                     case 'PL':
@@ -110,7 +110,7 @@ class StoreSeedLotRequest extends FormRequest
                     
                     default:
                         $messages['unit.in'] = 'The selected unit is invalid for this seed class.';
-                        $messages['quantity.numeric'] = 'Quantity must be a number.';
+                        $messages['quantity.integer'] = 'Quantity must be an integer (no decimals).';
                         break;
                 }
             }

@@ -75,9 +75,8 @@ class VarietyController extends Controller
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            // Allow decimals for BS/FS to match DB schema and UI formatting
-            'stock_bs_kg' => 'nullable|numeric|min:0',
-            'stock_fs_kg' => 'nullable|numeric|min:0',
+            'stock_bs_kg' => 'nullable|integer|min:0',
+            'stock_fs_kg' => 'nullable|integer|min:0',
             'planlet' => 'nullable|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -162,9 +161,8 @@ class VarietyController extends Controller
             ],
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            // Allow decimals for BS/FS to match DB schema and UI formatting
-            'stock_bs_kg' => 'nullable|numeric|min:0',
-            'stock_fs_kg' => 'nullable|numeric|min:0',
+            'stock_bs_kg' => 'nullable|integer|min:0',
+            'stock_fs_kg' => 'nullable|integer|min:0',
             'planlet' => 'nullable|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',

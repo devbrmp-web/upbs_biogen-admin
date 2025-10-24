@@ -433,8 +433,8 @@ class VarietyTest extends TestCase
             'sku' => 'TOTAL-STOCK-001',
             'description' => 'Test total stock calculation',
             'price' => 10000,
-            'stock_bs_kg' => 100.5,
-            'stock_fs_kg' => 75.3,
+            'stock_bs_kg' => 100,
+            'stock_fs_kg' => 75,
             'minimum_limit' => 10,
         ]);
 
@@ -444,7 +444,7 @@ class VarietyTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-TOTAL-001',
             'production_year' => 2024,
-            'quantity' => 100.5,
+            'quantity' => 100,
             'unit' => 'kg',
             'price_per_unit' => 10000,
             'is_sellable' => true,
@@ -455,12 +455,12 @@ class VarietyTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-TOTAL-001',
             'production_year' => 2024,
-            'quantity' => 75.3,
+            'quantity' => 75,
             'unit' => 'kg',
             'price_per_unit' => 10000,
             'is_sellable' => true,
         ]);
 
-        $this->assertEquals(175.8, $variety->total_stock);
+        $this->assertEquals(175, $variety->total_stock);
     }
 }

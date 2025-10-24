@@ -106,7 +106,8 @@
                                     <span class="badge bg-secondary">{{ $seedLot->seedClass->name ?? 'N/A' }}</span>
                                 </td>
                                 <td>{{ $seedLot->production_year }}</td>
-                                <td>{{ number_format($seedLot->quantity, 2) }} {{ $seedLot->unit }}</td>
+                                -    <td>{{ number_format($seedLot->quantity, 2) }} {{ $seedLot->unit }}</td>
+                +    <td>{{ number_format($seedLot->quantity, 0) }} {{ $seedLot->unit }}</td>
                                 <td>Rp {{ number_format($seedLot->price_per_unit, 0, ',', '.') }}</td>
                                 <td>
                                     @if($seedLot->is_sellable)

@@ -29,9 +29,8 @@ class Variety extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'stock' => 'integer',
-        // Use decimal precision to match DB schema (DECIMAL(12,3))
-        'stock_bs_kg' => 'decimal:3',
-        'stock_fs_kg' => 'decimal:3',
+        'stock_bs_kg' => 'integer',
+        'stock_fs_kg' => 'integer',
         'planlet' => 'integer',
         'minimum_limit' => 'integer',
     ];

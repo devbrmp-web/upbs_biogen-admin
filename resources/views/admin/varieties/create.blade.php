@@ -97,10 +97,10 @@
                             <div class="row">
                                 <!-- BS Stock -->
                                 <div class="col-md-4 mb-3">
-                                    <label for="stock_bs_kg" class="form-label">BS Stock (kg, bisa desimal)</label>
+                                    <label for="stock_bs_kg" class="form-label">BS Stock (kg, bilangan bulat)</label>
                                     <input type="number" class="form-control @error('stock_bs_kg') is-invalid @enderror" 
                                            id="stock_bs_kg" name="stock_bs_kg" value="{{ old('stock_bs_kg') }}" 
-                                           step="0.001" min="0" inputmode="decimal" placeholder="Contoh: 12.345">
+                                           step="1" min="0" inputmode="numeric" placeholder="Contoh: 12">
                                     @error('stock_bs_kg')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -108,10 +108,10 @@
 
                                 <!-- FS Stock -->
                                 <div class="col-md-4 mb-3">
-                                    <label for="stock_fs_kg" class="form-label">FS Stock (kg, bisa desimal)</label>
+                                    <label for="stock_fs_kg" class="form-label">FS Stock (kg, bilangan bulat)</label>
                                     <input type="number" class="form-control @error('stock_fs_kg') is-invalid @enderror" 
                                            id="stock_fs_kg" name="stock_fs_kg" value="{{ old('stock_fs_kg') }}" 
-                                           step="0.001" min="0" inputmode="decimal" placeholder="Contoh: 7.500">
+                                           step="1" min="0" inputmode="numeric" placeholder="Contoh: 7">
                                     @error('stock_fs_kg')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -126,12 +126,6 @@
                                     @error('planlet')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <div class="alert alert-light border py-2 mb-0">
-                                    <strong>Total Stock (kg): <span id="totalStockDisplay">0.000</span></strong>
                                 </div>
                             </div>
 
@@ -208,47 +202,24 @@
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
 
-        // Decimal-friendly guard for BS/FS; integer-only for planlet & minimum_limit
-        const decimalFields = ['stock_bs_kg','stock_fs_kg'];
-        const integerFields = ['planlet','minimum_limit'];
-
-        decimalFields.forEach(function(id){
+        // Integer-only guard for numeric inputs
+        const integerIds = ['stock_bs_kg','stock_fs_kg','planlet','minimum_limit'];
+        integerIds.forEach(function(id){
             const el = document.getElementById(id);
             if (!el) return;
+            const sanitize = function(val){
+                // Hanya digit (0-9), hapus titik/koma/karakter lain
+                const digits = String(val).replace(/[^0-9]/g,'');
+                return digits;
+            };
             const applySanitize = function(){
-                let v = String(el.value).replace(/,/g, '.'); // normalize comma to dot
-                // keep only digits and dots
-                v = v.replace(/[^0-9\.]/g, '');
-                // ensure only one dot
-                const firstDotIndex = v.indexOf('.');
-                if (firstDotIndex !== -1) {
-                    const before = v.slice(0, firstDotIndex + 1);
-                    const after = v.slice(firstDotIndex + 1).replace(/\./g, '');
-                    v = before + after;
-                }
-                el.value = v;
-                updateTotalStock();
+                const clean = sanitize(el.value);
+                el.value = clean;
             };
             el.addEventListener('input', applySanitize);
             el.addEventListener('change', applySanitize);
             el.addEventListener('blur', applySanitize);
-            el.addEventListener('keypress', function(e){
-                const ch = e.key;
-                if (!/[0-9\.,]/.test(ch)) {
-                    e.preventDefault();
-                }
-            });
-        });
-
-        integerFields.forEach(function(id){
-            const el = document.getElementById(id);
-            if (!el) return;
-            const applySanitize = function(){
-                el.value = String(el.value).replace(/[^0-9]/g, '');
-            };
-            el.addEventListener('input', applySanitize);
-            el.addEventListener('change', applySanitize);
-            el.addEventListener('blur', applySanitize);
+            // Prevent enter decimal separators
             el.addEventListener('keypress', function(e){
                 const ch = e.key;
                 if (!/[0-9]/.test(ch)) {
@@ -256,26 +227,6 @@
                 }
             });
         });
-
-        // Helper to parse and update Total Stock (kg)
-        const totalDisplayEl = document.getElementById('totalStockDisplay');
-        function parseDecimalValue(inputId){
-            const el = document.getElementById(inputId);
-            if (!el) return 0;
-            const v = String(el.value).replace(',', '.');
-            const f = parseFloat(v);
-            return isNaN(f) ? 0 : f;
-        }
-        function updateTotalStock(){
-            if (!totalDisplayEl) return;
-            const bs = parseDecimalValue('stock_bs_kg');
-            const fs = parseDecimalValue('stock_fs_kg');
-            const total = bs + fs;
-            totalDisplayEl.textContent = total.toFixed(3);
-        }
-
-        // Initialize on load
-        updateTotalStock();
 
         // Fallback input preview
         if (input && preview && container) {
