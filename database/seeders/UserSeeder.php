@@ -28,12 +28,12 @@ class UserSeeder extends Seeder
         $existingSuperAdmin = User::query()->where('role_id', $superAdminRole->id)->exists();
         if (! $existingSuperAdmin) {
             User::create([
-                'name' => 'Super Admin',
-                'email' => 'superadmin@upbs.local',
+                'name' => 'Super Admin Biogen',
+                'email' => 'superadmin@upbs.test',
                 'role_id' => $superAdminRole->id,
-                'password_hash' => Hash::make('password'),
+                'password' => Hash::make('password'),
             ]);
-            $this->command?->info('User super_admin awal dibuat: superadmin@upbs.local / password');
+            $this->command?->info('User super_admin awal dibuat: superadmin@upbs.test / password');
         } else {
             $this->command?->info('User super_admin sudah ada, seeder dilewati.');
         }

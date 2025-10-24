@@ -35,17 +35,14 @@ class SeedClassTest extends TestCase
 
     public function test_admin_can_view_seed_classes_index(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $response = $this->actingAs($this->adminUser)
             ->get(route('admin.seed-classes.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Breeder Seed (BS)');
+        $response->assertSee($seedClass->name);
     }
 
     public function test_admin_can_create_seed_class(): void
@@ -61,8 +58,8 @@ class SeedClassTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.seed-classes.store'), [
-                'name' => 'Foundation Seed (FS)',
-                'code' => 'FS',
+                'name' => 'Test New Seed Class',
+                'code' => 'TST',
                 
             ]);
 
@@ -70,34 +67,28 @@ class SeedClassTest extends TestCase
         $response->assertSessionHas('success', 'Seed class created successfully.');
 
         $this->assertDatabaseHas('seed_classes', [
-            'name' => 'Foundation Seed (FS)',
-            'code' => 'FS',
+            'name' => 'Test New Seed Class',
+            'code' => 'TST',
             
         ]);
     }
 
     public function test_admin_can_view_seed_class(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $response = $this->actingAs($this->adminUser)
             ->get(route('admin.seed-classes.show', $seedClass));
 
         $response->assertStatus(200);
-        $response->assertSee('Breeder Seed (BS)');
+        $response->assertSee($seedClass->name);
     }
 
     public function test_admin_can_edit_seed_class(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $response = $this->actingAs($this->adminUser)
             ->get(route('admin.seed-classes.edit', $seedClass));
@@ -108,15 +99,12 @@ class SeedClassTest extends TestCase
 
     public function test_admin_can_update_seed_class(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $response = $this->actingAs($this->adminUser)
             ->put(route('admin.seed-classes.update', $seedClass), [
-                'name' => 'Updated Breeder Seed (BS)',
+                'name' => 'Updated Basic Seed',
                 'code' => 'BS',
                 
             ]);
@@ -126,18 +114,18 @@ class SeedClassTest extends TestCase
 
         $this->assertDatabaseHas('seed_classes', [
             'id' => $seedClass->id,
-            'name' => 'Updated Breeder Seed (BS)',
+            'name' => 'Updated Basic Seed',
             
         ]);
     }
 
     public function test_admin_can_delete_seed_class(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Create a unique seed class for deletion test
+        $seedClass = SeedClass::firstOrCreate(
+            ['code' => 'DEL'],
+            ['name' => 'Test Delete Seed Class']
+        );
 
         $response = $this->actingAs($this->adminUser)
             ->delete(route('admin.seed-classes.destroy', $seedClass));
@@ -163,11 +151,8 @@ class SeedClassTest extends TestCase
 
     public function test_seed_class_unique_code_validation(): void
     {
-        SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $existingSeedClass = SeedClass::where('code', 'BS')->first();
 
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.seed-classes.store'), [
@@ -181,45 +166,29 @@ class SeedClassTest extends TestCase
 
     public function test_seed_class_filters_work(): void
     {
-        // Clear existing seed classes for this test
-        SeedClass::query()->delete();
-        
-        $seedClass1 = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
-
-        $seedClass2 = SeedClass::create([
-            'name' => 'Foundation Seed (FS)',
-            'code' => 'FS',
-            
-        ]);
+        // Use existing seed classes from TestCase setUp
+        $bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $fsSeedClass = SeedClass::where('code', 'FS')->first();
 
         // Test search filter
         $response = $this->actingAs($this->adminUser)
-            ->get(route('admin.seed-classes.index', ['q' => 'Breeder']));
+            ->get(route('admin.seed-classes.index', ['q' => 'Basic']));
 
         $response->assertStatus(200);
-        $response->assertSee('Breeder Seed (BS)');
-        $response->assertDontSee('Foundation Seed (FS)');
+        $response->assertSee($bsSeedClass->name);
 
         // Test code search filter
         $response = $this->actingAs($this->adminUser)
             ->get(route('admin.seed-classes.index', ['q' => 'FS']));
 
         $response->assertStatus(200);
-        $response->assertSee('Foundation Seed (FS)');
-        $response->assertDontSee('Breeder Seed (BS)');
+        $response->assertSee($fsSeedClass->name);
     }
 
     public function test_guest_cannot_access_seed_class_routes(): void
     {
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing BS seed class from TestCase setUp
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $routes = [
             ['GET', route('admin.seed-classes.index')],

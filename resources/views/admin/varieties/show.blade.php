@@ -35,6 +35,10 @@
                                 <td>{{ $variety->name }}</td>
                             </tr>
                             <tr>
+                                <td class="fw-semibold">SKU:</td>
+                                <td><code>{{ $variety->sku ?? 'N/A' }}</code></td>
+                            </tr>
+                            <tr>
                                 <td class="fw-semibold">Slug:</td>
                                 <td><code>{{ $variety->slug }}</code></td>
                             </tr>
@@ -47,19 +51,43 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td class="fw-semibold">Price:</td>
+                                <td><strong>Rp {{ number_format($variety->price ?? 0, 0, ',', '.') }}</strong></td>
+                            </tr>
+                            <tr>
                                 <td class="fw-semibold">Stock Status:</td>
                                 <td>
                                     @php
-                                        $stockStatus = $variety->stock_status;
+                                        $stockStatus = $variety->stock_status; // accessor returns: Tersedia | Restock | Habis
                                         $badgeClass = match($stockStatus) {
-                                            'tersedia' => 'bg-success',
-                                            'restock' => 'bg-warning',
-                                            'habis' => 'bg-danger',
+                                            'Tersedia' => 'bg-success',
+                                            'Restock' => 'bg-warning',
+                                            'Habis' => 'bg-danger',
                                             default => 'bg-secondary'
                                         };
                                     @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($stockStatus) }}</span>
+                                    <span class="badge {{ $badgeClass }}">{{ $stockStatus }}</span>
                                 </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">BS Stock:</td>
+                                <td>{{ number_format($variety->stock_bs_kg ?? 0, 3) }} kg</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">FS Stock:</td>
+                                <td>{{ number_format($variety->stock_fs_kg ?? 0, 3) }} kg</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Planlet (per botol):</td>
+                                <td>{{ number_format($variety->planlet ?? 0, 0) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Total Stock:</td>
+                                <td><strong>{{ number_format(($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0), 3) }} kg</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Min. Limit:</td>
+                                <td>{{ number_format($variety->minimum_limit ?? 0, 3) }} kg</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Description:</td>
@@ -94,10 +122,40 @@
                     <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-success">
                         <i class="bx bx-plus"></i> Add New Seed Lot
                     </a>
-                    <a href="{{ route('admin.seed-lots.index', ['variety' => $variety->id]) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id]) }}" class="btn btn-outline-primary">
                         <i class="bx bx-list-ul"></i> View All Seed Lots
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Stock Summary Card -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">Stock Summary</h6>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary mb-1">{{ number_format($variety->stock_bs_kg ?? 0, 3) }}</h5>
+                            <small class="text-muted">BS Stock (kg)</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success mb-1">{{ number_format($variety->stock_fs_kg ?? 0, 3) }}</h5>
+                        <small class="text-muted">FS Stock (kg)</small>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="text-center">
+                    <h4 class="text-dark mb-1">{{ number_format(($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0), 3) }}</h4>
+                    <small class="text-muted">Total Stock (kg)</small>
+                </div>
+                @php($totalBsFs = ($variety->stock_bs_kg ?? 0) + ($variety->stock_fs_kg ?? 0))
+                @if(($variety->minimum_limit ?? 0) > 0 && $totalBsFs <= ($variety->minimum_limit ?? 0))
+                    <div class="alert alert-warning mt-3 mb-0 py-2">
+                        <small><i class="bx bx-warning"></i> Stock below minimum limit!</small>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -108,7 +166,12 @@
     <div class="col">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Related Seed Lots</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Seed Lots Management</h5>
+                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-sm btn-success">
+                        <i class="bx bx-plus"></i> Add Seed Lot
+                    </a>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="bg-light bg-opacity-50">
@@ -118,9 +181,10 @@
                                 <th>Production Year</th>
                                 <th>Quantity</th>
                                 <th>Price/Unit</th>
+                                <th>Total Value</th>
                                 <th>Status</th>
                                 <th>Created</th>
-                                <th class="text-end">Action</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,6 +197,7 @@
                                 <td>{{ $seedLot->production_year }}</td>
                                 <td>{{ number_format($seedLot->quantity, 2) }} {{ $seedLot->unit }}</td>
                                 <td>Rp {{ number_format($seedLot->price_per_unit, 0, ',', '.') }}</td>
+                                <td><strong>Rp {{ number_format($seedLot->total_value, 0, ',', '.') }}</strong></td>
                                 <td>
                                     @if($seedLot->is_sellable)
                                         <span class="badge bg-success">Sellable</span>
@@ -149,6 +214,14 @@
                                         <a href="{{ route('admin.seed-lots.edit', $seedLot) }}" class="btn btn-sm btn-light" title="Edit">
                                             <i class="bx bx-pencil"></i>
                                         </a>
+                                        <form action="{{ route('admin.seed-lots.destroy', $seedLot) }}" method="POST" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this seed lot?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -158,11 +231,26 @@
                 </div>
                 @if($variety->seedLots->count() > 10)
                     <div class="text-center mt-3">
-                        <a href="{{ route('admin.seed-lots.index', ['variety' => $variety->id]) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id]) }}" class="btn btn-outline-primary">
                             View All {{ $variety->seedLots->count() }} Seed Lots
                         </a>
                     </div>
                 @endif
+            </div>
+        </div>
+    </div>
+</div>
+@else
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bx bx-package fs-1 text-muted mb-3"></i>
+                <h5 class="text-muted">No Seed Lots Found</h5>
+                <p class="text-muted mb-4">This variety doesn't have any seed lots yet. Create the first one to start managing inventory.</p>
+                <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-success">
+                    <i class="bx bx-plus"></i> Create First Seed Lot
+                </a>
             </div>
         </div>
     </div>

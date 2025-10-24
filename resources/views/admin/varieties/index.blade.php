@@ -9,7 +9,7 @@
                 <div class="d-flex flex-wrap justify-content-between gap-3">
                     <div class="search-bar">
                         <span><i class="bx bx-search-alt"></i></span>
-                        <input type="search" class="form-control" id="search" placeholder="Search varieties..." />
+                        <input type="search" class="form-control" id="search" placeholder="Search varieties..." value="{{ request('search', request('q')) }}" />
                     </div>
                     <div class="d-flex gap-2">
                         <select class="form-select" id="commodityFilter" style="width: auto;">
@@ -41,6 +41,7 @@
                                 <th>Image</th>
                                 <th>Name</th>
                                 <th>Commodity</th>
+                                <th>Planlet</th>
                                 <th>Stock Status</th>
                                 <th>Seed Lots</th>
                                 <th>Created</th>
@@ -73,16 +74,16 @@
                                     <span class="badge bg-primary">{{ $variety->commodity->name ?? 'N/A' }}</span>
                                 </td>
                                 <td>
-                                    @php
-                                        $stockStatus = $variety->stock_status;
-                                        $badgeClass = match($stockStatus) {
-                                            'tersedia' => 'bg-success',
-                                            'restock' => 'bg-warning',
-                                            'habis' => 'bg-danger',
-                                            default => 'bg-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($stockStatus) }}</span>
+                                    <span class="badge bg-secondary">{{ $variety->planlet ?? 0 }}</span>
+                                </td>
+                                <td>
+                                    @if($variety->stock_status == 'Tersedia')
+                                        <span class="badge bg-success">Tersedia</span>
+                                    @elseif($variety->stock_status == 'Restock')
+                                        <span class="badge bg-warning">Restock</span>
+                                    @else
+                                        <span class="badge bg-danger">Habis</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="badge bg-info">{{ $variety->seed_lots_count ?? 0 }}</span>
@@ -103,7 +104,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="9" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bx bx-package fs-1 d-block mb-2"></i>
                                         No varieties found
@@ -205,11 +206,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle filter changes
     const commodityFilter = document.getElementById('commodityFilter');
     const stockFilter = document.getElementById('stockFilter');
+    const searchInput = document.getElementById('search');
     
     function updateFilters() {
         const url = new URL(window.location);
         const commodity = commodityFilter.value;
         const stockStatus = stockFilter.value;
+        const searchQuery = searchInput ? searchInput.value.trim() : '';
         
         if (commodity) {
             url.searchParams.set('commodity', commodity);
@@ -222,6 +225,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             url.searchParams.delete('stock_status');
         }
+
+        if (searchQuery !== '') {
+            // Use 'search' param, controller supports both 'search' and 'q'
+            url.searchParams.set('search', searchQuery);
+        } else {
+            url.searchParams.delete('search');
+            url.searchParams.delete('q');
+        }
         
         window.location.href = url.toString();
     }
@@ -232,6 +243,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (stockFilter) {
         stockFilter.addEventListener('change', updateFilters);
+    }
+
+    if (searchInput) {
+        // Trigger search on Enter key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                updateFilters();
+            }
+        });
+        // Optional: trigger on blur
+        searchInput.addEventListener('blur', function() {
+            updateFilters();
+        });
     }
 });
 </script>

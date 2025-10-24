@@ -18,7 +18,9 @@ class SeedLotTest extends TestCase
     protected User $adminUser;
     protected Commodity $commodity;
     protected Variety $variety;
-    protected SeedClass $seedClass;
+    protected SeedClass $bsSeedClass;
+    protected SeedClass $fsSeedClass;
+    protected SeedClass $plSeedClass;
 
     protected function setUp(): void
     {
@@ -55,11 +57,10 @@ class SeedLotTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        // Use existing seed classes from base TestCase
+        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
+        $this->plSeedClass = SeedClass::where('code', 'PL')->first();
     }
 
     public function test_admin_can_view_seed_lots_index(): void
@@ -67,7 +68,7 @@ class SeedLotTest extends TestCase
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -97,22 +98,21 @@ class SeedLotTest extends TestCase
             ->post(route('admin.seed-lots.store'), [
                 'lot_code' => 'BS-2024-002',
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->seedClass->id,
+                'seed_class_id' => $this->bsSeedClass->id,
                 'production_year' => 2024,
                 'quantity' => 150,
                 'unit' => 'kg',
                 'price_per_unit' => 55000,
                 'is_sellable' => true,
-                
             ]);
 
-        $response->assertRedirect(route('admin.seed-lots.index'));
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
         $response->assertSessionHas('success', 'Seed lot created successfully.');
 
         $this->assertDatabaseHas('seed_lots', [
             'lot_code' => 'BS-2024-002',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'quantity' => 150,
             'price_per_unit' => 55000,
         ]);
@@ -123,7 +123,7 @@ class SeedLotTest extends TestCase
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -143,7 +143,7 @@ class SeedLotTest extends TestCase
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -163,7 +163,7 @@ class SeedLotTest extends TestCase
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -175,7 +175,7 @@ class SeedLotTest extends TestCase
             ->put(route('admin.seed-lots.update', $seedLot), [
                 'lot_code' => 'BS-2024-001-UPDATED',
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->seedClass->id,
+                'seed_class_id' => $this->bsSeedClass->id,
                 'production_year' => 2024,
                 'quantity' => 200,
                 'unit' => 'kg',
@@ -184,7 +184,7 @@ class SeedLotTest extends TestCase
                 
             ]);
 
-        $response->assertRedirect(route('admin.seed-lots.index'));
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
         $response->assertSessionHas('success', 'Seed lot updated successfully.');
 
         $this->assertDatabaseHas('seed_lots', [
@@ -201,7 +201,7 @@ class SeedLotTest extends TestCase
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -247,7 +247,7 @@ class SeedLotTest extends TestCase
         SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -259,7 +259,7 @@ class SeedLotTest extends TestCase
             ->post(route('admin.seed-lots.store'), [
                 'lot_code' => 'BS-2024-001', // Duplicate lot code
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->seedClass->id,
+                'seed_class_id' => $this->bsSeedClass->id,
                 'production_year' => 2024,
                 'quantity' => 150,
                 'unit' => 'kg',
@@ -275,7 +275,7 @@ class SeedLotTest extends TestCase
         $seedLot1 = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',
@@ -286,7 +286,7 @@ class SeedLotTest extends TestCase
         $seedLot2 = SeedLot::create([
             'lot_code' => 'FS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->fsSeedClass->id,
             'production_year' => 2023,
             'quantity' => 200,
             'unit' => 'kg',
@@ -311,12 +311,214 @@ class SeedLotTest extends TestCase
         $response->assertSee('FS-2024-001');
     }
 
+    public function test_admin_can_create_fs_seed_lot_with_valid_unit(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'FS-2024-001',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->fsSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 100,
+                'unit' => 'kg', // Valid unit for FS
+                'price_per_unit' => 50000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
+        $response->assertSessionHas('success', 'Seed lot created successfully.');
+
+        $this->assertDatabaseHas('seed_lots', [
+            'lot_code' => 'FS-2024-001',
+            'seed_class_id' => $this->fsSeedClass->id,
+            'unit' => 'kg',
+        ]);
+    }
+
+    public function test_admin_cannot_create_fs_seed_lot_with_invalid_unit(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'FS-2024-002',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->fsSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 100,
+                'unit' => 'seeds', // Invalid unit for FS
+                'price_per_unit' => 50000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertSessionHasErrors(['unit']);
+        $this->assertDatabaseMissing('seed_lots', [
+            'lot_code' => 'FS-2024-002',
+        ]);
+    }
+
+    public function test_admin_can_create_pl_seed_lot_with_valid_unit(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'PL-2024-001',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->plSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 500,
+                'unit' => 'bottle', // Valid unit for PL
+                'price_per_unit' => 2000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
+        $response->assertSessionHas('success', 'Seed lot created successfully.');
+
+        $this->assertDatabaseHas('seed_lots', [
+            'lot_code' => 'PL-2024-001',
+            'seed_class_id' => $this->plSeedClass->id,
+            'unit' => 'bottle',
+        ]);
+    }
+
+    public function test_admin_cannot_create_pl_seed_lot_with_invalid_unit(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'PL-2024-002',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->plSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 500,
+                'unit' => 'kg', // Invalid unit for PL
+                'price_per_unit' => 2000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertSessionHasErrors(['unit']);
+        $this->assertDatabaseMissing('seed_lots', [
+            'lot_code' => 'PL-2024-002',
+        ]);
+    }
+
+    public function test_admin_cannot_create_seed_lot_with_negative_quantity(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'BS-2024-NEG',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->bsSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => -10, // Negative quantity
+                'unit' => 'kg',
+                'price_per_unit' => 50000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertSessionHasErrors(['quantity']);
+        $this->assertDatabaseMissing('seed_lots', [
+            'lot_code' => 'BS-2024-NEG',
+        ]);
+    }
+
+    public function test_admin_can_create_seed_lot_with_zero_price(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'BS-2024-ZERO',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->bsSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 100,
+                'unit' => 'kg',
+                'price_per_unit' => 0, // Zero price is allowed based on validation rules
+                'is_sellable' => true,
+            ]);
+
+        // Controller redirects to variety show page when variety_id is provided
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
+        $response->assertSessionHas('success', 'Seed lot created successfully.');
+
+        $this->assertDatabaseHas('seed_lots', [
+            'lot_code' => 'BS-2024-ZERO',
+            'price_per_unit' => 0,
+        ]);
+    }
+
+    public function test_admin_cannot_create_seed_lot_with_future_production_year(): void
+    {
+        $futureYear = now()->year + 2;
+        
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'BS-2026-FUTURE',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->bsSeedClass->id,
+                'production_year' => $futureYear, // Future year
+                'quantity' => 100,
+                'unit' => 'kg',
+                'price_per_unit' => 50000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertSessionHasErrors(['production_year']);
+        $this->assertDatabaseMissing('seed_lots', [
+            'lot_code' => 'BS-2026-FUTURE',
+        ]);
+    }
+
+    public function test_admin_can_create_seed_lot_with_current_year(): void
+    {
+        $currentYear = now()->year;
+        
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'BS-' . $currentYear . '-CURRENT',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->bsSeedClass->id,
+                'production_year' => $currentYear,
+                'quantity' => 100,
+                'unit' => 'kg',
+                'price_per_unit' => 50000,
+                'is_sellable' => true,
+            ]);
+
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
+        $response->assertSessionHas('success', 'Seed lot created successfully.');
+
+        $this->assertDatabaseHas('seed_lots', [
+            'lot_code' => 'BS-' . $currentYear . '-CURRENT',
+            'production_year' => $currentYear,
+        ]);
+    }
+
+    public function test_admin_can_create_non_sellable_seed_lot(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->post(route('admin.seed-lots.store'), [
+                'lot_code' => 'BS-2024-NONSELL',
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $this->bsSeedClass->id,
+                'production_year' => 2024,
+                'quantity' => 100,
+                'unit' => 'kg',
+                'price_per_unit' => 50000,
+                'is_sellable' => false, // Non-sellable
+            ]);
+
+        $response->assertRedirect(route('admin.varieties.show', $this->variety));
+        $response->assertSessionHas('success', 'Seed lot created successfully.');
+
+        $this->assertDatabaseHas('seed_lots', [
+            'lot_code' => 'BS-2024-NONSELL',
+            'is_sellable' => false,
+        ]);
+    }
+
     public function test_guest_cannot_access_seed_lot_routes(): void
     {
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
             'variety_id' => $this->variety->id,
-            'seed_class_id' => $this->seedClass->id,
+            'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
             'quantity' => 100,
             'unit' => 'kg',

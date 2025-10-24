@@ -48,7 +48,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                @error('file')<div class="text-danger small">{{ $message }}</div>@enderror
+                                @error('image')<div class="text-danger small">{{ $message }}</div>@enderror
                                 <div id="imagePreviewContainer" class="mt-2 d-none">
                                     <div class="border rounded p-2 d-inline-block">
                                         <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
@@ -121,7 +121,8 @@
                 // If a file is added via Dropzone, include it
                 const files = dz.getAcceptedFiles();
                 if (files && files[0]) {
-                    fd.set('file', files[0]);
+                    // Pastikan kunci sesuai dengan validasi controller (name="image")
+                    fd.set('image', files[0]);
                 }
                 try {
                     const res = await fetch(form.action, {

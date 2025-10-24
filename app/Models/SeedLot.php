@@ -75,4 +75,34 @@ class SeedLot extends Model
     {
         return 'lot_code';
     }
+
+    /**
+     * Boot method to handle cache clearing on model events.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($seedLot) {
+            $seedLot->clearVarietyStockCache();
+        });
+
+        static::updated(function ($seedLot) {
+            $seedLot->clearVarietyStockCache();
+        });
+
+        static::deleted(function ($seedLot) {
+            $seedLot->clearVarietyStockCache();
+        });
+    }
+
+    /**
+     * Clear variety stock cache when seed lot changes.
+     */
+    protected function clearVarietyStockCache(): void
+    {
+        if ($this->variety) {
+            $this->variety->clearStockCache();
+        }
+    }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSeedLotRequest;
+use App\Http\Requests\UpdateSeedLotRequest;
 use App\Models\SeedLot;
 use App\Models\Variety;
 use App\Models\SeedClass;
@@ -49,8 +51,20 @@ class SeedLotController extends Controller
         }
 
         $seedLots = $query->latest('updated_at')->paginate(10)->appends($request->query());
-        $varieties = Variety::with('commodity')->orderBy('name')->get();
-        $seedClasses = SeedClass::where('is_active', true)->orderBy('name')->get();
+        
+        // Load dropdown data separately to avoid duplicate queries
+        // Use separate queries to avoid conflicts with eager loading
+        $varieties = \DB::table('varieties')
+            ->join('commodities', 'varieties.commodity_id', '=', 'commodities.id')
+            ->select('varieties.id', 'varieties.name', 'commodities.name as commodity_name')
+            ->orderBy('varieties.name')
+            ->get();
+            
+        $seedClasses = \DB::table('seed_classes')
+            ->select('id', 'name', 'code')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('admin.seed-lots.index', compact('seedLots', 'varieties', 'seedClasses'));
     }
@@ -58,32 +72,39 @@ class SeedLotController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $varieties = Variety::with('commodity')->orderBy('name')->get();
-        $seedClasses = SeedClass::where('is_active', true)->orderBy('name')->get();
+        $varieties = Variety::select('id', 'name', 'commodity_id')
+            ->with('commodity:id,name')
+            ->orderBy('name')
+            ->get();
+            
+        $seedClasses = SeedClass::select('id', 'name', 'code')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
         
-        return view('admin.seed-lots.create', compact('varieties', 'seedClasses'));
+        // Pre-select variety if provided in query parameter
+        $selectedVarietyId = $request->integer('variety_id');
+        
+        return view('admin.seed-lots.create', compact('varieties', 'seedClasses', 'selectedVarietyId'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSeedLotRequest $request)
     {
-        $validated = $request->validate([
-            'variety_id' => 'required|exists:varieties,id',
-            'seed_class_id' => 'required|exists:seed_classes,id',
-            'lot_code' => 'required|string|max:50|unique:seed_lots,lot_code',
-            'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|in:kg,gram,ton,piece',
-            'price_per_unit' => 'required|numeric|min:0',
-            'is_sellable' => 'boolean',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
-        SeedLot::create($validated);
+        $seedLot = SeedLot::create($validated);
+
+        // Redirect back to variety show page if variety_id was provided
+        if ($request->filled('variety_id')) {
+            $variety = Variety::findOrFail($request->variety_id);
+            return redirect()->route('admin.varieties.show', $variety)
+                ->with('success', 'Seed lot created successfully.');
+        }
 
         return redirect()->route('admin.seed-lots.index')
             ->with('success', 'Seed lot created successfully.');
@@ -113,26 +134,18 @@ class SeedLotController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SeedLot $seedLot)
+    public function update(UpdateSeedLotRequest $request, SeedLot $seedLot)
     {
-        $validated = $request->validate([
-            'variety_id' => 'required|exists:varieties,id',
-            'seed_class_id' => 'required|exists:seed_classes,id',
-            'lot_code' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('seed_lots', 'lot_code')->ignore($seedLot->id),
-            ],
-            'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|in:kg,gram,ton,piece',
-            'price_per_unit' => 'required|numeric|min:0',
-            'is_sellable' => 'boolean',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $seedLot->update($validated);
+
+        // Redirect back to variety show page if variety_id was provided
+        if ($request->filled('variety_id')) {
+            $variety = Variety::findOrFail($request->variety_id);
+            return redirect()->route('admin.varieties.show', $variety)
+                ->with('success', 'Seed lot updated successfully.');
+        }
 
         return redirect()->route('admin.seed-lots.index')
             ->with('success', 'Seed lot updated successfully.');
@@ -141,9 +154,17 @@ class SeedLotController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(SeedLot $seedLot)
+    public function destroy(SeedLot $seedLot, Request $request)
     {
+        $varietyId = $seedLot->variety_id;
         $seedLot->delete();
+
+        // Redirect back to variety show page if variety_id was provided
+        if ($request->filled('variety_id')) {
+            $variety = Variety::findOrFail($request->variety_id);
+            return redirect()->route('admin.varieties.show', $variety)
+                ->with('success', 'Seed lot deleted successfully.');
+        }
 
         return redirect()->route('admin.seed-lots.index')
             ->with('success', 'Seed lot deleted successfully.');

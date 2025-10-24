@@ -90,11 +90,7 @@ class DatabaseRelationshipsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $seedLot1 = SeedLot::create([
             'lot_code' => 'BS-2024-001',
@@ -141,11 +137,7 @@ class DatabaseRelationshipsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
@@ -180,11 +172,7 @@ class DatabaseRelationshipsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',
@@ -198,7 +186,7 @@ class DatabaseRelationshipsTest extends TestCase
         ]);
 
         $this->assertEquals($seedClass->id, $seedLot->seedClass->id);
-        $this->assertEquals('Breeder Seed (BS)', $seedLot->seedClass->name);
+        $this->assertEquals($seedClass->name, $seedLot->seedClass->name);
     }
 
     public function test_seed_class_has_many_seed_lots(): void
@@ -219,11 +207,7 @@ class DatabaseRelationshipsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $seedLot1 = SeedLot::create([
             'lot_code' => 'BS-2024-001',
@@ -261,7 +245,7 @@ class DatabaseRelationshipsTest extends TestCase
         $role = Role::firstOrCreate(
             ['id' => 2],
             [
-                'name' => 'admin',
+                'name' => 'Admin',
                 'description' => 'Administrator dengan akses terbatas'
             ]
         );
@@ -273,7 +257,7 @@ class DatabaseRelationshipsTest extends TestCase
         ]);
 
         $this->assertEquals($role->id, $user->role->id);
-        $this->assertEquals('admin', $user->role->name);
+        $this->assertEquals('Admin', $user->role->name);
     }
 
     public function test_role_has_many_users(): void
@@ -353,11 +337,7 @@ class DatabaseRelationshipsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $seedClass = SeedClass::create([
-            'name' => 'Breeder Seed (BS)',
-            'code' => 'BS',
-            
-        ]);
+        $seedClass = SeedClass::where('code', 'BS')->first();
 
         $seedLot = SeedLot::create([
             'lot_code' => 'BS-2024-001',

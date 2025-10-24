@@ -48,6 +48,28 @@ class CommodityTest extends TestCase
         $response->assertSee('Test Commodity');
     }
 
+    public function test_admin_can_search_commodities_by_name(): void
+    {
+        Commodity::factory()->create(['name' => 'Alpha Rice']);
+        Commodity::factory()->create(['name' => 'Beta Corn']);
+
+        // Search using 'q' parameter
+        $response = $this->actingAs($this->adminUser)
+            ->get(route('admin.commodities.index', ['q' => 'Alpha']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Alpha Rice');
+        $response->assertDontSee('Beta Corn');
+
+        // Search using 'search' parameter alias
+        $response = $this->actingAs($this->adminUser)
+            ->get(route('admin.commodities.index', ['search' => 'Beta']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Beta Corn');
+        $response->assertDontSee('Alpha Rice');
+    }
+
     public function test_admin_can_create_commodity(): void
     {
         $response = $this->actingAs($this->adminUser)
@@ -66,7 +88,6 @@ class CommodityTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.commodities.store'), [
                 'name' => 'New Commodity',
-                'description' => 'Test commodity description',
                 'is_active' => true,
                 'image' => $image,
             ]);
@@ -76,20 +97,18 @@ class CommodityTest extends TestCase
 
         $this->assertDatabaseHas('commodities', [
             'name' => 'New Commodity',
-            'description' => 'Test commodity description',
             'is_active' => true,
         ]);
 
         $commodity = Commodity::where('name', 'New Commodity')->first();
-        $this->assertNotNull($commodity->image_url);
-        Storage::disk('public')->assertExists($commodity->image_url);
+        $this->assertNotNull($commodity->image_path);
+        Storage::disk('public')->assertExists($commodity->image_path);
     }
 
     public function test_admin_can_view_commodity(): void
     {
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            'description' => 'Test description',
             'is_active' => true,
         ]);
 
@@ -104,7 +123,6 @@ class CommodityTest extends TestCase
     {
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            'description' => 'Test description',
             'is_active' => true,
         ]);
 
@@ -121,7 +139,6 @@ class CommodityTest extends TestCase
 
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            'description' => 'Test description',
             'is_active' => true,
         ]);
 
@@ -130,7 +147,6 @@ class CommodityTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->put(route('admin.commodities.update', $commodity), [
                 'name' => 'Updated Commodity',
-                'description' => 'Updated description',
                 'is_active' => false,
                 'image' => $newImage,
             ]);
@@ -141,13 +157,12 @@ class CommodityTest extends TestCase
         $this->assertDatabaseHas('commodities', [
             'id' => $commodity->id,
             'name' => 'Updated Commodity',
-            'description' => 'Updated description',
             'is_active' => false,
         ]);
 
         $commodity->refresh();
-        $this->assertNotNull($commodity->image_url);
-        Storage::disk('public')->assertExists($commodity->image_url);
+        $this->assertNotNull($commodity->image_path);
+        Storage::disk('public')->assertExists($commodity->image_path);
     }
 
     public function test_admin_can_delete_commodity(): void
@@ -159,9 +174,8 @@ class CommodityTest extends TestCase
 
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            'description' => 'Test description',
             'is_active' => true,
-            'image_url' => $imagePath,
+            'image_path' => $imagePath,
         ]);
 
         $response = $this->actingAs($this->adminUser)
@@ -182,7 +196,6 @@ class CommodityTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.commodities.store'), [
                 'name' => '', // Required field empty
-                'description' => str_repeat('a', 1000), // Too long
             ]);
 
         $response->assertSessionHasErrors(['name']);
@@ -192,7 +205,6 @@ class CommodityTest extends TestCase
     {
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            'description' => 'Test description',
             'is_active' => true,
         ]);
 

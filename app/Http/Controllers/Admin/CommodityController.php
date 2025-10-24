@@ -13,9 +13,17 @@ class CommodityController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $commodities = Commodity::withCount('varieties')->paginate(10);
+        $query = Commodity::withCount('varieties');
+
+        // Support both 'q' and 'search' parameters to align with Varieties
+        $searchQuery = $request->string('q')->trim()->toString() ?: $request->string('search')->trim()->toString();
+        if ($searchQuery) {
+            $query->where('name', 'like', "%{$searchQuery}%");
+        }
+
+        $commodities = $query->latest('updated_at')->paginate(10)->appends($request->query());
         
         return view('admin.commodities.index', compact('commodities'));
     }
@@ -36,11 +44,12 @@ class CommodityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:commodities,slug',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_url'] = $request->file('image')->store('commodities', 'public');
+            $validated['image_path'] = $request->file('image')->store('commodities', 'public');
         }
 
         Commodity::create($validated);
@@ -82,16 +91,17 @@ class CommodityController extends Controller
                 'max:255',
                 Rule::unique('commodities', 'slug')->ignore($commodity->id),
             ],
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
             // Delete old image if exists
-            if ($commodity->image_url) {
-                Storage::disk('public')->delete($commodity->image_url);
+            if ($commodity->image_path) {
+                Storage::disk('public')->delete($commodity->image_path);
             }
             
-            $validated['image_url'] = $request->file('image')->store('commodities', 'public');
+            $validated['image_path'] = $request->file('image')->store('commodities', 'public');
         }
 
         $commodity->update($validated);
@@ -106,8 +116,8 @@ class CommodityController extends Controller
     public function destroy(Commodity $commodity)
     {
         // Delete image if exists
-        if ($commodity->image_url) {
-            Storage::disk('public')->delete($commodity->image_url);
+        if ($commodity->image_path) {
+            Storage::disk('public')->delete($commodity->image_path);
         }
 
         $commodity->delete();

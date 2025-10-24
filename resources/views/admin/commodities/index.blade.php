@@ -9,7 +9,7 @@
                 <div class="d-flex flex-wrap justify-content-between gap-3">
                     <div class="search-bar">
                         <span><i class="bx bx-search-alt"></i></span>
-                        <input type="search" class="form-control" id="search" placeholder="Search commodities..." />
+                        <input type="search" class="form-control" id="search" placeholder="Search commodities..." value="{{ request('search', request('q')) }}" />
                     </div>
                     <div>
                         <a href="{{ route('admin.commodities.create') }}" class="btn btn-primary">
@@ -38,8 +38,8 @@
                             @forelse($commodities as $commodity)
                             <tr>
                                 <td>
-                                    @if($commodity->image_url)
-                                            <img src="{{ asset('storage/' . $commodity->image_url) }}" alt="{{ $commodity->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
+                                    @if($commodity->image_path)
+                                            <img src="{{ asset('storage/' . $commodity->image_path) }}" alt="{{ $commodity->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
                                     @else
                                         <div class="avatar-sm">
                                             <span class="avatar-title bg-light text-secondary rounded">
@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let targetFormId = null;
     const modalEl = document.getElementById('confirmDeleteModal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const searchInput = document.getElementById('search');
     
     if (!modalEl || !confirmBtn) {
         console.error('Modal elements not found');
@@ -169,6 +170,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Handle search input to update URL params
+    function updateSearch() {
+        const url = new URL(window.location);
+        const query = searchInput ? searchInput.value.trim() : '';
+        if (query !== '') {
+            // Prefer 'search' param (controller supports both 'search' and 'q')
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+            url.searchParams.delete('q');
+        }
+        window.location.href = url.toString();
+    }
+
+    if (searchInput) {
+        // Trigger on Enter key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                updateSearch();
+            }
+        });
+        // Trigger on blur
+        searchInput.addEventListener('blur', function() {
+            updateSearch();
+        });
+    }
 });
 </script>
 @endpush

@@ -13,7 +13,8 @@ class Commodity extends Model
     protected $fillable = [
         'name',
         'slug',
-        'image_url',
+        'image_path',
+        'is_active',
     ];
 
     protected static function boot(): void

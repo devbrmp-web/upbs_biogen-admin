@@ -104,8 +104,10 @@
                                         id="unit" name="unit" required>
                                     <option value="">Select Unit</option>
                                     <option value="kg" {{ old('unit', $seedLot->unit) == 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
-                                    <option value="g" {{ old('unit', $seedLot->unit) == 'g' ? 'selected' : '' }}>Gram (g)</option>
+                                    <option value="gram" {{ old('unit', $seedLot->unit) == 'gram' ? 'selected' : '' }}>Gram (g)</option>
                                     <option value="ton" {{ old('unit', $seedLot->unit) == 'ton' ? 'selected' : '' }}>Ton</option>
+                                    <option value="piece" {{ old('unit', $seedLot->unit) == 'piece' ? 'selected' : '' }}>Piece</option>
+                                    <option value="bottle" {{ old('unit', $seedLot->unit) == 'bottle' ? 'selected' : '' }}>Bottle</option>
                                 </select>
                                 @error('unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -220,6 +222,10 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/seed-lot-validation.js') }}"></script>
+@endpush
 
 @push('scripts')
 <script>

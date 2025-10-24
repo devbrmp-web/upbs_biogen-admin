@@ -20,8 +20,8 @@
 
                 <div class="row">
                     <div class="col-md-4">
-                        @if($commodity->image_url)
-                            <img src="{{ asset('storage/' . $commodity->image_url) }}" alt="{{ $commodity->name }}" class="img-fluid rounded" style="width:100%;max-width:300px;height:200px;object-fit:cover;" />
+                        @if($commodity->image_path)
+                            <img src="{{ asset('storage/' . $commodity->image_path) }}" alt="{{ $commodity->name }}" class="img-fluid rounded" style="width:100%;max-width:300px;height:200px;object-fit:cover;" />
                         @else
                             <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:200px;">
                                 <i class="bx bx-image fs-1 text-muted"></i>

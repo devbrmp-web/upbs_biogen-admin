@@ -17,6 +17,7 @@ return new class extends Migration
                 $table->string('name')->unique();
                 $table->string('description')->nullable();
                 $table->timestamps();
+                $table->softDeletes(); // Menambahkan deleted_at untuk soft delete
             });
         }
     }

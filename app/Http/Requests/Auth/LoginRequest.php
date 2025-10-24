@@ -46,8 +46,8 @@ class LoginRequest extends FormRequest
         // Cari user berdasarkan email
         $user = \App\Models\User::where('email', $this->input('email'))->first();
         
-        // Jika user tidak ditemukan atau password_hash tidak cocok
-        if (!$user || !\Illuminate\Support\Facades\Hash::check($this->input('password'), $user->password_hash)) {
+        // Jika user tidak ditemukan atau password tidak cocok
+        if (!$user || !\Illuminate\Support\Facades\Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

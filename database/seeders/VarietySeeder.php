@@ -240,7 +240,7 @@ class VarietySeeder extends Seeder
                     $varietyData['slug'] = Str::slug($varietyData['name']);
                     $varietyData['sku'] = 'SKU-' . strtoupper(Str::random(8));
                     $varietyData['price'] = rand(50000, 500000); // Random price between 50k-500k IDR
-                    $varietyData['image'] = null; // No image initially
+                    $varietyData['image_path'] = null; // No image initially
                     
                     Variety::create($varietyData);
                 }

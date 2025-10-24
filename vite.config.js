@@ -61,6 +61,8 @@ export default defineConfig({
                 'resources/js/components/extended-rating.js',
                 'resources/js/components/extended-sweetalert.js',
                 'resources/js/components/ui-toasts.js'
+                ,
+                'resources/js/seed-lot-validation.js'
             ],
             refresh: true,
         }),

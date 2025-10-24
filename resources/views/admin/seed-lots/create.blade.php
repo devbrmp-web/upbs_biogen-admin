@@ -50,7 +50,8 @@
                                         id="variety_id" name="variety_id" required>
                                     <option value="">Select Variety</option>
                                     @foreach($varieties as $variety)
-                                        <option value="{{ $variety->id }}" {{ old('variety_id') == $variety->id ? 'selected' : '' }}>
+                                        <option value="{{ $variety->id }}" 
+                                            {{ (old('variety_id', $selectedVarietyId) == $variety->id) ? 'selected' : '' }}>
                                             {{ $variety->name }} ({{ $variety->commodity->name ?? 'N/A' }})
                                         </option>
                                     @endforeach
@@ -98,8 +99,10 @@
                                         id="unit" name="unit" required>
                                     <option value="">Select Unit</option>
                                     <option value="kg" {{ old('unit') == 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
-                                    <option value="g" {{ old('unit') == 'g' ? 'selected' : '' }}>Gram (g)</option>
+                                    <option value="gram" {{ old('unit') == 'gram' ? 'selected' : '' }}>Gram (g)</option>
                                     <option value="ton" {{ old('unit') == 'ton' ? 'selected' : '' }}>Ton</option>
+                                    <option value="piece" {{ old('unit') == 'piece' ? 'selected' : '' }}>Piece</option>
+                                    <option value="bottle" {{ old('unit') == 'bottle' ? 'selected' : '' }}>Bottle</option>
                                 </select>
                                 @error('unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -187,6 +190,10 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script src="{{ asset('js/seed-lot-validation.js') }}"></script>
+@endpush
 
 @push('scripts')
 <script>

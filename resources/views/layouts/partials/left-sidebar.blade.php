@@ -1,14 +1,12 @@
 <div class="main-nav">
     <!-- Sidebar Logo -->
     <div class="logo-box">
-        <a href="{{ Route::has('admin.any') ? route('admin.any', 'home') : '#' }}" class="logo-dark">
-            <img src="/images/logo-sm.png" class="logo-sm" alt="logo sm"/>
-            <img src="/images/logo-dark.png" class="logo-lg" alt="logo dark"/>
+        <a href="{{ route('admin.dashboard') }}" class="logo-light">
+            <img src="/images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png" class="logo-lg d-block" alt="UPBS Biogen logo (light)"/>
         </a>
 
-        <a href="{{ Route::has('admin.any') ? route('admin.any', 'home') : '#' }}" class="logo-light">
-            <img src="/images/logo-sm.png" class="logo-sm" alt="logo sm"/>
-            <img src="/images/logo-light.png" class="logo-lg" alt="logo light"/>
+        <a href="{{ route('admin.dashboard') }}" class="logo-dark">
+            <img src="/images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png" class="logo-lg d-block" alt="UPBS Biogen logo (dark)"/>
         </a>
     </div>
 

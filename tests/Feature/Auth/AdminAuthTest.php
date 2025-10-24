@@ -26,7 +26,7 @@ class AdminAuthTest extends TestCase
         User::create([
             'name' => 'Test Admin',
             'email' => 'test@biogen.local',
-            'password_hash' => Hash::make('password'),
+            'password' => Hash::make('password'),
             'role_id' => $role->id
         ]);
     }

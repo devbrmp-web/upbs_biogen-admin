@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name'); // Nama komoditas (e.g., Padi, Jagung, Kedelai)
             $table->string('slug')->unique(); // URL-friendly name
             $table->text('description')->nullable(); // Deskripsi komoditas
-            $table->string('image_url')->nullable(); // URL gambar komoditas
+            $table->string('image_path')->nullable(); // Path gambar komoditas
             $table->boolean('is_active')->default(true); // Status aktif
             $table->timestamps();
             

@@ -6,6 +6,8 @@ use App\Models\Commodity;
 use App\Models\Variety;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\SeedClass;
+use App\Models\SeedLot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +19,8 @@ class VarietyTest extends TestCase
 
     protected User $adminUser;
     protected Commodity $commodity;
+    protected SeedClass $bsSeedClass;
+    protected SeedClass $fsSeedClass;
 
     protected function setUp(): void
     {
@@ -42,6 +46,17 @@ class VarietyTest extends TestCase
             'name' => 'Test Commodity',
             'description' => 'Test commodity description',
         ]);
+
+        // Create seed classes
+        $this->bsSeedClass = SeedClass::firstOrCreate(
+            ['code' => 'BS'],
+            ['name' => 'Benih Sebar', 'description' => 'Benih Sebar']
+        );
+        
+        $this->fsSeedClass = SeedClass::firstOrCreate(
+            ['code' => 'FS'],
+            ['name' => 'Benih Pokok', 'description' => 'Benih Pokok']
+        );
     }
 
     public function test_admin_can_view_varieties_index(): void
@@ -106,8 +121,8 @@ class VarietyTest extends TestCase
         ]);
 
         $variety = Variety::where('name', 'New Variety')->first();
-        $this->assertNotNull($variety->image);
-        Storage::disk('public')->assertExists($variety->image);
+        $this->assertNotNull($variety->image_path);
+        Storage::disk('public')->assertExists($variety->image_path);
     }
 
     public function test_admin_can_view_variety(): void
@@ -194,8 +209,8 @@ class VarietyTest extends TestCase
         ]);
 
         $variety->refresh();
-        $this->assertNotNull($variety->image);
-        Storage::disk('public')->assertExists($variety->image);
+        $this->assertNotNull($variety->image_path);
+        Storage::disk('public')->assertExists($variety->image_path);
     }
 
     public function test_admin_can_delete_variety(): void
@@ -214,7 +229,7 @@ class VarietyTest extends TestCase
             'stock_bs_kg' => 100,
             'stock_fs_kg' => 50,
             'minimum_limit' => 10,
-            'image' => $imagePath,
+            'image_path' => $imagePath,
         ]);
 
         $response = $this->actingAs($this->adminUser)
@@ -236,7 +251,7 @@ class VarietyTest extends TestCase
             ->post(route('admin.varieties.store'), [
                 'commodity_id' => '', // Required field empty
                 'name' => '', // Required field empty
-                'sku' => '', // Required field empty
+                'sku' => '', // Optional field (auto-generated when empty)
                 'description' => '', // Required field empty
                 'price' => -100, // Invalid price
                 'stock_bs_kg' => -10, // Invalid stock
@@ -245,7 +260,7 @@ class VarietyTest extends TestCase
             ]);
 
         $response->assertStatus(302); // Should redirect back with errors
-        $response->assertSessionHasErrors(['commodity_id', 'name', 'sku', 'description', 'price', 'stock_bs_kg', 'stock_fs_kg', 'minimum_limit']);
+        $response->assertSessionHasErrors(['commodity_id', 'name', 'description', 'price', 'stock_bs_kg', 'stock_fs_kg', 'minimum_limit']);
     }
 
     public function test_variety_filters_work(): void
@@ -332,7 +347,8 @@ class VarietyTest extends TestCase
             'minimum_limit' => 10,
         ]);
 
-        $this->assertEquals('habis', $outOfStockVariety->stock_status);
+        // No seed lots created, so total_stock should be 0
+        $this->assertEquals('Habis', $outOfStockVariety->stock_status);
 
         // Test 'restock' status (low stock)
         $lowStockVariety = Variety::create([
@@ -346,7 +362,30 @@ class VarietyTest extends TestCase
             'minimum_limit' => 10,
         ]);
 
-        $this->assertEquals('restock', $lowStockVariety->stock_status);
+        // Create seed lots with total stock = 8 (below minimum_limit of 10)
+        SeedLot::create([
+            'variety_id' => $lowStockVariety->id,
+            'seed_class_id' => $this->bsSeedClass->id,
+            'lot_code' => 'BS-LOW-001',
+            'production_year' => 2024,
+            'quantity' => 5,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
+
+        SeedLot::create([
+            'variety_id' => $lowStockVariety->id,
+            'seed_class_id' => $this->fsSeedClass->id,
+            'lot_code' => 'FS-LOW-001',
+            'production_year' => 2024,
+            'quantity' => 3,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
+
+        $this->assertEquals('Restock', $lowStockVariety->stock_status);
 
         // Test 'tersedia' status (available)
         $availableVariety = Variety::create([
@@ -360,7 +399,30 @@ class VarietyTest extends TestCase
             'minimum_limit' => 10,
         ]);
 
-        $this->assertEquals('tersedia', $availableVariety->stock_status);
+        // Create seed lots with total stock = 150 (above minimum_limit of 10)
+        SeedLot::create([
+            'variety_id' => $availableVariety->id,
+            'seed_class_id' => $this->bsSeedClass->id,
+            'lot_code' => 'BS-AVAIL-001',
+            'production_year' => 2024,
+            'quantity' => 100,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
+
+        SeedLot::create([
+            'variety_id' => $availableVariety->id,
+            'seed_class_id' => $this->fsSeedClass->id,
+            'lot_code' => 'FS-AVAIL-001',
+            'production_year' => 2024,
+            'quantity' => 50,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
+
+        $this->assertEquals('Tersedia', $availableVariety->stock_status);
     }
 
     public function test_variety_total_stock_attribute(): void
@@ -374,6 +436,29 @@ class VarietyTest extends TestCase
             'stock_bs_kg' => 100.5,
             'stock_fs_kg' => 75.3,
             'minimum_limit' => 10,
+        ]);
+
+        // Create seed lots that match the expected total
+        SeedLot::create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->bsSeedClass->id,
+            'lot_code' => 'BS-TOTAL-001',
+            'production_year' => 2024,
+            'quantity' => 100.5,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
+
+        SeedLot::create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->fsSeedClass->id,
+            'lot_code' => 'FS-TOTAL-001',
+            'production_year' => 2024,
+            'quantity' => 75.3,
+            'unit' => 'kg',
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
         ]);
 
         $this->assertEquals(175.8, $variety->total_stock);

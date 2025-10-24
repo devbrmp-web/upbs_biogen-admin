@@ -25,7 +25,7 @@ return new class extends Migration
             $table->integer('minimum_limit')->default(0); // Batas minimum stok
             $table->enum('status', ['available', 'out_of_stock', 'discontinued'])->default('available');
             $table->boolean('is_active')->default(true); // Status aktif
-            $table->string('image')->nullable(); // Path gambar varietas
+            $table->string('image_path')->nullable(); // Path gambar varietas
             $table->timestamps();
             
             // Index untuk performa query

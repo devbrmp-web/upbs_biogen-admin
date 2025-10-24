@@ -45,9 +45,14 @@ class VarietyFactory extends Factory
             'sku' => strtoupper($this->faker->unique()->bothify('VAR-###-???')),
             'description' => $this->faker->sentence(8),
             'price' => $this->faker->numberBetween(5000, 50000),
+            'stock' => function (array $attributes) {
+                return ($attributes['stock_bs_kg'] ?? 0) + ($attributes['stock_fs_kg'] ?? 0);
+            },
             'stock_bs_kg' => $this->faker->numberBetween(0, 1000),
             'stock_fs_kg' => $this->faker->numberBetween(0, 500),
             'minimum_limit' => $this->faker->numberBetween(1, 50),
+            'status' => $this->faker->randomElement(['available', 'out_of_stock', 'discontinued']),
+            'is_active' => true,
         ];
     }
 

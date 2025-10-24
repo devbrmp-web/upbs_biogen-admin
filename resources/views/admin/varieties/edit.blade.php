@@ -26,39 +26,134 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $variety->name) }}" required maxlength="100" />
-                                @error('name')<div class="text-danger small">{{ $message }}</div>@enderror
-                            </div>
+                        <!-- Name Field -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                   id="name" name="name" value="{{ old('name', $variety->name) }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="col-lg-6">
-                            <div class="mb-3">
-                                <label for="commodity_id" class="form-label">Commodity</label>
-                                <select class="form-select" id="commodity_id" name="commodity_id" required>
-                                    <option value="">Select Commodity</option>
-                                    @foreach($commodities as $commodity)
-                                        <option value="{{ $commodity->id }}" @selected(old('commodity_id', $variety->commodity_id) == $commodity->id)>
-                                            {{ $commodity->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('commodity_id')<div class="text-danger small">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" name="description" rows="3" maxlength="1000">{{ old('description', $variety->description) }}</textarea>
-                                @error('description')<div class="text-danger small">{{ $message }}</div>@enderror
+                        <!-- Commodity Field -->
+                        <div class="mb-3">
+                            <label for="commodity_id" class="form-label">Commodity <span class="text-danger">*</span></label>
+                            <select class="form-select @error('commodity_id') is-invalid @enderror" 
+                                    id="commodity_id" name="commodity_id" required>
+                                <option value="">Select Commodity</option>
+                                @foreach($commodities as $commodity)
+                                    <option value="{{ $commodity->id }}" {{ old('commodity_id', $variety->commodity_id) == $commodity->id ? 'selected' : '' }}>
+                                        {{ $commodity->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('commodity_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- SKU Info (autogenerate) -->
+                        <div class="mb-3">
+                            <label class="form-label">SKU</label>
+                            <div class="form-text">SKU akan digenerate otomatis berdasarkan komoditas dan nama. Nilai saat ini: <code>{{ $variety->sku }}</code></div>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                                      id="description" name="description" rows="3">{{ old('description', $variety->description) }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Price Field -->
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control @error('price') is-invalid @enderror" 
+                                   id="price" name="price" value="{{ old('price', $variety->price) }}" step="0.01" min="0" required>
+                            @error('price')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Stock Management Section -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Stock Management</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- BS Stock -->
+                                    <div class="col-md-3 mb-3">
+                                        <label for="stock_bs_kg" class="form-label">BS Stock (kg)</label>
+                                        <input type="number" class="form-control @error('stock_bs_kg') is-invalid @enderror" 
+                                               id="stock_bs_kg" name="stock_bs_kg" value="{{ old('stock_bs_kg', $variety->stock_bs_kg ?? '') }}" 
+                                               step="0.001" min="0" inputmode="decimal" placeholder="Masukkan nilai desimal, contoh 12.345">
+                                        @error('stock_bs_kg')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <!-- FS Stock -->
+                                    <div class="col-md-3 mb-3">
+                                        <label for="stock_fs_kg" class="form-label">FS Stock (kg)</label>
+                                        <input type="number" class="form-control @error('stock_fs_kg') is-invalid @enderror" 
+                                               id="stock_fs_kg" name="stock_fs_kg" value="{{ old('stock_fs_kg', $variety->stock_fs_kg ?? '') }}" 
+                                               step="0.001" min="0" inputmode="decimal" placeholder="Masukkan nilai desimal, contoh 7.500">
+                                        @error('stock_fs_kg')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Planlet (per bottle) -->
+                                    <div class="col-md-3 mb-3">
+                                        <label for="planlet" class="form-label">Planlet (per botol)</label>
+                                        <input type="number" class="form-control @error('planlet') is-invalid @enderror" 
+                                               id="planlet" name="planlet" value="{{ old('planlet', $variety->planlet ?? '') }}" 
+                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
+                                        @error('planlet')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Minimum Limit -->
+                                    <div class="col-md-3 mb-3">
+                                        <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
+                                        <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
+                                               id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit', $variety->minimum_limit ?? '') }}" 
+                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
+                                        @error('minimum_limit')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <div class="alert alert-light border py-2 mb-0">
+                                        <strong>Total Stock (kg): <span id="totalStockDisplay">0.000</span></strong>
+                                    </div>
+                                </div>
+
+                                <small class="text-muted d-block">Catatan: BS dan FS dapat berisi desimal (maks 3 angka di belakang koma). Planlet dan Minimum Limit adalah bilangan bulat. Total Stock akan dihitung otomatis dari BS + FS.</small>
+
+                                <!-- Status Field -->
+                                <div class="mb-3 mt-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select @error('status') is-invalid @enderror" 
+                                            id="status" name="status">
+                                        <option value="available" {{ old('status', $variety->status) == 'available' ? 'selected' : '' }}>Available</option>
+                                        <option value="out_of_stock" {{ old('status', $variety->status) == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                        <option value="discontinued" {{ old('status', $variety->status) == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
+                                    </select>
+                                    @error('status')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="row">
                         <div class="col-lg-12">
@@ -74,17 +169,17 @@
                                         <span class="text-muted fs-13">Select one image only (jpg, jpeg, png, webp) maximum 2MB.</span>
                                     </div>
                                 </div>
-                                @error('file')<div class="text-danger small">{{ $message }}</div>@enderror
+                                @error('image')<div class="text-danger small">{{ $message }}</div>@enderror
                                 <div id="imagePreviewContainer" class="mt-2 d-none">
                                     <div class="border rounded p-2 d-inline-block">
                                         <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
                                     </div>
                                 </div>
-                                @if($variety->image)
+                                @if($variety->image_path)
                                     <div class="mt-2">
                                         <small class="text-muted d-block mb-1">Current Image:</small>
                                         <div class="border rounded p-2 d-inline-block">
-                                            <img src="{{ asset('storage/' . $variety->image) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
+                                            <img src="{{ asset('storage/' . $variety->image_path) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
                                         </div>
                                     </div>
                                 @endif
@@ -110,6 +205,73 @@
         const input = document.getElementById('varietyImageInput');
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
+
+        // Decimal-friendly guard for BS/FS; integer-only for planlet & minimum_limit
+        const decimalFields = ['stock_bs_kg','stock_fs_kg'];
+        const integerFields = ['planlet','minimum_limit'];
+        
+        decimalFields.forEach(function(id){
+            const el = document.getElementById(id);
+            if (!el) return;
+            const applySanitize = function(){
+                let v = String(el.value).replace(/,/g, '.'); // normalize comma to dot
+                // keep only digits and dots
+                v = v.replace(/[^0-9\.]/g, '');
+                // ensure only one dot
+                const firstDotIndex = v.indexOf('.');
+                if (firstDotIndex !== -1) {
+                    const before = v.slice(0, firstDotIndex + 1);
+                    const after = v.slice(firstDotIndex + 1).replace(/\./g, '');
+                    v = before + after;
+                }
+                el.value = v;
+                updateTotalStock();
+            };
+            el.addEventListener('input', applySanitize);
+            el.addEventListener('change', applySanitize);
+            el.addEventListener('blur', applySanitize);
+            el.addEventListener('keypress', function(e){
+                const ch = e.key;
+                if (!/[0-9\.,]/.test(ch)) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        integerFields.forEach(function(id){
+            const el = document.getElementById(id);
+            if (!el) return;
+            const applySanitize = function(){
+                el.value = String(el.value).replace(/[^0-9]/g, '');
+            };
+            el.addEventListener('input', applySanitize);
+            el.addEventListener('change', applySanitize);
+            el.addEventListener('blur', applySanitize);
+            el.addEventListener('keypress', function(e){
+                const ch = e.key;
+                if (!/[0-9]/.test(ch)) { e.preventDefault(); }
+            });
+        });
+
+        // Helper to parse and update Total Stock (kg)
+        const totalDisplayEl = document.getElementById('totalStockDisplay');
+        function parseDecimalValue(inputId){
+            const el = document.getElementById(inputId);
+            if (!el) return 0;
+            const v = String(el.value).replace(',', '.');
+            const f = parseFloat(v);
+            return isNaN(f) ? 0 : f;
+        }
+        function updateTotalStock(){
+            if (!totalDisplayEl) return;
+            const bs = parseDecimalValue('stock_bs_kg');
+            const fs = parseDecimalValue('stock_fs_kg');
+            const total = bs + fs;
+            totalDisplayEl.textContent = total.toFixed(3);
+        }
+
+        // Initialize on load with existing values
+        updateTotalStock();
 
         // Fallback input preview
         if (input && preview && container) {
@@ -155,7 +317,7 @@
                 // If a file is added via Dropzone, include it
                 const files = dz.getAcceptedFiles();
                 if (files && files[0]) {
-                    fd.set('file', files[0]);
+                    fd.set('image', files[0]);
                 }
                 try {
                     const res = await fetch(form.action, {

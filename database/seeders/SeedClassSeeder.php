@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SeedClass;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SeedClassSeeder extends Seeder
@@ -16,25 +17,28 @@ class SeedClassSeeder extends Seeder
             [
                 'code' => 'BS',
                 'name' => 'Benih Sebar',
-                'description' => 'Benih yang diproduksi dari benih pokok (FS) dan digunakan untuk produksi komersial.',
+                'description' => 'Benih Sebar (BS) - Seed class for direct sowing, measured in kilograms',
                 'is_active' => true,
             ],
             [
                 'code' => 'FS',
                 'name' => 'Benih Pokok',
-                'description' => 'Benih yang diproduksi dari benih sumber (NS) dan digunakan untuk memproduksi benih sebar (BS).',
+                'description' => 'Benih Pokok (FS) - Foundation seed class, measured in kilograms',
                 'is_active' => true,
             ],
             [
-                'code' => 'NS',
-                'name' => 'Benih Sumber',
-                'description' => 'Benih yang diproduksi langsung dari varietas unggul dan digunakan untuk memproduksi benih pokok (FS).',
+                'code' => 'PL',
+                'name' => 'Planlet',
+                'description' => 'Planlet - Tissue culture plantlets, measured in bottles',
                 'is_active' => true,
             ],
         ];
 
         foreach ($seedClasses as $seedClass) {
-            SeedClass::create($seedClass);
+            SeedClass::updateOrCreate(
+                ['code' => $seedClass['code']],
+                $seedClass
+            );
         }
     }
 }
