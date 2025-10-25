@@ -44,6 +44,15 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
         Route::resource('seed-lots', \App\Http\Controllers\Admin\SeedLotController::class);
     });
 
+// Super Admin only routes
+Route::middleware(['auth', \App\Http\Middleware\EnsureSuperAdmin::class])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        // Admin User Management (Super Admin only)
+        Route::resource('admin-users', \App\Http\Controllers\Admin\AdminUserController::class)
+            ->parameters(['admin-users' => 'adminUser']);
+    });
+
 // Root publik sementara
 Route::get('/', fn() => redirect('/login'));
 

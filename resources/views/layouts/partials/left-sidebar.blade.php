@@ -58,7 +58,7 @@
             </li>
 
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{{ route('admin.admin-users.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="wpf:administrator"></iconify-icon>
                     </span>
