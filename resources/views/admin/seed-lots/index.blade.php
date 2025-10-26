@@ -106,8 +106,7 @@
                                     <span class="badge bg-secondary">{{ $seedLot->seedClass->name ?? 'N/A' }}</span>
                                 </td>
                                 <td>{{ $seedLot->production_year }}</td>
-                                -    <td>{{ number_format($seedLot->quantity, 2) }} {{ $seedLot->unit }}</td>
-                +    <td>{{ number_format($seedLot->quantity, 0) }} {{ $seedLot->unit }}</td>
+                                <td>{{ number_format($seedLot->quantity, 0) }} {{ $seedLot->unit }}</td>
                                 <td>Rp {{ number_format($seedLot->price_per_unit, 0, ',', '.') }}</td>
                                 <td>
                                     @if($seedLot->is_sellable)
@@ -150,8 +149,8 @@
                 </div>
 
                 @if($seedLots instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    <div class="d-flex justify-content-center mt-3">
-                        {{ $seedLots->withQueryString()->links() }}
+                    <div class="d-flex justify-content-center mt-3 seed-lots-pagination">
+                        {{ $seedLots->withQueryString()->links('custom.pagination') }}
                     </div>
                 @endif
             </div>
@@ -206,4 +205,14 @@ function confirmDelete(id, lotCode) {
     }
 }
 </script>
+@endpush
+
+@push('styles')
+<style>
+/* scoped pagination size fix for Seed Lots page only */
+.seed-lots-pagination .pagination .page-link {
+    font-size: .875rem;
+    padding: .375rem .75rem;
+}
+</style>
 @endpush

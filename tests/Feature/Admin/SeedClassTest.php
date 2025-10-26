@@ -104,7 +104,7 @@ class SeedClassTest extends TestCase
 
         $response = $this->actingAs($this->adminUser)
             ->put(route('admin.seed-classes.update', $seedClass), [
-                'name' => 'Updated Basic Seed',
+                'name' => 'Updated Breeder Seed',
                 'code' => 'BS',
                 
             ]);
@@ -114,7 +114,7 @@ class SeedClassTest extends TestCase
 
         $this->assertDatabaseHas('seed_classes', [
             'id' => $seedClass->id,
-            'name' => 'Updated Basic Seed',
+            'name' => 'Updated Breeder Seed',
             
         ]);
     }
@@ -172,7 +172,7 @@ class SeedClassTest extends TestCase
 
         // Test search filter
         $response = $this->actingAs($this->adminUser)
-            ->get(route('admin.seed-classes.index', ['q' => 'Basic']));
+            ->get(route('admin.seed-classes.index', ['q' => 'Breeder']));
 
         $response->assertStatus(200);
         $response->assertSee($bsSeedClass->name);

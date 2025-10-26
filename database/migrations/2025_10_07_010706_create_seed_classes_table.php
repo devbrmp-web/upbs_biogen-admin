@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('seed_classes', function (Blueprint $table) {
             $table->id();
             $table->string('code', 10)->unique(); // BS, FS, NS
-            $table->string('name'); // Benih Sebar, Benih Pokok, Benih Sumber
+            $table->string('name'); // Breeder Seed, Foundation Seed, Nucleus Seed
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

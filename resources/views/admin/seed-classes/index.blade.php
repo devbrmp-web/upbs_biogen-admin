@@ -79,7 +79,7 @@
                                             <i class="bx bx-pencil"></i>
                                         </a>
                                         <button type="button" class="btn btn-sm btn-danger" title="Delete" 
-                                                onclick="confirmDelete('{{ $seedClass->id }}', '{{ $seedClass->name }}')">
+                                                onclick="confirmDelete('{{ $seedClass->code }}', '{{ $seedClass->name }}')">
                                             <i class="bx bx-trash"></i>
                                         </button>
                                     </div>
@@ -140,9 +140,9 @@
 
 @push('scripts')
 <script>
-function confirmDelete(id, name) {
+function confirmDelete(code, name) {
     document.getElementById('deleteItemName').textContent = name;
-    document.getElementById('deleteForm').action = '{{ route("admin.seed-classes.destroy", ":id") }}'.replace(':id', id);
+    document.getElementById('deleteForm').action = '{{ route("admin.seed-classes.destroy", ":code") }}'.replace(':code', code);
     
     // Try Bootstrap modal first
     if (typeof bootstrap !== 'undefined') {

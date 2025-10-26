@@ -25,7 +25,7 @@ class SeedClassFactory extends Factory
     public function definition(): array
     {
         $seedClasses = [
-            ['name' => 'Basic Seed', 'code' => 'BS'],
+            ['name' => 'Breeder Seed', 'code' => 'BS'],
             ['name' => 'Foundation Seed', 'code' => 'FS'],
             ['name' => 'Planlet', 'code' => 'PL'],
             ['name' => 'Certified Seed', 'code' => 'CS'],
@@ -42,12 +42,12 @@ class SeedClassFactory extends Factory
     }
 
     /**
-     * Create a Basic Seed class.
+     * Create a Breeder Seed class.
      */
     public function basicSeed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'name' => 'Basic Seed',
+            'name' => 'Breeder Seed',
             'code' => 'BS',
         ]);
     }

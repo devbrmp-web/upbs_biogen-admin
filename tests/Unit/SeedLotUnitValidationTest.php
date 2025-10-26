@@ -35,7 +35,7 @@ class SeedLotUnitValidationTest extends TestCase
         // Use firstOrCreate to avoid unique constraint violations
         $this->bsSeedClass = SeedClass::firstOrCreate(
             ['code' => 'BS'],
-            ['name' => 'Basic Seed']
+            ['name' => 'Breeder Seed']
         );
         
         $this->fsSeedClass = SeedClass::firstOrCreate(

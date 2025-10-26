@@ -43,7 +43,7 @@ class VarietyCacheTest extends TestCase
         // Create seed classes
         $this->bsSeedClass = SeedClass::firstOrCreate(
             ['code' => 'BS'],
-            ['name' => 'BS', 'description' => 'Benih Sebar']
+            ['name' => 'BS', 'description' => 'Breeder Seed']
         );
         $this->fsSeedClass = SeedClass::firstOrCreate(
             ['code' => 'FS'],

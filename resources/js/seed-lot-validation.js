@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         seedClassOptions.forEach(option => {
             const text = option.textContent;
             
-            // Extract code from text like "Basic Seed (BS)" -> "BS"
+            // Extract code from text like "Breeder Seed (BS)" -> "BS"
             const codeMatch = text.match(/\(([^)]+)\)$/);
             if (codeMatch) {
                 option.setAttribute('data-code', codeMatch[1]);

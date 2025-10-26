@@ -103,15 +103,24 @@ class SeedClassController extends Controller
      */
     public function destroy(SeedClass $seedClass)
     {
-        // Check if seed class has associated seed lots
-        if ($seedClass->seedLots()->count() > 0) {
-            return redirect()->route('admin.seed-classes.index')
-                ->with('error', 'Cannot delete seed class that has associated seed lots.');
+        // Proactively prevent deletion if there are referencing seed lots (works across DBs and complements FK handling)
+        if ($seedClass->seedLots()->exists()) {
+            return back()->with('error', 'Seed class cannot be deleted because it is still being used by Seed Lots.');
         }
 
-        $seedClass->delete();
-
-        return redirect()->route('admin.seed-classes.index')
-            ->with('success', 'Seed class deleted successfully.');
+        try {
+            $seedClass->delete();
+            
+            return redirect()->route('admin.seed-classes.index')
+                ->with('success', 'Seed class deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle foreign key constraint violation (MySQL error code 1451, SQLSTATE 23000)
+            if ($e->getCode() == '23000' || str_contains($e->getMessage(), '1451')) {
+                return back()->with('error', 'Seed class cannot be deleted because it is still being used by Seed Lots.');
+            }
+            
+            // Re-throw other database exceptions
+            throw $e;
+        }
     }
 }
