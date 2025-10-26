@@ -30,14 +30,14 @@
                         @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Unique code for the seed class (e.g., BS for Benih Sebar, FS for Foundation Seed)</div>
+                        <div class="form-text">Unique code for the seed class (e.g., BS for Breeder Seed, FS for Foundation Seed)</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                id="name" name="name" value="{{ old('name', $seedClass->name) }}" 
-                               placeholder="e.g., Benih Sebar, Foundation Seed" required>
+                               placeholder="e.g., Breeder Seed, Foundation Seed" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

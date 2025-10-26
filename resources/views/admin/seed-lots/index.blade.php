@@ -17,33 +17,33 @@
                 <form method="GET" action="{{ route('admin.seed-lots.index') }}" class="mb-3">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <input type="text" name="search" class="form-control" placeholder="Search by lot code..." value="{{ request('search') }}">
+                            <input type="text" name="q" class="form-control" placeholder="Search by lot code..." value="{{ request('q') }}">
                         </div>
                         <div class="col-md-2">
-                            <select name="variety" class="form-select">
+                            <select name="variety_id" class="form-select">
                                 <option value="">All Varieties</option>
                                 @foreach($varieties as $variety)
-                                    <option value="{{ $variety->id }}" {{ request('variety') == $variety->id ? 'selected' : '' }}>
+                                    <option value="{{ $variety->id }}" {{ request('variety_id') == $variety->id ? 'selected' : '' }}>
                                         {{ $variety->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="seed_class" class="form-select">
+                            <select name="seed_class_id" class="form-select">
                                 <option value="">All Seed Classes</option>
                                 @foreach($seedClasses as $seedClass)
-                                    <option value="{{ $seedClass->id }}" {{ request('seed_class') == $seedClass->id ? 'selected' : '' }}>
+                                    <option value="{{ $seedClass->id }}" {{ request('seed_class_id') == $seedClass->id ? 'selected' : '' }}>
                                         {{ $seedClass->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="status" class="form-select">
+                            <select name="is_sellable" class="form-select">
                                 <option value="">All Status</option>
-                                <option value="sellable" {{ request('status') == 'sellable' ? 'selected' : '' }}>Sellable</option>
-                                <option value="not_sellable" {{ request('status') == 'not_sellable' ? 'selected' : '' }}>Not Sellable</option>
+                                <option value="1" {{ request('is_sellable') === '1' ? 'selected' : '' }}>Sellable</option>
+                                <option value="0" {{ request('is_sellable') === '0' ? 'selected' : '' }}>Not Sellable</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -51,7 +51,7 @@
                                 <button type="submit" class="btn btn-outline-primary">
                                     <i class="bx bx-search"></i> Search
                                 </button>
-                                @if(request()->hasAny(['search', 'variety', 'seed_class', 'status']))
+                                @if(request()->hasAny(['q', 'variety_id', 'seed_class_id', 'is_sellable']))
                                     <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-outline-secondary">
                                         <i class="bx bx-x"></i> Clear
                                     </a>

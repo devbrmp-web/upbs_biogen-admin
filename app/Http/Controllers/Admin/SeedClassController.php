@@ -16,12 +16,13 @@ class SeedClassController extends Controller
     {
         $query = SeedClass::query();
 
-        // Filter by search query
-        if ($q = $request->string('q')->trim()->toString()) {
-            $query->where(function ($builder) use ($q) {
-                $builder->where('name', 'like', "%{$q}%")
-                    ->orWhere('code', 'like', "%{$q}%")
-                    ->orWhere('description', 'like', "%{$q}%");
+        // Support both 'q' and 'search' parameters to align with Commodities/Varieties
+        $searchQuery = $request->string('q')->trim()->toString() ?: $request->string('search')->trim()->toString();
+        if ($searchQuery) {
+            $query->where(function ($builder) use ($searchQuery) {
+                $builder->where('name', 'like', "%{$searchQuery}%")
+                    ->orWhere('code', 'like', "%{$searchQuery}%")
+                    ->orWhere('description', 'like', "%{$searchQuery}%");
             });
         }
 

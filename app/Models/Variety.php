@@ -46,9 +46,7 @@ class Variety extends Model
            
            // Autogenerate SKU if not provided
            if (empty($variety->sku)) {
-               $commoditySlug = $variety->commodity?->slug ?? 'unknown';
-               $nameSlug = Str::slug($variety->name);
-               $variety->sku = strtoupper($commoditySlug . '-' . $nameSlug);
+               $variety->sku = static::generateUniqueSku($variety);
            }
        });
 
@@ -57,11 +55,9 @@ class Variety extends Model
                $variety->slug = Str::slug($variety->name);
            }
            
-           // Jangan menimpa SKU eksplisit; hanya generate jika SKU kosong/null
+           // Only generate SKU if it's empty/null (immutable by default)
            if (empty($variety->sku)) {
-               $commoditySlug = $variety->commodity?->slug ?? 'unknown';
-               $nameSlug = Str::slug($variety->name);
-               $variety->sku = strtoupper($commoditySlug . '-' . $nameSlug);
+               $variety->sku = static::generateUniqueSku($variety);
            }
            
            $variety->clearStockCache();
@@ -101,43 +97,58 @@ class Variety extends Model
     }
 
    /**
-    * Get the total stock from all sources.
-    */
-   public function getTotalStockAttribute(): float
-   {
-       // Use cached value if available
-       $cacheKey = "variety_total_stock_{$this->id}";
-       
-       return cache()->remember($cacheKey, now()->addMinutes(5), function () {
-            // Primary: total dari seed lots yang is_sellable dan unit kg
-            $seedLotStock = 0;
+     * Get the total stock from sellable seed lots with unit kg only.
+     */
+    public function getTotalStockAttribute(): float
+    {
+        // Use cached value if available
+        $cacheKey = "variety_total_stock_{$this->id}";
+        
+        return cache()->remember($cacheKey, now()->addMinutes(5), function () {
+            // Calculate total from seed lots that are sellable and unit kg only
             if ($this->relationLoaded('seedLots')) {
-                $seedLotStock = $this->seedLots
+                return $this->seedLots
                     ->where('is_sellable', true)
                     ->where('unit', 'kg')
                     ->sum('quantity');
             } else {
-                $seedLotStock = $this->seedLots()
+                return $this->seedLots()
                     ->where('is_sellable', true)
                     ->where('unit', 'kg')
                     ->sum('quantity');
             }
-            
-            // Jika ada stok dari seed lots, gunakan itu
-            if ($seedLotStock > 0) {
-                return $seedLotStock;
+        });
+    }
+
+    /**
+     * Get the total planlet from sellable seed lots with unit 'botol' and seed class 'PL'.
+     */
+    public function getTotalPlanletAttribute(): int
+    {
+        // Use cached value if available
+        $cacheKey = "variety_total_planlet_{$this->id}";
+        
+        return cache()->remember($cacheKey, now()->addMinutes(5), function () {
+            // Calculate total planlet from seed lots that are sellable, unit 'botol', and seed class 'PL'
+            if ($this->relationLoaded('seedLots')) {
+                return $this->seedLots
+                    ->where('is_sellable', true)
+                    ->where('unit', 'botol')
+                    ->filter(function ($seedLot) {
+                        return $seedLot->seedClass && $seedLot->seedClass->code === 'PL';
+                    })
+                    ->sum('quantity');
+            } else {
+                return $this->seedLots()
+                    ->where('is_sellable', true)
+                    ->where('unit', 'botol')
+                    ->whereHas('seedClass', function ($query) {
+                        $query->where('code', 'PL');
+                    })
+                    ->sum('quantity');
             }
-            
-            // Fallback 1: gabungan stock_bs_kg + stock_fs_kg
-            $bsFsStock = ($this->stock_bs_kg ?? 0) + ($this->stock_fs_kg ?? 0);
-            if ($bsFsStock > 0) {
-                return $bsFsStock;
-            }
-            
-            // Fallback 2: kolom stock
-            return $this->stock ?? 0;
-       });
-   }
+        });
+    }
 
     /**
      * Get the stock status based on total stock and minimum limit.
@@ -152,17 +163,17 @@ class Variety extends Model
             $totalStock = $this->attributes['total_stock_calculated'] ?? $this->total_stock;
             $minimumStockLimit = $this->minimum_limit ?? 0;
             
-            // Habis: jika total stok <= 0
-            if ($totalStock <= 0) {
+            // Habis: jika total stok = 0
+            if ($totalStock == 0) {
                 return 'Habis';
             }
             
-            // Restock: jika total stok > 0 TAPI <= minimum_stock_limit
+            // Restock: jika 0 < total stok <= minimum_limit
             if ($totalStock > 0 && $totalStock <= $minimumStockLimit) {
                 return 'Restock';
             }
             
-            // Tersedia: jika total stok > minimum_stock_limit
+            // Tersedia: jika total stok > minimum_limit
             return 'Tersedia';
         });
     }
@@ -174,19 +185,20 @@ class Variety extends Model
     {
         cache()->forget("variety_total_stock_{$this->id}");
         cache()->forget("variety_stock_status_{$this->id}");
+        cache()->forget("variety_total_planlet_{$this->id}");
     }
 
 
 
     /**
-     * Scope a query to only include varieties with stock.
+     * Scope a query to only include varieties with stock from sellable seed lots.
      */
     public function scopeInStock($query)
     {
-        return $query->where(function ($q) {
-            $q->where('stock', '>', 0)
-              ->orWhere('stock_bs_kg', '>', 0)
-              ->orWhere('stock_fs_kg', '>', 0);
+        return $query->whereHas('seedLots', function ($seedLots) {
+            $seedLots->where('is_sellable', true)
+                ->where('unit', 'kg')
+                ->where('quantity', '>', 0);
         });
     }
 
@@ -197,6 +209,7 @@ class Variety extends Model
     {
         return $query->whereHas('seedLots', function ($seedLots) {
             $seedLots->where('is_sellable', true)
+                ->where('unit', 'kg')
                 ->where('quantity', '>', 0);
         });
     }
@@ -255,6 +268,46 @@ class Variety extends Model
             default:
                 return $query;
         }
+    }
+
+    /**
+     * Generate unique SKU with conflict resolution
+     */
+    protected static function generateUniqueSku($variety): string
+    {
+        // Load commodity if not already loaded
+        if (!$variety->commodity) {
+            $variety->load('commodity');
+        }
+        
+        $commoditySlug = $variety->commodity?->slug ?? 'unknown';
+        $nameSlug = Str::slug($variety->name);
+        $baseSku = strtoupper($commoditySlug . '-' . $nameSlug);
+        
+        // Check if base SKU is unique
+        $existingCount = static::where('sku', $baseSku)
+            ->when($variety->exists, function ($query) use ($variety) {
+                return $query->where('id', '!=', $variety->id);
+            })
+            ->count();
+            
+        if ($existingCount === 0) {
+            return $baseSku;
+        }
+        
+        // Find next available suffix
+        $suffix = 2;
+        do {
+            $candidateSku = $baseSku . '-' . $suffix;
+            $existingCount = static::where('sku', $candidateSku)
+                ->when($variety->exists, function ($query) use ($variety) {
+                    return $query->where('id', '!=', $variety->id);
+                })
+                ->count();
+            $suffix++;
+        } while ($existingCount > 0);
+        
+        return $candidateSku;
     }
 
     /**

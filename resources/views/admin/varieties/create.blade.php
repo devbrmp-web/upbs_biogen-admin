@@ -66,8 +66,37 @@
                             <div class="mb-3">
                                 <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                       id="price" name="price" value="{{ old('price') }}" step="0.01" min="0" required>
+                                       id="price" name="price" value="{{ old('price') }}" step="1" min="0" inputmode="numeric" required>
                                 @error('price')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <!-- Minimum Limit Field -->
+                            <div class="mb-3">
+                                <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
+                                <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
+                                       id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit') }}" step="1" min="0" inputmode="numeric">
+                                @error('minimum_limit')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <!-- Status Field -->
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select @error('status') is-invalid @enderror" 
+                                        id="status" name="status">
+                                    <option value="available" {{ old('status', 'available') == 'available' ? 'selected' : '' }}>Available</option>
+                                    <option value="out_of_stock" {{ old('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                    <option value="discontinued" {{ old('status') == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
+                                </select>
+                                @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -88,73 +117,10 @@
                         </div>
                     </div>
 
-                    <!-- Stock Management Section -->
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Stock Management</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <!-- BS Stock -->
-                                <div class="col-md-4 mb-3">
-                                    <label for="stock_bs_kg" class="form-label">BS Stock (kg, bilangan bulat)</label>
-                                    <input type="number" class="form-control @error('stock_bs_kg') is-invalid @enderror" 
-                                           id="stock_bs_kg" name="stock_bs_kg" value="{{ old('stock_bs_kg') }}" 
-                                           step="1" min="0" inputmode="numeric" placeholder="Contoh: 12">
-                                    @error('stock_bs_kg')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- FS Stock -->
-                                <div class="col-md-4 mb-3">
-                                    <label for="stock_fs_kg" class="form-label">FS Stock (kg, bilangan bulat)</label>
-                                    <input type="number" class="form-control @error('stock_fs_kg') is-invalid @enderror" 
-                                           id="stock_fs_kg" name="stock_fs_kg" value="{{ old('stock_fs_kg') }}" 
-                                           step="1" min="0" inputmode="numeric" placeholder="Contoh: 7">
-                                    @error('stock_fs_kg')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Planlet (per botol) -->
-                                <div class="col-md-4 mb-3">
-                                    <label for="planlet" class="form-label">Planlet (per botol, bilangan bulat)</label>
-                                    <input type="number" class="form-control @error('planlet') is-invalid @enderror" 
-                                           id="planlet" name="planlet" value="{{ old('planlet') }}" 
-                                           step="1" min="0" inputmode="numeric" placeholder="Contoh: 10">
-                                    @error('planlet')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Minimum Limit -->
-                            <div class="mb-3">
-                                <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg, bilangan bulat)</label>
-                                <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
-                                       id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit') }}" 
-                                       step="1" min="0" inputmode="numeric" placeholder="Contoh: 50">
-                                @error('minimum_limit')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted d-block mt-1">Catatan: Total Stock (kg) akan dihitung otomatis dari BS + FS. Planlet tidak termasuk perhitungan total kg karena satuannya per botol.</small>
-                            </div>
-
-                            <!-- Status Field -->
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status" name="status">
-                                    <option value="available" {{ old('status', 'available') == 'available' ? 'selected' : '' }}>Available</option>
-                                    <option value="out_of_stock" {{ old('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
-                                    <option value="discontinued" {{ old('status') == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
-                                </select>
-                                @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+                    <!-- Help Text -->
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle me-2"></i>
+                        <strong>Stock Management:</strong> Total stok (kg) dihitung otomatis dari Seed Lots berunit kg yang dapat dijual. Planlet tidak dihitung ke total kg karena satuannya per botol.
                     </div>
 
                     <div class="row">
@@ -202,8 +168,8 @@
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
 
-        // Integer-only guard for numeric inputs
-        const integerIds = ['stock_bs_kg','stock_fs_kg','planlet','minimum_limit'];
+        // Integer-only guard for numeric inputs (price and minimum_limit)
+        const integerIds = ['price', 'minimum_limit'];
         integerIds.forEach(function(id){
             const el = document.getElementById(id);
             if (!el) return;

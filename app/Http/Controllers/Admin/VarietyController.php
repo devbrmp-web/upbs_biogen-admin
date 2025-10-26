@@ -74,10 +74,7 @@ class VarietyController extends Controller
             // SKU kini opsional; jika kosong akan digenerate otomatis oleh model
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'stock_bs_kg' => 'nullable|integer|min:0',
-            'stock_fs_kg' => 'nullable|integer|min:0',
-            'planlet' => 'nullable|integer|min:0',
+            'price' => 'required|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -86,13 +83,8 @@ class VarietyController extends Controller
             $validated['image_path'] = $request->file('image')->store('varieties', 'public');
         }
 
-        // Normalize nullable stock inputs to 0 (DB columns are non-nullable dengan default 0)
-        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
-        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
-        $validated['planlet'] = $validated['planlet'] ?? 0;
+        // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        // Hitung total stock (kg) secara otomatis dari BS + FS (Planlet tidak dihitung)
-        $validated['stock'] = ($validated['stock_bs_kg'] + $validated['stock_fs_kg']);
 
         Variety::create($validated);
 
@@ -103,9 +95,31 @@ class VarietyController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Variety $variety)
+    public function show(Request $request, Variety $variety)
     {
-        $variety->load(['commodity', 'seedLots.seedClass']);
+        $variety->load(['commodity']);
+        
+        // Build seed lots query with search and filters
+        $seedLotsQuery = $variety->seedLots()->with('seedClass');
+        
+        // Apply search filter
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $seedLotsQuery->where('lot_code', 'like', "%{$searchTerm}%");
+        }
+        
+        // Apply seed class filter
+        if ($request->filled('seed_class')) {
+            $seedLotsQuery->where('seed_class_id', $request->seed_class);
+        }
+        
+        // Apply sellable status filter
+        if ($request->filled('is_sellable')) {
+            $seedLotsQuery->where('is_sellable', $request->is_sellable);
+        }
+        
+        // Load filtered seed lots
+        $variety->setRelation('seedLots', $seedLotsQuery->orderBy('created_at', 'desc')->get());
         
         // Load aggregate data for stock calculations
         $variety->loadCount(['seedLots as seed_lots_count']);
@@ -160,10 +174,7 @@ class VarietyController extends Controller
                 Rule::unique('varieties', 'sku')->ignore($variety->id),
             ],
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'stock_bs_kg' => 'nullable|integer|min:0',
-            'stock_fs_kg' => 'nullable|integer|min:0',
-            'planlet' => 'nullable|integer|min:0',
+            'price' => 'required|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -177,13 +188,9 @@ class VarietyController extends Controller
             $validated['image_path'] = $request->file('image')->store('varieties', 'public');
         }
 
-        // Normalize nullable stock inputs to 0 (DB columns are non-nullable dengan default 0)
-        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
-        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
+        // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['planlet'] = $validated['planlet'] ?? 0;
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        // Hitung total stock (kg) secara otomatis dari BS + FS (Planlet tidak dihitung)
-        $validated['stock'] = ($validated['stock_bs_kg'] + $validated['stock_fs_kg']);
 
         $variety->update($validated);
 

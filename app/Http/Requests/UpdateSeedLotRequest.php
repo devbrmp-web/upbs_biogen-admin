@@ -30,7 +30,7 @@ class UpdateSeedLotRequest extends FormRequest
             // Integer-only policy by default
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|in:kg,gram,ton,piece,bottle',
-            'price_per_unit' => 'required|numeric|min:0',
+            'price_per_unit' => 'required|integer|min:0',
             'is_sellable' => 'boolean',
             'notes' => 'nullable|string',
         ];
@@ -90,7 +90,7 @@ class UpdateSeedLotRequest extends FormRequest
             'unit.required' => 'Unit is required.',
             'unit.in' => 'The selected unit is invalid for this seed class.',
             'price_per_unit.required' => 'Price per unit is required.',
-            'price_per_unit.numeric' => 'Price per unit must be a number.',
+            'price_per_unit.numeric' => 'Price per unit must be an integer.',
             'price_per_unit.min' => 'Price per unit must be at least 0.',
         ];
 

@@ -78,8 +78,8 @@ seed_classes (1) ←→ (many) seed_lots
 ```
 
 ### Seed Classes:
-- BS (Benih Sebar)
-- FS (Benih Pokok) 
+- BS (Breeder Seed)
+- FS (Foundation Seed) 
 - NS (Benih Sumber)
 
 ### Seed Lots:

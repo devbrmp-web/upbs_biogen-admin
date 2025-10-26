@@ -28,7 +28,7 @@ class StoreSeedLotRequest extends FormRequest
             // Integer-only policy by default
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|in:kg,gram,ton,piece,bottle',
-            'price_per_unit' => 'required|numeric|min:0',
+            'price_per_unit' => 'required|integer|min:0',
             'is_sellable' => 'boolean',
             'notes' => 'nullable|string',
         ];
@@ -87,7 +87,7 @@ class StoreSeedLotRequest extends FormRequest
             'quantity.min' => 'Quantity must be at least 0.',
             'unit.required' => 'Unit is required.',
             'price_per_unit.required' => 'Price per unit is required.',
-            'price_per_unit.numeric' => 'Price per unit must be a number.',
+            'price_per_unit.integer' => 'Price per unit must be an integer.',
             'price_per_unit.min' => 'Price per unit must be at least 0.',
         ];
 
@@ -99,7 +99,7 @@ class StoreSeedLotRequest extends FormRequest
                 switch ($seedClass->code) {
                     case 'BS':
                     case 'FS':
-                        $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: kg, gram, ton.';
+                        $messages['unit.in'] = 'Breeder Seed (BS) and Foundation Seed (FS) must use weight-based units (kg, gram, ton).';
                         $messages['quantity.integer'] = 'Quantity must be an integer (no decimals) for weight-based seed classes.';
                         break;
                     

@@ -70,24 +70,16 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold">BS Stock:</td>
-                                <td>{{ number_format($variety->stock_bs_kg ?? 0, 0) }} kg</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">FS Stock:</td>
-                                <td>{{ number_format($variety->stock_fs_kg ?? 0, 0) }} kg</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">Planlet (per botol):</td>
-                                <td>{{ number_format($variety->planlet ?? 0, 0) }}</td>
-                            </tr>
-                            <tr>
                                 <td class="fw-semibold">Total Stock:</td>
                                 <td><strong>{{ number_format($variety->total_stock ?? 0, 0) }} kg</strong></td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Min. Limit:</td>
                                 <td>{{ number_format($variety->minimum_limit ?? 0, 0) }} kg</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold">Total Planlet:</td>
+                                <td>{{ number_format($variety->total_planlet ?? 0, 0) }} bottles</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Description:</td>
@@ -133,26 +125,28 @@
         <div class="card mt-3">
             <div class="card-body">
                 <h6 class="card-title">Stock Summary</h6>
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
-                            <h5 class="text-primary mb-1">{{ number_format($variety->stock_bs_kg ?? 0, 0) }}</h5>
-                            <small class="text-muted">BS Stock (kg)</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <h5 class="text-success mb-1">{{ number_format($variety->stock_fs_kg ?? 0, 0) }}</h5>
-                        <small class="text-muted">FS Stock (kg)</small>
-                    </div>
-                </div>
-                <hr class="my-3">
                 <div class="text-center">
                     <h4 class="text-dark mb-1">{{ number_format($variety->total_stock ?? 0, 0) }}</h4>
                     <small class="text-muted">Total Stock (kg)</small>
+                    <p class="text-muted mt-2 mb-0"><small>Calculated from sellable Seed Lots with unit kg</small></p>
+                </div>
+                <hr class="my-3">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-info mb-1">{{ number_format($variety->minimum_limit ?? 0, 0) }}</h5>
+                            <small class="text-muted">Min. Limit (kg)</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-secondary mb-1">{{ number_format($variety->total_planlet ?? 0, 0) }}</h5>
+                        <small class="text-muted">Total Planlet (bottles)</small>
+                        <p class="text-muted mt-1 mb-0"><small>From sellable PL Seed Lots</small></p>
+                    </div>
                 </div>
                 @if(($variety->minimum_limit ?? 0) > 0 && ($variety->total_stock ?? 0) <= ($variety->minimum_limit ?? 0))
                     <div class="alert alert-warning mt-3 mb-0 py-2">
-                        <small><i class="bx bx-warning"></i> Restock</small>
+                        <small><i class="bx bx-warning"></i> Restock needed</small>
                     </div>
                 @endif
             </div>
@@ -171,6 +165,35 @@
                         <i class="bx bx-plus"></i> Add Seed Lot
                     </a>
                 </div>
+                
+                <!-- Search & Filter Form -->
+                <form method="GET" action="{{ route('admin.varieties.show', $variety) }}" class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search by lot code..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="seed_class" class="form-select">
+                                <option value="">All Seed Classes</option>
+                                @foreach(\App\Models\SeedClass::orderBy('name')->get() as $seedClass)
+                                    <option value="{{ $seedClass->id }}" {{ request('seed_class') == $seedClass->id ? 'selected' : '' }}>
+                                        {{ $seedClass->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="is_sellable" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="1" {{ request('is_sellable') === '1' ? 'selected' : '' }}>Sellable</option>
+                                <option value="0" {{ request('is_sellable') === '0' ? 'selected' : '' }}>Not Sellable</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Filter</button>
+                        </div>
+                    </div>
+                </form>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="bg-light bg-opacity-50">

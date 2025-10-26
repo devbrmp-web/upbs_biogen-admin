@@ -16,14 +16,14 @@ class SeedClassSeeder extends Seeder
         $seedClasses = [
             [
                 'code' => 'BS',
-                'name' => 'Benih Sebar',
-                'description' => 'Benih Sebar (BS) - Seed class for direct sowing, measured in kilograms',
+                'name' => 'Breeder Seed',
+                'description' => 'Breeder Seed (BS) - Seed class for direct sowing, measured in kilograms',
                 'is_active' => true,
             ],
             [
                 'code' => 'FS',
-                'name' => 'Benih Pokok',
-                'description' => 'Benih Pokok (FS) - Foundation seed class, measured in kilograms',
+                'name' => 'Foundation Seed',
+                'description' => 'Foundation Seed (FS) - Foundation seed class, measured in kilograms',
                 'is_active' => true,
             ],
             [

@@ -24,14 +24,14 @@
                         @error('code')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Unique code for the seed class (e.g., BS for Benih Sebar, FS for Foundation Seed)</div>
+                        <div class="form-text">Unique code for the seed class (e.g., BS for Breeder Seed, FS for Foundation Seed)</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                id="name" name="name" value="{{ old('name') }}" 
-                               placeholder="e.g., Benih Sebar, Foundation Seed" required>
+                               placeholder="e.g., Breeder Seed, Foundation Seed" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -76,7 +76,7 @@
                 <div class="alert alert-warning">
                     <h6><i class="bx bx-bulb"></i> Common Seed Classes</h6>
                     <ul class="mb-0 small">
-                        <li><strong>BS:</strong> Benih Sebar</li>
+                        <li><strong>BS:</strong> Breeder Seed</li>
                         <li><strong>FS:</strong> Foundation Seed</li>
                         <li><strong>SS:</strong> Stock Seed</li>
                         <li><strong>ES:</strong> Extension Seed</li>

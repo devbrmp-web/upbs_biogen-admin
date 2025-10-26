@@ -55,7 +55,7 @@ class VarietyTest extends TestCase
         
         $this->fsSeedClass = SeedClass::firstOrCreate(
             ['code' => 'FS'],
-            ['name' => 'Benih Pokok', 'description' => 'Benih Pokok']
+            ['name' => 'Foundation Seed', 'description' => 'Foundation Seed']
         );
     }
 
@@ -101,8 +101,6 @@ class VarietyTest extends TestCase
                 'sku' => 'NEW-VAR-001',
                 'description' => 'New variety description',
                 'price' => 15000,
-                'stock_bs_kg' => 200,
-                'stock_fs_kg' => 100,
                 'minimum_limit' => 20,
                 'image' => $image,
             ]);
@@ -115,8 +113,6 @@ class VarietyTest extends TestCase
             'name' => 'New Variety',
             'sku' => 'NEW-VAR-001',
             'price' => 15000,
-            'stock_bs_kg' => 200,
-            'stock_fs_kg' => 100,
             'minimum_limit' => 20,
         ]);
 
@@ -175,8 +171,6 @@ class VarietyTest extends TestCase
             'sku' => 'TEST-VAR-004',
             'description' => 'Test variety description',
             'price' => 10000,
-            'stock_bs_kg' => 100,
-            'stock_fs_kg' => 50,
             'minimum_limit' => 10,
         ]);
 
@@ -189,8 +183,6 @@ class VarietyTest extends TestCase
                 'sku' => 'UPD-VAR-001',
                 'description' => 'Updated variety description',
                 'price' => 20000,
-                'stock_bs_kg' => 150,
-                'stock_fs_kg' => 75,
                 'minimum_limit' => 15,
                 'image' => $newImage,
             ]);
@@ -203,8 +195,6 @@ class VarietyTest extends TestCase
             'name' => 'Updated Variety',
             'sku' => 'UPD-VAR-001',
             'price' => 20000,
-            'stock_bs_kg' => 150,
-            'stock_fs_kg' => 75,
             'minimum_limit' => 15,
         ]);
 
@@ -254,13 +244,11 @@ class VarietyTest extends TestCase
                 'sku' => '', // Optional field (auto-generated when empty)
                 'description' => '', // Required field empty
                 'price' => -100, // Invalid price
-                'stock_bs_kg' => -10, // Invalid stock
-                'stock_fs_kg' => -5, // Invalid stock
                 'minimum_limit' => -1, // Invalid minimum limit
             ]);
 
         $response->assertStatus(302); // Should redirect back with errors
-        $response->assertSessionHasErrors(['commodity_id', 'name', 'description', 'price', 'stock_bs_kg', 'stock_fs_kg', 'minimum_limit']);
+        $response->assertSessionHasErrors(['commodity_id', 'name', 'description', 'price', 'minimum_limit']);
     }
 
     public function test_variety_filters_work(): void

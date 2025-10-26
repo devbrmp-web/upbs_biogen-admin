@@ -73,80 +73,40 @@
                         <div class="mb-3">
                             <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                   id="price" name="price" value="{{ old('price', $variety->price) }}" step="0.01" min="0" required>
+                                   id="price" name="price" value="{{ old('price', $variety->price) }}" step="1" min="0" inputmode="numeric" required>
                             @error('price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <!-- Stock Management Section -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h6 class="mb-0">Stock Management</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- BS Stock -->
-                                    <div class="col-md-3 mb-3">
-                                        <label for="stock_bs_kg" class="form-label">BS Stock (kg)</label>
-                                        <input type="number" class="form-control @error('stock_bs_kg') is-invalid @enderror" 
-                                               id="stock_bs_kg" name="stock_bs_kg" value="{{ old('stock_bs_kg', $variety->stock_bs_kg ?? '') }}" 
-                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
-                                        @error('stock_bs_kg')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                        <!-- Minimum Limit Field -->
+                        <div class="mb-3">
+                            <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
+                            <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
+                                   id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit', $variety->minimum_limit ?? '') }}" step="1" min="0" inputmode="numeric">
+                            @error('minimum_limit')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                                    <!-- FS Stock -->
-                                    <div class="col-md-3 mb-3">
-                                        <label for="stock_fs_kg" class="form-label">FS Stock (kg)</label>
-                                        <input type="number" class="form-control @error('stock_fs_kg') is-invalid @enderror" 
-                                               id="stock_fs_kg" name="stock_fs_kg" value="{{ old('stock_fs_kg', $variety->stock_fs_kg ?? '') }}" 
-                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
-                                        @error('stock_fs_kg')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                        <!-- Status Field -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select @error('status') is-invalid @enderror" 
+                                    id="status" name="status">
+                                <option value="available" {{ old('status', $variety->status) == 'available' ? 'selected' : '' }}>Available</option>
+                                <option value="out_of_stock" {{ old('status', $variety->status) == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                <option value="discontinued" {{ old('status', $variety->status) == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
+                            </select>
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                                    <!-- Planlet (per bottle) -->
-                                    <div class="col-md-3 mb-3">
-                                        <label for="planlet" class="form-label">Planlet (per botol)</label>
-                                        <input type="number" class="form-control @error('planlet') is-invalid @enderror" 
-                                               id="planlet" name="planlet" value="{{ old('planlet', $variety->planlet ?? '') }}" 
-                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
-                                        @error('planlet')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Minimum Limit -->
-                                    <div class="col-md-3 mb-3">
-                                        <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
-                                        <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
-                                               id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit', $variety->minimum_limit ?? '') }}" 
-                                               step="1" min="0" inputmode="numeric" placeholder="Masukkan bilangan bulat">
-                                        @error('minimum_limit')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <small class="text-muted d-block">Catatan: BS, FS, Planlet, dan Minimum Limit dicatat sebagai bilangan bulat. Total Stock akan dihitung otomatis dari BS + FS.</small>
-
-                                <!-- Status Field -->
-                                <div class="mb-3 mt-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <select class="form-select @error('status') is-invalid @enderror" 
-                                            id="status" name="status">
-                                        <option value="available" {{ old('status', $variety->status) == 'available' ? 'selected' : '' }}>Available</option>
-                                        <option value="out_of_stock" {{ old('status', $variety->status) == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
-                                        <option value="discontinued" {{ old('status', $variety->status) == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
-                                    </select>
-                                    @error('status')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                        <!-- Help Text -->
+                        <div class="alert alert-info">
+                            <i class="bx bx-info-circle me-2"></i>
+                            <strong>Stock Management:</strong> Total stok (kg) dihitung otomatis dari Seed Lots berunit kg yang dapat dijual. Planlet tidak dihitung ke total kg karena satuannya per botol.
                         </div>
 
                     <div class="row">
@@ -200,8 +160,8 @@
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
 
-        // Integer-only guard for numeric fields
-        const intFields = ['stock_bs_kg', 'stock_fs_kg', 'planlet', 'minimum_limit'];
+        // Integer-only guard for numeric fields (price and minimum_limit)
+        const intFields = ['price', 'minimum_limit'];
         intFields.forEach(function(id){
             const el = document.getElementById(id);
             if (!el) return;

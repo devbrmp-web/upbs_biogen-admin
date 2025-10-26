@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (seedClassCode) {
             case 'BS':
             case 'FS':
-                message = 'Basic Seed (BS) and Foundation Seed (FS) must use weight-based units (kg, gram, ton).';
+                message = 'Breeder Seed (BS) and Foundation Seed (FS) must be measured in kg, gram, or ton';
                 break;
             case 'PL':
                 message = 'Planlet (PL) must use bottle or piece units.';

@@ -21,6 +21,7 @@ class VarietyManagementTest extends TestCase
     protected Commodity $commodity;
     protected SeedClass $seedClass;
     protected SeedClass $bsSeedClass;
+    protected SeedClass $fsSeedClass;
     protected Variety $variety;
     
     protected function setUp(): void
@@ -32,9 +33,10 @@ class VarietyManagementTest extends TestCase
         $this->actingAs($this->admin);
         
         $this->commodity = Commodity::factory()->create();
-        // Use existing seed class from base TestCase
+        // Use existing seed classes from base TestCase
         $this->seedClass = SeedClass::where('code', 'BS')->first();
         $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
         $this->variety = Variety::factory()->create([
             'commodity_id' => $this->commodity->id,
         ]);
@@ -48,8 +50,6 @@ class VarietyManagementTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TV-001',
             'price' => 50000,
-            'stock_bs_kg' => 100,
-            'stock_fs_kg' => 50,
             'minimum_limit' => 10,
             'status' => 'available',
         ]);
@@ -70,9 +70,7 @@ class VarietyManagementTest extends TestCase
             ->assertSee($variety->name)
             ->assertSee($variety->sku)
             ->assertSee('Rp 50.000')
-            ->assertSee('100 kg') // BS stock formatted with 0 decimals
-            ->assertSee('50 kg')  // FS stock formatted with 0 decimals
-            ->assertSee('150 kg') // Total stock formatted with 0 decimals
+            ->assertSee('25 kg') // Total stock from seed lot (calculated from sellable seed lots)
             ->assertSee($seedLot->lot_code)
             ->assertSee('25 kg') // Seed lot quantity formatted with 0 decimals
             ->assertSee('Rp 2.000');
@@ -196,19 +194,34 @@ class VarietyManagementTest extends TestCase
     {
         $variety = Variety::factory()->create([
             'commodity_id' => $this->commodity->id,
-            'stock_bs_kg' => 75,
-            'stock_fs_kg' => 25,
             'minimum_limit' => 20,
             'status' => 'available',
+        ]);
+
+        // Create seed lots to provide actual stock data
+        SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->bsSeedClass->id,
+            'quantity' => 75,
+            'unit' => 'kg',
+            'is_sellable' => true,
+        ]);
+
+        SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->fsSeedClass->id,
+            'quantity' => 25,
+            'unit' => 'kg',
+            'is_sellable' => true,
         ]);
 
         $response = $this->actingAs($this->admin)
             ->get(route('admin.varieties.show', $variety));
 
         $response->assertOk()
-            ->assertSee('75 kg') // BS stock formatted with 0 decimals
-            ->assertSee('25 kg') // FS stock formatted with 0 decimals
-            ->assertSee('100 kg') // Total stock formatted with 0 decimals
+            ->assertSee('75 kg') // BS stock calculated from seed lots
+            ->assertSee('25 kg') // FS stock calculated from seed lots
+            ->assertSee('100 kg') // Total stock calculated from seed lots
             ->assertSee('20 kg'); // Minimum limit formatted with 0 decimals
     }
 
@@ -217,10 +230,25 @@ class VarietyManagementTest extends TestCase
     {
         $variety = Variety::factory()->create([
             'commodity_id' => $this->commodity->id,
-            'stock_bs_kg' => 5,
-            'stock_fs_kg' => 3,
             'minimum_limit' => 20,
             'status' => 'available',
+        ]);
+
+        // Create seed lots with low stock (total 8 kg, below minimum of 20 kg)
+        SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->bsSeedClass->id,
+            'quantity' => 5,
+            'unit' => 'kg',
+            'is_sellable' => true,
+        ]);
+
+        SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $this->fsSeedClass->id,
+            'quantity' => 3,
+            'unit' => 'kg',
+            'is_sellable' => true,
         ]);
 
         $response = $this->actingAs($this->admin)

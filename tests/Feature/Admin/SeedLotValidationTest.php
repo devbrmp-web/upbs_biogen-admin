@@ -271,7 +271,7 @@ class SeedLotValidationTest extends TestCase
         $errors = session('errors');
         $unitError = $errors->get('unit')[0];
         
-        $this->assertStringContainsString('invalid for this seed class', $unitError);
+        $this->assertStringContainsString('Breeder Seed (BS) and Foundation Seed (FS)', $unitError);
     }
 
     #[Test]

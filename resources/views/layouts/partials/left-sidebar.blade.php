@@ -49,11 +49,11 @@
             </li>
 
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{{ route('admin.seed-classes.index') }}">
                     <span class="nav-icon">
-                        <iconify-icon icon="iconamoon:invoice-duotone"></iconify-icon>
+                        <iconify-icon icon="iconamoon:badge-fill"></iconify-icon>
                     </span>
-                    <span class="nav-text"> Orders </span>
+                    <span class="nav-text"> Seed Classes </span>
                 </a>
             </li>
 
@@ -62,18 +62,7 @@
                     <span class="nav-icon">
                         <iconify-icon icon="wpf:administrator"></iconify-icon>
                     </span>
-                    <span class="nav-text"> Administrator </span>
-                </a>
-            </li>
-
-            <li class="menu-title">Report</li>
-
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <span class="nav-icon">
-                        <iconify-icon icon="iconamoon:history-duotone"></iconify-icon>
-                    </span>
-                    <span class="nav-text"> Audit Log </span>
+                    <span class="nav-text"> Admin Users </span>
                 </a>
             </li>
 

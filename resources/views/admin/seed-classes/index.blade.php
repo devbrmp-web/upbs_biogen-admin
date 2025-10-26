@@ -17,13 +17,13 @@
                 <form method="GET" action="{{ route('admin.seed-classes.index') }}" class="mb-3">
                     <div class="row g-2">
                         <div class="col-md-6">
-                            <input type="text" name="search" class="form-control" placeholder="Search by name or code..." value="{{ request('search') }}">
+                            <input type="text" name="search" id="search" class="form-control" placeholder="Search by name or code..." value="{{ request('search') ?: request('q') }}">
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="bx bx-search"></i> Search
                             </button>
-                            @if(request()->hasAny(['search']))
+                            @if(request()->hasAny(['search', 'q']))
                                 <a href="{{ route('admin.seed-classes.index') }}" class="btn btn-outline-secondary">
                                     <i class="bx bx-x"></i> Clear
                                 </a>
