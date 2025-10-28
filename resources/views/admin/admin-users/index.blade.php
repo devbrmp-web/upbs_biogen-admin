@@ -6,10 +6,11 @@
     <div class="col">
         <div class="card">
             <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between gap-3">
-                    <div class="search-bar">
+                <div class="d-flex flex-wrap justify-content-between gap-3 align-items-center">
+                    <div class="search-bar d-flex align-items-center gap-2" role="search">
                         <span><i class="bx bx-search-alt"></i></span>
                         <input type="search" class="form-control" id="search" placeholder="Search admin users..." value="{{ request('search', request('q')) }}" />
+                        <a href="{{ route('admin.admin-users.index') }}" id="clearFilters" class="btn btn-outline-secondary {{ request()->hasAny(['search','q']) ? '' : 'd-none' }}" aria-label="Clear filters">Clear</a>
                     </div>
                     <div>
                         <a href="{{ route('admin.admin-users.create') }}" class="btn btn-primary">
@@ -19,105 +20,15 @@
                 </div>
                 <!-- end row -->
             </div>
-            <div>
-                <div class="table-responsive table-centered">
-                    <table class="table text-nowrap mb-0">
-                        <thead class="bg-light bg-opacity-50">
-                            <tr>
-                                <th>Avatar</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Created</th>
-                                <th>Updated</th>
-                                <th class="text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <!-- end thead-->
-                        <tbody>
-                            @forelse($admins as $admin)
-                            <tr>
-                                <td>
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-primary text-white rounded-circle">
-                                            {{ strtoupper(substr($admin->name, 0, 2)) }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div>
-                                            <h6 class="mb-1 fw-semibold">{{ $admin->name }}</h6>
-                                            @if($admin->id === auth()->id())
-                                                <span class="badge bg-info-subtle text-info">You</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ $admin->email }}</td>
-                                <td>
-                                    @if($admin->role_id === 1)
-                                        <span class="badge bg-danger-subtle text-danger">Super Admin</span>
-                                    @elseif($admin->role_id === 2)
-                                        <span class="badge bg-warning-subtle text-warning">Admin</span>
-                                    @endif
-                                </td>
-                                <td>{{ $admin->created_at->format('M d, Y') }}</td>
-                                <td>{{ $admin->updated_at->format('M d, Y') }}</td>
-                                <td class="text-end">
-                                    <div class="dropdown">
-                                        <a href="#" class="dropdown-toggle btn btn-sm btn-outline-light" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bx bx-dots-horizontal-rounded"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a href="{{ route('admin.admin-users.show', $admin) }}" class="dropdown-item">
-                                                <i class="bx bx-show me-2"></i>View
-                                            </a>
-                                            <a href="{{ route('admin.admin-users.edit', $admin) }}" class="dropdown-item">
-                                                <i class="bx bx-edit me-2"></i>Edit
-                                            </a>
-                                            @if($admin->id !== auth()->id())
-                                                <div class="dropdown-divider"></div>
-                                                <form action="{{ route('admin.admin-users.destroy', $admin) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger" 
-                                                            onclick="return confirm('Are you sure you want to delete this admin user?')">
-                                                        <i class="bx bx-trash me-2"></i>Delete
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <i class="bx bx-user-x display-4 text-muted mb-2"></i>
-                                        <h5 class="text-muted">No admin users found</h5>
-                                        <p class="text-muted mb-3">Get started by adding your first admin user.</p>
-                                        <a href="{{ route('admin.admin-users.create') }}" class="btn btn-primary">
-                                            + Add Admin User
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                        <!-- end tbody -->
-                    </table>
-                    <!-- end table -->
+            <div id="list-root" class="position-relative">
+                <div id="sr-status" class="visually-hidden" aria-live="polite"></div>
+                <div id="loading-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-none" style="backdrop-filter: blur(1px); background-color: rgba(255,255,255,0.6);">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
+                        <span class="ms-2">Loading...</span>
+                    </div>
                 </div>
-                <!-- table responsive -->
-                @if($admins->hasPages())
-                <div class="card-footer border-top">
-                    <nav aria-label="Page Navigation">
-                        {{ $admins->links() }}
-                    </nav>
-                </div>
-                @endif
+                @include('admin.admin-users.partials.table-content')
             </div>
         </div>
         <!-- end card -->
@@ -131,34 +42,129 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const root = document.getElementById('list-root');
+    const overlay = document.getElementById('loading-overlay');
+    const srStatus = document.getElementById('sr-status');
     const searchInput = document.getElementById('search');
-    
-    // Handle search input to update URL params
-    function updateSearch() {
-        const url = new URL(window.location);
-        const query = searchInput ? searchInput.value.trim() : '';
-        if (query !== '') {
-            // Prefer 'search' param (controller supports both 'search' and 'q')
-            url.searchParams.set('search', query);
-        } else {
-            url.searchParams.delete('search');
-            url.searchParams.delete('q');
-        }
-        window.location.href = url.toString();
+    const clearBtn = document.getElementById('clearFilters');
+    const indexUrl = '{{ route('admin.admin-users.index') }}';
+    let currentController = null;
+
+    function showOverlay() { if (overlay) overlay.classList.remove('d-none'); }
+    function hideOverlay() { if (overlay) overlay.classList.add('d-none'); }
+    function announce(msg) { if (srStatus) srStatus.textContent = msg; }
+
+    function buildUrl(baseUrl, extraParams = {}) {
+        const url = new URL(baseUrl || window.location.href, window.location.origin);
+        const q = searchInput ? searchInput.value.trim() : '';
+        // Normalize params
+        url.searchParams.delete('q');
+        url.searchParams.delete('page');
+        if (q) url.searchParams.set('search', q); else url.searchParams.delete('search');
+        Object.entries(extraParams).forEach(([k,v]) => {
+            if (v !== undefined && v !== null && String(v).length) url.searchParams.set(k, v); else url.searchParams.delete(k);
+        });
+        url.searchParams.set('ajax', '1');
+        return url.toString();
     }
 
-    if (searchInput) {
-        // Trigger on Enter key
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                updateSearch();
+    async function fetchAndRender(url) {
+        showOverlay();
+        announce('Loading, please wait...');
+        try {
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+            const resp = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+                credentials: 'same-origin',
+                signal: currentController.signal,
+            });
+            if (!resp.ok) throw new Error('Network error');
+            const html = await resp.text();
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBody = tmp.querySelector('#list-body');
+            const oldBody = root.querySelector('#list-body');
+            if (newBody && oldBody) {
+                oldBody.replaceWith(newBody);
+            } else {
+                root.innerHTML = html; // fallback
             }
-        });
-        // Trigger on blur
-        searchInput.addEventListener('blur', function() {
-            updateSearch();
+            hideOverlay();
+            announce('List updated.');
+            // Clean history URL (remove ajax)
+            const clean = new URL(url);
+            clean.searchParams.delete('ajax');
+            history.pushState({}, '', clean.toString());
+            updateClearVisibility(clean);
+        } catch (err) {
+            hideOverlay();
+            announce('Failed to load.');
+            console.error(err);
+        }
+    }
+
+    function updateClearVisibility(urlObj) {
+        if (!clearBtn) return;
+        const hasSearch = (urlObj.searchParams.get('search') || urlObj.searchParams.get('q') || '').trim().length > 0;
+        clearBtn.classList.toggle('d-none', !hasSearch);
+    }
+
+    let debounceTimer = null;
+    function debounce(fn, delay = 400) {
+        return function(...args) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+    const onSearchChange = debounce(() => {
+        const url = buildUrl(indexUrl);
+        fetchAndRender(url);
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', onSearchChange);
+        searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); onSearchChange(); } });
+        searchInput.addEventListener('blur', onSearchChange);
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+            const url = buildUrl(indexUrl, {});
+            fetchAndRender(url);
         });
     }
+
+    // Intercept pagination via event delegation
+    if (root) {
+        root.addEventListener('click', function(e) {
+            const a = e.target.closest('a.page-link');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href) return;
+            e.preventDefault();
+            const urlObj = new URL(href, window.location.origin);
+            // Preserve search
+            const q = searchInput ? searchInput.value.trim() : '';
+            if (q) urlObj.searchParams.set('search', q); else urlObj.searchParams.delete('search');
+            urlObj.searchParams.set('ajax', '1');
+            fetchAndRender(urlObj.toString());
+        });
+    }
+
+    // Handle back/forward
+    window.addEventListener('popstate', function() {
+        const url = new URL(window.location.href);
+        if (searchInput) searchInput.value = url.searchParams.get('search') || url.searchParams.get('q') || '';
+        url.searchParams.set('ajax', '1');
+        fetchAndRender(url.toString());
+        updateClearVisibility(new URL(window.location.href));
+    });
+
+    // Initialize clear visibility
+    updateClearVisibility(new URL(window.location.href));
 });
 </script>
 @endpush

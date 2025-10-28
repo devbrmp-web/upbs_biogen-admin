@@ -107,7 +107,7 @@ class VarietyManagementTest extends TestCase
             'unit' => 'kg',
             'price_per_unit' => 2500,
             'is_sellable' => true,
-            'notes' => 'Test seed lot',
+            'description' => 'Test seed lot',
         ];
 
         $response = $this->actingAs($this->admin)
@@ -148,7 +148,7 @@ class VarietyManagementTest extends TestCase
             'unit' => 'kg',
             'price_per_unit' => 3000,
             'is_sellable' => true,
-            'notes' => 'Updated seed lot',
+            'description' => 'Updated seed lot',
         ];
 
         $response = $this->actingAs($this->admin)

@@ -29,10 +29,10 @@ class UpdateSeedLotRequest extends FormRequest
             'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
             // Integer-only policy by default
             'quantity' => 'required|integer|min:0',
-            'unit' => 'required|string|in:kg,gram,ton,piece,bottle',
+            'unit' => 'required|string|in:kg,ton,piece,bottle',
             'price_per_unit' => 'required|integer|min:0',
             'is_sellable' => 'boolean',
-            'notes' => 'nullable|string',
+            'description' => 'nullable|string|max:1000',
         ];
 
         // Add conditional validation based on seed class
@@ -43,8 +43,8 @@ class UpdateSeedLotRequest extends FormRequest
                 switch ($seedClass->code) {
                     case 'BS':
                     case 'FS':
-                        // BS and FS should use weight-based units (kg, gram, ton)
-                        $rules['unit'] = 'required|string|in:kg,gram,ton';
+                        // BS and FS should use weight-based units (kg, ton)
+                        $rules['unit'] = 'required|string|in:kg,ton';
                         // Quantity must be integer for consistency
                         $rules['quantity'] = 'required|integer|min:0';
                         break;
@@ -57,8 +57,8 @@ class UpdateSeedLotRequest extends FormRequest
                         break;
                     
                     default:
-                        // Other seed classes can use any unit
-                        $rules['unit'] = 'required|string|in:kg,gram,ton,piece,bottle';
+                        // Other seed classes can use any of the allowed units (excluding gram)
+                        $rules['unit'] = 'required|string|in:kg,ton,piece,bottle';
                         $rules['quantity'] = 'required|integer|min:0';
                         break;
                 }
@@ -66,6 +66,27 @@ class UpdateSeedLotRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * Hook into validator for additional constraints.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            // Enforce price_per_unit divisibility by 1000 when unit is 'ton' for BS/FS
+            $seedClass = null;
+            if ($this->filled('seed_class_id')) {
+                $seedClass = SeedClass::find($this->seed_class_id);
+            }
+            $unit = $this->input('unit');
+            if ($seedClass && in_array($seedClass->code, ['BS', 'FS']) && $unit === 'ton') {
+                $price = $this->input('price_per_unit');
+                if (is_numeric($price) && ((int) $price % 1000 !== 0)) {
+                    $validator->errors()->add('price_per_unit', 'For BS/FS with unit ton, price per unit must be a multiple of 1000 to normalize to per kg.');
+                }
+            }
+        });
     }
 
     /**
@@ -90,7 +111,7 @@ class UpdateSeedLotRequest extends FormRequest
             'unit.required' => 'Unit is required.',
             'unit.in' => 'The selected unit is invalid for this seed class.',
             'price_per_unit.required' => 'Price per unit is required.',
-            'price_per_unit.numeric' => 'Price per unit must be an integer.',
+            'price_per_unit.integer' => 'Price per unit must be an integer.',
             'price_per_unit.min' => 'Price per unit must be at least 0.',
         ];
 
@@ -102,7 +123,7 @@ class UpdateSeedLotRequest extends FormRequest
                 switch ($seedClass->code) {
                     case 'BS':
                     case 'FS':
-                        $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: kg, gram, ton.';
+                        $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: kg, ton.';
                         $messages['quantity.integer'] = 'Quantity must be an integer (no decimals) for weight-based seed classes.';
                         break;
                     

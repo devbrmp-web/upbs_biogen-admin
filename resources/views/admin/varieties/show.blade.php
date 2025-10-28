@@ -9,10 +9,10 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h4 class="card-title">{{ $variety->name }}</h4>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.varieties.edit', $variety) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ route('admin.varieties.edit', $variety) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-primary">
                             <i class="bx bx-pencil"></i> Edit
                         </a>
-                        <a href="{{ route('admin.varieties.index') }}" class="btn btn-sm btn-light">
+                        <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.varieties.index')) }}" class="btn btn-sm btn-light">
                             <i class="bx bx-arrow-back"></i> Back
                         </a>
                     </div>
@@ -45,7 +45,7 @@
                             <tr>
                                 <td class="fw-semibold">Commodity:</td>
                                 <td>
-                                    <a href="{{ route('admin.commodities.show', $variety->commodity) }}" class="badge bg-primary text-decoration-none">
+                                    <a href="{{ route('admin.commodities.show', $variety->commodity) }}?return={{ urlencode(request()->fullUrl()) }}" class="badge bg-primary text-decoration-none">
                                         {{ $variety->commodity->name }}
                                     </a>
                                 </td>
@@ -57,16 +57,7 @@
                             <tr>
                                 <td class="fw-semibold">Stock Status:</td>
                                 <td>
-                                    @php
-                                        $stockStatus = $variety->stock_status; // accessor returns: Tersedia | Restock | Habis
-                                        $badgeClass = match($stockStatus) {
-                                            'Tersedia' => 'bg-success',
-                                            'Restock' => 'bg-warning',
-                                            'Habis' => 'bg-danger',
-                                            default => 'bg-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ $stockStatus }}</span>
+                                    <span class="badge bg-{{ $variety->stock_status_class }}">{{ $variety->stock_status_label }}</span>
                                 </td>
                             </tr>
                             <tr>
@@ -83,7 +74,7 @@
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Description:</td>
-                                <td>{{ $variety->description ?: 'No description available' }}</td>
+                                <td>{!! $variety->description ? nl2br(e($variety->description)) : 'No description available' !!}</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Seed Lots:</td>
@@ -111,10 +102,10 @@
             <div class="card-body">
                 <h5 class="card-title">Quick Actions</h5>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-success">
+                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id, 'return' => request()->input('return', request()->fullUrl())]) }}" class="btn btn-success">
                         <i class="bx bx-plus"></i> Add New Seed Lot
                     </a>
-                    <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id]) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id, 'return' => request()->input('return', request()->fullUrl())]) }}" class="btn btn-outline-primary">
                         <i class="bx bx-list-ul"></i> View All Seed Lots
                     </a>
                 </div>
@@ -161,7 +152,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="card-title mb-0">Seed Lots Management</h5>
-                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-sm btn-success">
+                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id, 'return' => request()->input('return', request()->fullUrl())]) }}" class="btn btn-sm btn-success">
                         <i class="bx bx-plus"></i> Add Seed Lot
                     </a>
                 </div>
@@ -230,16 +221,17 @@
                                 <td>{{ $seedLot->created_at?->format('d M Y') }}</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.seed-lots.show', $seedLot) }}" class="btn btn-sm btn-info" title="View">
+                                        <a href="{{ route('admin.seed-lots.show', $seedLot) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="bx bx-show"></i>
                                         </a>
-                                        <a href="{{ route('admin.seed-lots.edit', $seedLot) }}" class="btn btn-sm btn-light" title="Edit">
+                                        <a href="{{ route('admin.seed-lots.edit', $seedLot) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-light" title="Edit">
                                             <i class="bx bx-pencil"></i>
                                         </a>
                                         <form action="{{ route('admin.seed-lots.destroy', $seedLot) }}" method="POST" class="d-inline" 
                                               onsubmit="return confirm('Are you sure you want to delete this seed lot?')">
                                             @csrf
                                             @method('DELETE')
+                                            <input type="hidden" name="return" value="{{ request()->input('return', request()->fullUrl()) }}">
                                             <button type="submit" class="btn btn-sm btn-danger" title="Delete">
                                                 <i class="bx bx-trash"></i>
                                             </button>
@@ -253,7 +245,7 @@
                 </div>
                 @if($variety->seedLots->count() > 10)
                     <div class="text-center mt-3">
-                        <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id]) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('admin.seed-lots.index', ['variety_id' => $variety->id, 'return' => request()->input('return', request()->fullUrl())]) }}" class="btn btn-outline-primary">
                             View All {{ $variety->seedLots->count() }} Seed Lots
                         </a>
                     </div>
@@ -270,7 +262,7 @@
                 <i class="bx bx-package fs-1 text-muted mb-3"></i>
                 <h5 class="text-muted">No Seed Lots Found</h5>
                 <p class="text-muted mb-4">This variety doesn't have any seed lots yet. Create the first one to start managing inventory.</p>
-                <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id]) }}" class="btn btn-success">
+                <a href="{{ route('admin.seed-lots.create', ['variety_id' => $variety->id, 'return' => request()->input('return', request()->fullUrl())]) }}" class="btn btn-success">
                     <i class="bx bx-plus"></i> Create First Seed Lot
                 </a>
             </div>

@@ -8,11 +8,24 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h4 class="card-title">{{ $seedLot->lot_code }}</h4>
+                    @php
+                        // Build sanitized return URL and ensure it stays within admin area
+                        $rawReturn = request()->input('return', request()->fullUrl());
+                        $rParts = parse_url($rawReturn);
+                        $rPath = $rParts['path'] ?? '';
+                        $rQuery = [];
+                        if (!empty($rParts['query'])) { parse_str($rParts['query'], $rQuery); }
+                        unset($rQuery['ajax'], $rQuery['X-Requested-With']);
+                        $rAllowed = ['q','search','variety_id','seed_class_id','is_sellable','page'];
+                        $rQuery = array_intersect_key($rQuery, array_flip($rAllowed));
+                        $rawSanitizedReturn = url($rPath) . (count($rQuery) ? ('?' . http_build_query($rQuery)) : '');
+                        $sanitizedReturn = sanitizeReturnUrl($rawSanitizedReturn, route('admin.seed-lots.index'));
+                    @endphp
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.seed-lots.edit', $seedLot) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ route('admin.seed-lots.edit', $seedLot) }}?return={{ urlencode($sanitizedReturn) }}" class="btn btn-sm btn-primary">
                             <i class="bx bx-pencil"></i> Edit
                         </a>
-                        <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-sm btn-light">
+                        <a href="{{ $sanitizedReturn ?: route('admin.seed-lots.index') }}" class="btn btn-sm btn-light">
                             <i class="bx bx-arrow-back"></i> Back
                         </a>
                     </div>
@@ -29,7 +42,7 @@
                                 <td class="fw-semibold">Variety:</td>
                                 <td>
                                     @if($seedLot->variety)
-                                        <a href="{{ route('admin.varieties.show', $seedLot->variety) }}" class="text-decoration-none fw-semibold">
+                                        <a href="{{ route('admin.varieties.show', ['variety' => $seedLot->variety, 'return' => $sanitizedReturn]) }}" class="text-decoration-none fw-semibold">
                                             {{ $seedLot->variety->name }}
                                         </a>
                                         @if($seedLot->variety->commodity)
@@ -44,7 +57,7 @@
                                 <td class="fw-semibold">Seed Class:</td>
                                 <td>
                                     @if($seedLot->seedClass)
-                                        <a href="{{ route('admin.seed-classes.show', $seedLot->seedClass) }}" class="badge bg-secondary text-decoration-none">
+                                        <a href="{{ route('admin.seed-classes.show', ['seed_class' => $seedLot->seedClass, 'return' => $sanitizedReturn]) }}" class="badge bg-secondary text-decoration-none">
                                             {{ $seedLot->seedClass->name }} ({{ $seedLot->seedClass->code }})
                                         </a>
                                     @else
@@ -90,7 +103,7 @@
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Description:</td>
-                                <td>{{ $seedLot->description ?: 'No description available' }}</td>
+                                <td style="white-space: pre-line;">{{ $seedLot->description ?: 'No description available' }}</td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold">Created:</td>
@@ -112,20 +125,20 @@
             <div class="card-body">
                 <h5 class="card-title">Quick Actions</h5>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('admin.seed-lots.edit', $seedLot) }}" class="btn btn-primary">
+                    <a href="{{ route('admin.seed-lots.edit', $seedLot) }}?return={{ urlencode($sanitizedReturn) }}" class="btn btn-primary">
                         <i class="bx bx-pencil"></i> Edit Seed Lot
                     </a>
                     @if($seedLot->variety)
-                        <a href="{{ route('admin.varieties.show', $seedLot->variety) }}" class="btn btn-outline-info">
+                        <a href="{{ route('admin.varieties.show', ['variety' => $seedLot->variety, 'return' => $sanitizedReturn]) }}" class="btn btn-outline-info">
                             <i class="bx bx-show"></i> View Variety
                         </a>
                     @endif
                     @if($seedLot->seedClass)
-                        <a href="{{ route('admin.seed-classes.show', $seedLot->seedClass) }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('admin.seed-classes.show', ['seed_class' => $seedLot->seedClass, 'return' => $sanitizedReturn]) }}" class="btn btn-outline-secondary">
                             <i class="bx bx-show"></i> View Seed Class
                         </a>
                     @endif
-                    <a href="{{ route('admin.seed-lots.create') }}" class="btn btn-outline-success">
+                    <a href="{{ route('admin.seed-lots.create', ['variety_id' => $seedLot->variety?->id, 'return' => $sanitizedReturn]) }}" class="btn btn-outline-success">
                         <i class="bx bx-plus"></i> Add New Seed Lot
                     </a>
                 </div>
@@ -173,4 +186,16 @@
     </div>
 </div>
 
+@endsection
+
+@section('script')
+<script>
+    // Initialize Bootstrap tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 @endsection

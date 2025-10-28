@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('unit', 20); // kg, botol, malai, dll
             $table->decimal('price_per_unit', 12, 2); // Harga per unit
             $table->boolean('is_sellable')->default(true); // Apakah bisa dijual
-            $table->text('notes')->nullable(); // Catatan tambahan
+            $table->text('description')->nullable(); // Optional detailed description
             $table->timestamps();
             
             // Index untuk performa query

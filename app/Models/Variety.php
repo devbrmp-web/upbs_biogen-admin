@@ -27,7 +27,7 @@ class Variety extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'price' => 'integer',
         'stock' => 'integer',
         'stock_bs_kg' => 'integer',
         'stock_fs_kg' => 'integer',
@@ -163,19 +163,40 @@ class Variety extends Model
             $totalStock = $this->attributes['total_stock_calculated'] ?? $this->total_stock;
             $minimumStockLimit = $this->minimum_limit ?? 0;
             
-            // Habis: jika total stok = 0
+            // Out of Stock: total stock = 0
             if ($totalStock == 0) {
-                return 'Habis';
+                return 'Out of Stock';
             }
-            
-            // Restock: jika 0 < total stok <= minimum_limit
+
+            // Restock: 0 < total stock <= minimum_limit
             if ($totalStock > 0 && $totalStock <= $minimumStockLimit) {
                 return 'Restock';
             }
-            
-            // Tersedia: jika total stok > minimum_limit
-            return 'Tersedia';
+
+            // Available: total stock > minimum_limit
+            return 'Available';
         });
+    }
+
+    /**
+     * English label for stock status (alias of stock_status for clarity in views).
+     */
+    public function getStockStatusLabelAttribute(): string
+    {
+        return $this->stock_status; // Already English via accessor above
+    }
+
+    /**
+     * Bootstrap badge context class based on stock status.
+     */
+    public function getStockStatusClassAttribute(): string
+    {
+        return match (strtolower($this->stock_status)) {
+            'available' => 'success',
+            'restock' => 'warning',
+            'out of stock' => 'danger',
+            default => 'secondary',
+        };
     }
 
     /**
@@ -207,11 +228,12 @@ class Variety extends Model
      */
     public function scopeWithAvailableStock($query)
     {
-        return $query->whereHas('seedLots', function ($seedLots) {
-            $seedLots->where('is_sellable', true)
-                ->where('unit', 'kg')
-                ->where('quantity', '>', 0);
-        });
+        // Available means: total sellable stock in kg is strictly greater than minimum_limit
+        return $query->whereRaw('(
+            SELECT COALESCE(SUM(quantity), 0)
+            FROM seed_lots sl
+            WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg"
+        ) > COALESCE(varieties.minimum_limit, 0)');
     }
 
     /**
@@ -221,6 +243,7 @@ class Variety extends Model
     {
         return $query->whereDoesntHave('seedLots', function ($seedLots) {
             $seedLots->where('is_sellable', true)
+                ->where('unit', 'kg')
                 ->where('quantity', '>', 0);
         });
     }
@@ -232,11 +255,17 @@ class Variety extends Model
     {
         // Use a safe subquery comparing total sellable lot quantity against variety minimum_limit.
         // This avoids HAVING in a whereHas subquery which can cause SQL errors when no rows match.
+        // Restock means: total sellable stock in kg is > 0 AND <= minimum_limit
         return $query->whereRaw('(
             SELECT COALESCE(SUM(quantity), 0)
             FROM seed_lots sl
             WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg"
-        ) <= varieties.minimum_limit');
+        ) > 0')
+        ->whereRaw('(
+            SELECT COALESCE(SUM(quantity), 0)
+            FROM seed_lots sl
+            WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg"
+        ) <= COALESCE(varieties.minimum_limit, 0)');
     }
 
     /**
@@ -259,8 +288,12 @@ class Variety extends Model
         $normalized = strtolower(trim((string) $status));
 
         switch ($normalized) {
+            case 'available':
             case 'tersedia':
                 return $query->withAvailableStock();
+            case 'out of stock':
+            case 'out-of-stock':
+            case 'out_of_stock':
             case 'habis':
                 return $query->outOfStock();
             case 'restock':

@@ -45,8 +45,8 @@ class SeedLotStockValidationTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create seed classes
@@ -70,9 +70,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-TEST-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('variety_id');
@@ -82,9 +82,9 @@ class SeedLotStockValidationTest extends TestCase
             'variety_id' => $this->variety->id,
             'lot_code' => 'BS-TEST-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('seed_class_id');
@@ -94,9 +94,9 @@ class SeedLotStockValidationTest extends TestCase
             'variety_id' => $this->variety->id,
             'seed_class_id' => $this->bsSeedClass->id,
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('lot_code');
@@ -115,9 +115,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-OLD-001',
             'production_year' => 1999, // Before minimum year 2000
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('production_year');
@@ -128,9 +128,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-FUTURE-001',
             'production_year' => $currentYear + 2, // Too far in future
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('production_year');
@@ -141,9 +141,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-CURRENT-001',
             'production_year' => $currentYear,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertRedirect();
@@ -164,9 +164,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-NEG-001',
             'production_year' => 2024,
-            'quantity' => -10.0, // Negative
+            'quantity' => -10, // Negative
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertSessionHasErrors('quantity');
@@ -177,9 +177,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-ZERO-001',
             'production_year' => 2024,
-            'quantity' => 0.0, // Zero should be valid
+            'quantity' => 0, // Zero should be valid
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertRedirect(); // Should succeed
@@ -190,9 +190,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-LARGE-001',
             'production_year' => 2024,
-            'quantity' => 999999999.99, // Very large should be valid
+            'quantity' => 999999999, // Very large should be valid
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertRedirect(); // Should succeed
@@ -209,9 +209,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-NEG-PRICE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => -1000.00, // Negative price
+            'price_per_unit' => -1000, // Negative price
         ]);
 
         $response->assertSessionHasErrors('price_per_unit');
@@ -222,15 +222,15 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-FREE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 0.00, // Free
+            'price_per_unit' => 0, // Free
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('seed_lots', [
             'lot_code' => 'BS-FREE-001',
-            'price_per_unit' => 0.00,
+            'price_per_unit' => 0,
         ]);
     }
 
@@ -245,9 +245,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-UNIQUE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         // Try to create another with same lot_code
@@ -256,9 +256,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id, // Different seed class
             'lot_code' => 'BS-UNIQUE-001', // Same lot code
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 60000.00,
+            'price_per_unit' => 60000,
         ]);
 
         $response->assertSessionHasErrors('lot_code');
@@ -275,9 +275,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-WEIGHT-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg', // Weight unit for BS
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         $response->assertRedirect();
@@ -286,21 +286,23 @@ class SeedLotStockValidationTest extends TestCase
             'unit' => 'kg',
         ]);
 
-        // FS seed class should accept weight-based units (same as BS)
+        // FS seed class should accept weight-based units (same as BS), and 'ton' should be normalized to 'kg'
         $response = $this->post(route('admin.seed-lots.store'), [
             'variety_id' => $this->variety->id,
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-WEIGHT-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
-            'unit' => 'gram', // Weight unit for FS
-            'price_per_unit' => 1000.00,
+            'quantity' => 1,
+            'unit' => 'ton', // Weight unit for FS to be normalized
+            'price_per_unit' => 1000,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('seed_lots', [
             'lot_code' => 'FS-WEIGHT-001',
-            'unit' => 'gram',
+            'unit' => 'kg',
+            'quantity' => 1000,
+            'price_per_unit' => 1,
         ]);
     }
 
@@ -315,14 +317,14 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-REDUCE-001',
             'production_year' => 2024,
-            'quantity' => 100.0,
+            'quantity' => 100,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         // Simulate some stock being reserved/sold (this would be done by order system)
         // For this test, we'll assume 30kg is reserved
-        $reservedQuantity = 30.0;
+        $reservedQuantity = 30;
 
         // Try to reduce quantity below reserved amount
         $response = $this->put(route('admin.seed-lots.update', $seedLot), [
@@ -330,9 +332,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-REDUCE-001',
             'production_year' => 2024,
-            'quantity' => 20.0, // Less than reserved (30kg)
+            'quantity' => 20, // Less than reserved (30kg)
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         // This should be allowed for now (business logic may vary)
@@ -351,9 +353,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-SELLABLE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -369,9 +371,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-NON-SELLABLE-001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false,
         ]);
 
@@ -392,9 +394,9 @@ class SeedLotStockValidationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-DELETE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
         ]);
 
         // Test deletion when no orders exist

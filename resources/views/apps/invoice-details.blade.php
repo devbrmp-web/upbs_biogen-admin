@@ -131,7 +131,7 @@
                     <div class="col-sm-7">
                         <div class="clearfix pt-xl-3 pt-0">
                             <h6 class="text-muted">
-                                Notes:
+                                Description:
                             </h6>
 
                             <small class="text-muted">

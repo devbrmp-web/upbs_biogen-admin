@@ -26,24 +26,20 @@ class SeedLotFactory extends Factory
      */
     public function definition(): array
     {
-        $units = ['kg', 'gram', 'ton', 'bottle', 'piece'];
+        $units = ['kg', 'bottle', 'piece'];
         $unit = $this->faker->randomElement($units);
         
-        // Adjust quantity based on unit
+        // Adjust quantity based on unit (integer-only)
         $quantity = match($unit) {
             'kg' => $this->faker->numberBetween(10, 1000),
-            'gram' => $this->faker->numberBetween(100, 5000),
-            'ton' => $this->faker->numberBetween(1, 50),
             'bottle' => $this->faker->numberBetween(10, 500),
             'piece' => $this->faker->numberBetween(50, 1000),
             default => $this->faker->numberBetween(10, 1000),
         };
 
-        // Adjust price based on unit
+        // Adjust price based on unit (integer-only)
         $pricePerUnit = match($unit) {
             'kg' => $this->faker->numberBetween(1000, 10000),
-            'gram' => $this->faker->numberBetween(10, 100),
-            'ton' => $this->faker->numberBetween(500000, 2000000),
             'bottle' => $this->faker->numberBetween(5000, 25000),
             'piece' => $this->faker->numberBetween(100, 1000),
             default => $this->faker->numberBetween(1000, 10000),
@@ -58,7 +54,7 @@ class SeedLotFactory extends Factory
             'unit' => $unit,
             'price_per_unit' => $pricePerUnit,
             'is_sellable' => $this->faker->boolean(80), // 80% chance of being sellable
-            'notes' => $this->faker->optional()->sentence(),
+            'description' => $this->faker->optional()->sentence(),
             'created_at' => now(),
             'updated_at' => now(),
         ];
@@ -105,6 +101,18 @@ class SeedLotFactory extends Factory
             'unit' => 'bottle',
             'quantity' => $this->faker->numberBetween(10, 500),
             'price_per_unit' => $this->faker->numberBetween(5000, 25000),
+        ]);
+    }
+
+    /**
+     * Create a seed lot with piece unit.
+     */
+    public function withPieceUnit(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'unit' => 'piece',
+            'quantity' => $this->faker->numberBetween(50, 1000),
+            'price_per_unit' => $this->faker->numberBetween(100, 1000),
         ]);
     }
 

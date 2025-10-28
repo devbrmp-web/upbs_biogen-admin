@@ -9,10 +9,10 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h4 class="card-title">{{ $commodity->name }}</h4>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.commodities.edit', $commodity) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ route('admin.commodities.edit', $commodity) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-primary">
                             <i class="bx bx-pencil"></i> Edit
                         </a>
-                        <a href="{{ route('admin.commodities.index') }}" class="btn btn-sm btn-light">
+                        <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.commodities.index')) }}" class="btn btn-sm btn-light">
                             <i class="bx bx-arrow-back"></i> Back
                         </a>
                     </div>
@@ -64,10 +64,10 @@
             <div class="card-body">
                 <h5 class="card-title">Quick Actions</h5>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('admin.varieties.create', ['commodity_id' => $commodity->id]) }}" class="btn btn-success">
+                    <a href="{{ route('admin.varieties.create', ['commodity_id' => $commodity->id]) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-success">
                         <i class="bx bx-plus"></i> Add New Variety
                     </a>
-                    <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-outline-primary">
                         <i class="bx bx-list-ul"></i> View All Varieties
                     </a>
                 </div>
@@ -110,16 +110,7 @@
                                 </td>
                                 <td>{{ $variety->name }}</td>
                                 <td>
-                                    @php
-                                        $stockStatus = $variety->stock_status;
-                                        $badgeClass = match($stockStatus) {
-                                            'tersedia' => 'bg-success',
-                                            'restock' => 'bg-warning',
-                                            'habis' => 'bg-danger',
-                                            default => 'bg-secondary'
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($stockStatus) }}</span>
+                                    <span class="badge bg-{{ $variety->stock_status_class }}">{{ $variety->stock_status_label }}</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-info">{{ $variety->seed_lots_count ?? $variety->seedLots->count() }}</span>
@@ -127,10 +118,10 @@
                                 <td>{{ $variety->created_at?->format('d M Y') }}</td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.varieties.show', $variety) }}" class="btn btn-sm btn-info" title="View">
+                                        <a href="{{ route('admin.varieties.show', $variety) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-info" title="View">
                                             <i class="bx bx-show"></i>
                                         </a>
-                                        <a href="{{ route('admin.varieties.edit', $variety) }}" class="btn btn-sm btn-light" title="Edit">
+                                        <a href="{{ route('admin.varieties.edit', $variety) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-sm btn-light" title="Edit">
                                             <i class="bx bx-pencil"></i>
                                         </a>
                                     </div>
@@ -142,7 +133,7 @@
                 </div>
                 @if($commodity->varieties->count() > 10)
                     <div class="text-center mt-3">
-                        <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-outline-primary">
                             View All {{ $commodity->varieties->count() }} Varieties
                         </a>
                     </div>

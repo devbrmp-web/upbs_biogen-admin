@@ -25,6 +25,7 @@
                 <form action="{{ route('admin.varieties.update', $variety) }}" method="POST" enctype="multipart/form-data" id="varietyImageForm">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return" value="{{ request()->input('return', route('admin.varieties.index')) }}">
 
                         <!-- Name Field -->
                         <div class="mb-3">
@@ -56,7 +57,7 @@
                         <!-- SKU Info (autogenerate) -->
                         <div class="mb-3">
                             <label class="form-label">SKU</label>
-                            <div class="form-text">SKU akan digenerate otomatis berdasarkan komoditas dan nama. Nilai saat ini: <code>{{ $variety->sku }}</code></div>
+                            <div class="form-text">SKU will be auto-generated based on commodity and name. Current value: <code>{{ $variety->sku }}</code></div>
                         </div>
 
                         <!-- Description Field -->
@@ -73,7 +74,7 @@
                         <div class="mb-3">
                             <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                   id="price" name="price" value="{{ old('price', $variety->price) }}" step="1" min="0" inputmode="numeric" required>
+                                   id="price" name="price" value="{{ old('price', (int) $variety->price) }}" step="1" min="0" inputmode="numeric" pattern="[0-9]*" required>
                             @error('price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -106,7 +107,7 @@
                         <!-- Help Text -->
                         <div class="alert alert-info">
                             <i class="bx bx-info-circle me-2"></i>
-                            <strong>Stock Management:</strong> Total stok (kg) dihitung otomatis dari Seed Lots berunit kg yang dapat dijual. Planlet tidak dihitung ke total kg karena satuannya per botol.
+                            <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Planlets are not counted in total kg as they are measured per bottle.
                         </div>
 
                     <div class="row">
@@ -143,7 +144,7 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="{{ route('admin.varieties.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.varieties.index')) }}" class="btn btn-light">Cancel</a>
                         <button type="submit" class="btn btn-primary">Update Variety</button>
                     </div>
                 </form>
@@ -215,33 +216,15 @@
                 }
             });
 
-            form.addEventListener('submit', async function(e){
-                e.preventDefault();
-                const fd = new FormData(form);
-                // If a file is added via Dropzone, include it
-                const files = dz.getAcceptedFiles();
-                if (files && files[0]) {
-                    fd.set('image', files[0]);
-                }
-                try {
-                    const res = await fetch(form.action, {
-                        method: form.method || 'POST',
-                        body: fd,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        redirect: 'follow'
-                    });
-                    if (res.redirected) {
-                        window.location.href = res.url;
-                        return;
-                    }
-                    if (!res.ok) {
-                        console.error('Failed to submit form');
-                    }
-                } catch(err) {
-                    console.error(err);
-                }
+            // Allow normal form submission - remove preventDefault to fix 422 error
+            // The form will submit normally with proper Laravel validation
+        }
+
+        // Price input filtering - only allow digits
+        const priceEl = document.getElementById('price');
+        if (priceEl) {
+            priceEl.addEventListener('input', () => {
+                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
             });
         }
     });

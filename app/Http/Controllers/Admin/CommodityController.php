@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Commodity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CommodityController extends Controller
@@ -25,6 +26,11 @@ class CommodityController extends Controller
 
         $commodities = $query->latest('updated_at')->paginate(10)->appends($request->query());
         
+        // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)
+        if ($request->ajax()) {
+            return view('admin.commodities.partials.table-content', compact('commodities'));
+        }
+
         return view('admin.commodities.index', compact('commodities'));
     }
 
@@ -54,7 +60,7 @@ class CommodityController extends Controller
 
         Commodity::create($validated);
 
-        return redirect()->route('admin.commodities.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.commodities.index')))
             ->with('success', 'Commodity created successfully.');
     }
 
@@ -106,14 +112,14 @@ class CommodityController extends Controller
 
         $commodity->update($validated);
 
-        return redirect()->route('admin.commodities.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.commodities.index')))
             ->with('success', 'Commodity updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Commodity $commodity)
+    public function destroy(Request $request, Commodity $commodity)
     {
         // Delete image if exists
         if ($commodity->image_path) {
@@ -122,7 +128,29 @@ class CommodityController extends Controller
 
         $commodity->delete();
 
-        return redirect()->route('admin.commodities.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.commodities.index')))
             ->with('success', 'Commodity deleted successfully.');
+    }
+
+    /**
+     * Sanitize return URL to prevent open redirects and ensure it stays within app domain.
+     */
+    private function sanitizeReturnUrl(Request $request, string $fallbackUrl): string
+    {
+        $return = $request->string('return')->trim()->toString();
+        if (!$return) {
+            return $fallbackUrl;
+        }
+
+        // Basic hardening
+        if (Str::contains($return, ['javascript:', "\n", "\r"])) {
+            return $fallbackUrl;
+        }
+
+        $appUrl = rtrim(config('app.url'), '/');
+        if (Str::startsWith($return, [$appUrl, '/'])) {
+            return $return;
+        }
+        return $fallbackUrl;
     }
 }

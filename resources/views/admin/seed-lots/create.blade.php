@@ -8,13 +8,17 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="card-title">Add New Seed Lot</h4>
-                    <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-light">
+                    @php
+                        $sanitizedReturn = sanitizeReturnUrl(request('return'), route('admin.seed-lots.index'));
+                    @endphp
+                    <a href="{{ $sanitizedReturn }}" class="btn btn-light">
                         <i class="bx bx-arrow-back"></i> Back to List
                     </a>
                 </div>
 
                 <form action="{{ route('admin.seed-lots.store') }}" method="POST">
                     @csrf
+                    <input type="hidden" name="return" value="{{ $sanitizedReturn }}">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -68,7 +72,7 @@
                                         id="seed_class_id" name="seed_class_id" required>
                                     <option value="">Select Seed Class</option>
                                     @foreach($seedClasses as $seedClass)
-                                        <option value="{{ $seedClass->id }}" {{ old('seed_class_id') == $seedClass->id ? 'selected' : '' }}>
+                                        <option value="{{ $seedClass->id }}" data-code="{{ $seedClass->code }}" {{ old('seed_class_id') == $seedClass->id ? 'selected' : '' }}>
                                             {{ $seedClass->name }} ({{ $seedClass->code }})
                                         </option>
                                     @endforeach
@@ -83,10 +87,10 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="quantity" class="form-label">Quantity (bilangan bulat) <span class="text-danger">*</span></label>
-                                <input type="number" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
+                                <label for="quantity" class="form-label">Quantity (whole number) <span class="text-danger">*</span></label>
+                                <input type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
                                 id="quantity" name="quantity" value="{{ old('quantity') }}"
-                                placeholder="Masukkan jumlah sebagai bilangan bulat (tanpa desimal)" />
+                                placeholder="Enter quantity as whole number (no decimals)" />
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -99,7 +103,6 @@
                                         id="unit" name="unit" required>
                                     <option value="">Select Unit</option>
                                     <option value="kg" {{ old('unit') == 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
-                                    <option value="gram" {{ old('unit') == 'gram' ? 'selected' : '' }}>Gram (g)</option>
                                     <option value="ton" {{ old('unit') == 'ton' ? 'selected' : '' }}>Ton</option>
                                     <option value="piece" {{ old('unit') == 'piece' ? 'selected' : '' }}>Piece</option>
                                     <option value="bottle" {{ old('unit') == 'bottle' ? 'selected' : '' }}>Bottle</option>
@@ -107,17 +110,19 @@
                                 @error('unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small id="unit-hint" class="form-text text-muted"></small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="price_per_unit" class="form-label">Price per Unit (IDR) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" class="form-control @error('price_per_unit') is-invalid @enderror" 
+                                <input type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" class="form-control @error('price_per_unit') is-invalid @enderror" 
                                        id="price_per_unit" name="price_per_unit" value="{{ old('price_per_unit') }}" 
-                                       min="0" required>
+                                       required>
                                 @error('price_per_unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">Enter price per unit as whole number (no decimals).</div>
                             </div>
                         </div>
                     </div>
@@ -151,7 +156,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bx bx-save"></i> Save Seed Lot
                         </button>
-                        <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-secondary">
+                        <a href="{{ $sanitizedReturn }}" class="btn btn-secondary">
                             <i class="bx bx-x"></i> Cancel
                         </a>
                     </div>
@@ -169,9 +174,10 @@
                     <ul class="mb-0 small">
                         <li><strong>Lot Code:</strong> Unique identifier for tracking</li>
                         <li><strong>Variety:</strong> Type of seed/plant variety</li>
-                        <li><strong>Seed Class:</strong> Classification (BS, FS, etc.)</li>
-                        <li><strong>Quantity:</strong> Amount available</li>
-                        <li><strong>Price:</strong> Cost per unit in IDR</li>
+                        <li><strong>Seed Class:</strong> Classification (Breeder Seed, Foundation Seed, etc.)</li>
+                        <li><strong>Quantity:</strong> Amount available (whole number; no decimals)</li>
+                        <li><strong>Price:</strong> Cost per unit in IDR (whole number)</li>
+                        <li><strong>Unit:</strong> For BS/FS classes, use weight-based units (kg or ton)</li>
                     </ul>
                 </div>
                 
@@ -179,8 +185,9 @@
                     <h6><i class="bx bx-bulb"></i> Tips</h6>
                     <ul class="mb-0 small">
                         <li>Use consistent lot code format</li>
-                        <li>Ensure accurate quantity measurements</li>
-                        <li>Set competitive pricing</li>
+                        <li>Ensure quantity is entered as a whole number (no decimals)</li>
+                        <li>Price per unit should be a whole number</li>
+                        <li>For BS/FS classes, use kg or ton as unit</li>
                         <li>Only mark as sellable when ready</li>
                     </ul>
                 </div>
@@ -217,11 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
     varietySelect.addEventListener('change', generateLotCode);
     yearInput.addEventListener('change', generateLotCode);
     
-    // Format price input
+    // Format price input (integer only)
     const priceInput = document.getElementById('price_per_unit');
     priceInput.addEventListener('input', function() {
-        // Remove non-numeric characters except decimal point
-        this.value = this.value.replace(/[^0-9.]/g, '');
+        // Allow digits only (no decimals)
+        this.value = this.value.replace(/[^0-9]/g, '');
     });
 });
 </script>

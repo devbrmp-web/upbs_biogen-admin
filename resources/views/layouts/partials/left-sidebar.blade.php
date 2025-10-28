@@ -20,7 +20,7 @@
             <li class="menu-title">Menu</li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="iconamoon:home-duotone"></iconify-icon>
                     </span>
@@ -28,10 +28,10 @@
                 </a>
             </li>
 
-            <li class="menu-title">Management</li>
+            <li class="menu-title">Catalog</li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.commodities.index') }}">
+                <a class="nav-link {{ request()->routeIs('admin.commodities.*') ? 'active' : '' }}" href="{{ route('admin.commodities.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="iconamoon:category"></iconify-icon>
                     </span>
@@ -40,7 +40,7 @@
             </li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.varieties.index') }}">
+                <a class="nav-link {{ request()->routeIs('admin.varieties.*') ? 'active' : '' }}" href="{{ route('admin.varieties.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="gridicons:product"></iconify-icon>
                     </span>
@@ -48,8 +48,10 @@
                 </a>
             </li>
 
+            <li class="menu-title">Inventory</li>
+
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.seed-classes.index') }}">
+                <a class="nav-link {{ request()->routeIs('admin.seed-classes.*') ? 'active' : '' }}" href="{{ route('admin.seed-classes.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="iconamoon:badge-fill"></iconify-icon>
                     </span>
@@ -58,7 +60,18 @@
             </li>
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.admin-users.index') }}">
+                <a class="nav-link {{ request()->routeIs('admin.seed-lots.*') ? 'active' : '' }}" href="{{ route('admin.seed-lots.index') }}">
+                    <span class="nav-icon">
+                        <iconify-icon icon="iconamoon:box-duotone"></iconify-icon>
+                    </span>
+                    <span class="nav-text"> Seed Lots </span>
+                </a>
+            </li>
+
+            <li class="menu-title">Administrator</li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.admin-users.*') ? 'active' : '' }}" href="{{ route('admin.admin-users.index') }}">
                     <span class="nav-icon">
                         <iconify-icon icon="wpf:administrator"></iconify-icon>
                     </span>

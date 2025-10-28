@@ -8,11 +8,23 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="card-title">Edit Seed Lot: {{ $seedLot->lot_code }}</h4>
+                    @php
+                        $rawReturn = request()->input('return', request()->fullUrl());
+                        $rParts = parse_url($rawReturn);
+                        $rPath = $rParts['path'] ?? '';
+                        $rQuery = [];
+                        if (!empty($rParts['query'])) { parse_str($rParts['query'], $rQuery); }
+                        unset($rQuery['ajax'], $rQuery['X-Requested-With']);
+                        $rAllowed = ['q','search','variety_id','seed_class_id','is_sellable','page'];
+                        $rQuery = array_intersect_key($rQuery, array_flip($rAllowed));
+                        $rawSanitizedReturn = url($rPath) . (count($rQuery) ? ('?' . http_build_query($rQuery)) : '');
+                        $sanitizedReturn = sanitizeReturnUrl($rawSanitizedReturn, route('admin.seed-lots.index'));
+                    @endphp
                     <div class="d-flex gap-2">
-                        <a href="{{ route('admin.seed-lots.show', $seedLot) }}" class="btn btn-info">
+                        <a href="{{ route('admin.seed-lots.show', ['seed_lot' => $seedLot, 'return' => $sanitizedReturn]) }}" class="btn btn-info">
                             <i class="bx bx-show"></i> View
                         </a>
-                        <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-light">
+                        <a href="{{ $sanitizedReturn ?: route('admin.seed-lots.index') }}" class="btn btn-light">
                             <i class="bx bx-arrow-back"></i> Back to List
                         </a>
                     </div>
@@ -21,6 +33,7 @@
                 <form action="{{ route('admin.seed-lots.update', $seedLot) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return" value="{{ $sanitizedReturn }}">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -73,7 +86,7 @@
                                         id="seed_class_id" name="seed_class_id" required>
                                     <option value="">Select Seed Class</option>
                                     @foreach($seedClasses as $seedClass)
-                                        <option value="{{ $seedClass->id }}" {{ old('seed_class_id', $seedLot->seed_class_id) == $seedClass->id ? 'selected' : '' }}>
+                                        <option value="{{ $seedClass->id }}" data-code="{{ $seedClass->code }}" {{ old('seed_class_id', $seedLot->seed_class_id) == $seedClass->id ? 'selected' : '' }}>
                                             {{ $seedClass->name }} ({{ $seedClass->code }})
                                         </option>
                                     @endforeach
@@ -88,10 +101,10 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="quantity" class="form-label">Quantity (bilangan bulat) <span class="text-danger">*</span></label>
-                                <input type="number" step="1" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
+                                <label for="quantity" class="form-label">Quantity (whole number) <span class="text-danger">*</span></label>
+                                <input type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
                                 id="quantity" name="quantity" value="{{ old('quantity', $seedLot->quantity) }}"
-                                placeholder="Masukkan jumlah sebagai bilangan bulat (tanpa desimal)" />
+                                placeholder="Enter quantity as whole number (no decimals)" />
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -104,7 +117,6 @@
                                         id="unit" name="unit" required>
                                     <option value="">Select Unit</option>
                                     <option value="kg" {{ old('unit', $seedLot->unit) == 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
-                                    <option value="gram" {{ old('unit', $seedLot->unit) == 'gram' ? 'selected' : '' }}>Gram (g)</option>
                                     <option value="ton" {{ old('unit', $seedLot->unit) == 'ton' ? 'selected' : '' }}>Ton</option>
                                     <option value="piece" {{ old('unit', $seedLot->unit) == 'piece' ? 'selected' : '' }}>Piece</option>
                                     <option value="bottle" {{ old('unit', $seedLot->unit) == 'bottle' ? 'selected' : '' }}>Bottle</option>
@@ -112,17 +124,19 @@
                                 @error('unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small id="unit-hint" class="form-text text-muted"></small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="price_per_unit" class="form-label">Price per Unit (IDR) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" class="form-control @error('price_per_unit') is-invalid @enderror" 
+                                <input type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" class="form-control @error('price_per_unit') is-invalid @enderror" 
                                        id="price_per_unit" name="price_per_unit" value="{{ old('price_per_unit', $seedLot->price_per_unit) }}" 
-                                       min="0" required>
+                                       required>
                                 @error('price_per_unit')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <div class="form-text">Enter price per unit as whole number (no decimals).</div>
                             </div>
                         </div>
                     </div>
@@ -156,7 +170,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bx bx-save"></i> Update Seed Lot
                         </button>
-                        <a href="{{ route('admin.seed-lots.show', $seedLot) }}" class="btn btn-secondary">
+                        <a href="{{ $sanitizedReturn ?: route('admin.seed-lots.show', $seedLot) }}" class="btn btn-secondary">
                             <i class="bx bx-x"></i> Cancel
                         </a>
                     </div>
@@ -211,14 +225,14 @@
                     <h6><i class="bx bx-info-circle"></i> Editing Tips</h6>
                     <ul class="mb-0 small">
                         <li>Ensure lot code remains unique</li>
-                        <li>Update quantity if stock changes</li>
-                        <li>Adjust pricing as needed</li>
+                        <li>Update quantity as a whole number if stock changes (whole number)</li>
+                        <li>Adjust pricing as needed; price per unit should be a whole number (whole number)</li>
+                        <li>BS/FS classes must use kg or ton as unit</li>
                         <li>Toggle sellable status carefully</li>
                     </ul>
                 </div>
             </div>
         </div>
-    </div>
 </div>
 
 @endsection
@@ -230,11 +244,11 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Format price input
+    // Format price input (integer only)
     const priceInput = document.getElementById('price_per_unit');
     priceInput.addEventListener('input', function() {
-        // Remove non-numeric characters except decimal point
-        this.value = this.value.replace(/[^0-9.]/g, '');
+        // Allow digits only (no decimals)
+        this.value = this.value.replace(/[^0-9]/g, '');
     });
 });
 </script>

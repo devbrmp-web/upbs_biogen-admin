@@ -16,12 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitOptions = {
         'BS': [
             { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'gram', text: 'Gram (g)' },
             { value: 'ton', text: 'Ton' }
         ],
         'FS': [
             { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'gram', text: 'Gram (g)' },
             { value: 'ton', text: 'Ton' }
         ],
         'PL': [
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         'default': [
             { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'gram', text: 'Gram (g)' },
             { value: 'ton', text: 'Ton' },
             { value: 'piece', text: 'Piece' },
             { value: 'bottle', text: 'Bottle' }
@@ -85,10 +82,10 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (seedClassCode) {
             case 'BS':
             case 'FS':
-                message = 'Breeder Seed (BS) and Foundation Seed (FS) must be measured in kg, gram, or ton';
+                message = 'BS and FS classes must use kg or ton units.';
                 break;
             case 'PL':
-                message = 'Planlet (PL) must use bottle or piece units.';
+                message = 'PL class must use bottle or piece units.';
                 break;
         }
         
@@ -140,18 +137,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * Update quantity input step and validation behavior
-     * - PL (Planlet): integer only, step=1
-     * - Others (BS, FS, default): numeric with decimals, step=0.01
+     * - Integer-only for ALL classes
      */
     function updateQuantityBehavior(seedClassCode) {
         if (!quantityInput) return;
         // Enforce integer-only for ALL seed classes
         quantityInput.setAttribute('step', '1');
         quantityInput.setAttribute('min', '0');
-        showQuantityValidationMessage('Quantity harus bilangan bulat (tanpa desimal) untuk semua kelas.');
+        showQuantityValidationMessage('Quantity must be an integer (no decimals) for all classes.');
     }
 
-    // Enforce integer input when PL selected; allow decimals otherwise
+    // Enforce integer input
     quantityInput.addEventListener('keypress', function(e) {
         const char = String.fromCharCode(e.which);
         // Block any non-digit input (including '.')

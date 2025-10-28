@@ -43,7 +43,7 @@ class SeedLotValidationTest extends TestCase
     #[Test]
     public function bs_seed_class_accepts_weight_based_units()
     {
-        $validUnits = ['kg', 'gram', 'ton'];
+        $validUnits = ['kg', 'ton'];
         
         foreach ($validUnits as $unit) {
             $seedLotData = [
@@ -63,10 +63,12 @@ class SeedLotValidationTest extends TestCase
             $response->assertRedirect()
                 ->assertSessionHasNoErrors();
 
-            $this->assertDatabaseHas('seed_lots', [
-                'lot_code' => 'LOT-BS-' . strtoupper($unit),
-                'unit' => $unit,
-            ]);
+            // For BS, 'ton' input is normalized to stored 'kg' with quantity multiplied by 1000 and price_per_unit divided by 1000
+            $seedLot = SeedLot::where('lot_code', 'LOT-BS-' . strtoupper($unit))->first();
+            $this->assertNotNull($seedLot);
+            $this->assertEquals('kg', $seedLot->unit);
+            $this->assertEquals($unit === 'ton' ? 25 * 1000 : 25, $seedLot->quantity);
+            $this->assertEquals($unit === 'ton' ? 2000 / 1000 : 2000, $seedLot->price_per_unit);
         }
     }
 
@@ -101,7 +103,7 @@ class SeedLotValidationTest extends TestCase
     #[Test]
     public function fs_seed_class_accepts_weight_based_units()
     {
-        $validUnits = ['kg', 'gram', 'ton'];
+        $validUnits = ['kg', 'ton'];
         
         foreach ($validUnits as $unit) {
             $seedLotData = [
@@ -121,10 +123,12 @@ class SeedLotValidationTest extends TestCase
             $response->assertRedirect()
                 ->assertSessionHasNoErrors();
 
-            $this->assertDatabaseHas('seed_lots', [
-                'lot_code' => 'LOT-FS-' . strtoupper($unit),
-                'unit' => $unit,
-            ]);
+            // For FS, 'ton' input is normalized to stored 'kg' with quantity multiplied by 1000 and price_per_unit divided by 1000
+            $seedLot = SeedLot::where('lot_code', 'LOT-FS-' . strtoupper($unit))->first();
+            $this->assertNotNull($seedLot);
+            $this->assertEquals('kg', $seedLot->unit);
+            $this->assertEquals($unit === 'ton' ? 15 * 1000 : 15, $seedLot->quantity);
+            $this->assertEquals($unit === 'ton' ? 3000 / 1000 : 3000, $seedLot->price_per_unit);
         }
     }
 
@@ -189,7 +193,7 @@ class SeedLotValidationTest extends TestCase
     #[Test]
     public function planlet_seed_class_rejects_weight_units()
     {
-        $invalidUnits = ['kg', 'gram', 'ton'];
+        $invalidUnits = ['kg', 'ton'];
         
         foreach ($invalidUnits as $unit) {
             $seedLotData = [
@@ -282,7 +286,7 @@ class SeedLotValidationTest extends TestCase
             ['name' => 'Unknown Class']
         );
 
-        $allUnits = ['kg', 'gram', 'ton', 'piece', 'bottle'];
+        $allUnits = ['kg', 'ton', 'piece', 'bottle'];
         
         foreach ($allUnits as $unit) {
             $seedLotData = [

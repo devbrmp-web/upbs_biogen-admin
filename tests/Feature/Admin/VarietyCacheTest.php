@@ -58,8 +58,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create seed lots
@@ -68,9 +68,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -79,9 +79,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -90,16 +90,16 @@ class VarietyCacheTest extends TestCase
 
         // First call should cache the result
         $totalStock1 = $variety->total_stock;
-        $this->assertEquals(80.0, $totalStock1);
+        $this->assertEquals(80, $totalStock1);
 
         // Verify cache exists
         $cacheKey = "variety_total_stock_{$variety->id}";
         $this->assertTrue(Cache::has($cacheKey));
-        $this->assertEquals(80.0, Cache::get($cacheKey));
+        $this->assertEquals(80, Cache::get($cacheKey));
 
         // Second call should use cached result
         $totalStock2 = $variety->total_stock;
-        $this->assertEquals(80.0, $totalStock2);
+        $this->assertEquals(80, $totalStock2);
     }
 
     #[Test]
@@ -109,8 +109,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-002',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create seed lot with stock above minimum
@@ -119,9 +119,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -130,9 +130,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -141,16 +141,16 @@ class VarietyCacheTest extends TestCase
 
         // First call should cache the result
         $stockStatus1 = $variety->stock_status;
-        $this->assertEquals('Tersedia', $stockStatus1);
+        $this->assertEquals('Available', $stockStatus1);
 
         // Verify cache exists
         $cacheKey = "variety_stock_status_{$variety->id}";
         $this->assertTrue(Cache::has($cacheKey));
-        $this->assertEquals('Tersedia', Cache::get($cacheKey));
+        $this->assertEquals('Available', Cache::get($cacheKey));
 
         // Second call should use cached result
         $stockStatus2 = $variety->stock_status;
-        $this->assertEquals('Tersedia', $stockStatus2);
+        $this->assertEquals('Available', $stockStatus2);
     }
 
     #[Test]
@@ -160,8 +160,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-003',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         SeedLot::create([
@@ -169,9 +169,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -187,7 +187,7 @@ class VarietyCacheTest extends TestCase
         $this->assertTrue(Cache::has($stockStatusCacheKey));
 
         // Update variety
-        $variety->update(['minimum_limit' => 20.0]);
+        $variety->update(['minimum_limit' => 20]);
 
         // Verify cache is cleared
         $this->assertFalse(Cache::has($totalStockCacheKey));
@@ -201,8 +201,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-004',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Cache the values (should be 0 initially)
@@ -222,9 +222,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -240,8 +240,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-005',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         $seedLot = SeedLot::create([
@@ -249,9 +249,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -267,7 +267,7 @@ class VarietyCacheTest extends TestCase
         $this->assertTrue(Cache::has($stockStatusCacheKey));
 
         // Update seed lot
-        $seedLot->update(['quantity' => 100.0]);
+        $seedLot->update(['quantity' => 100]);
 
         // Verify cache is cleared
         $this->assertFalse(Cache::has($totalStockCacheKey));
@@ -281,8 +281,8 @@ class VarietyCacheTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-006',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         $seedLot = SeedLot::create([
@@ -290,9 +290,9 @@ class VarietyCacheTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 

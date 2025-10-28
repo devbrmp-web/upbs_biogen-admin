@@ -14,7 +14,7 @@ class SeedClassController extends Controller
      */
     public function index(Request $request)
     {
-        $query = SeedClass::query();
+        $query = SeedClass::query()->withCount('seedLots');
 
         // Support both 'q' and 'search' parameters to align with Commodities/Varieties
         $searchQuery = $request->string('q')->trim()->toString() ?: $request->string('search')->trim()->toString();
@@ -27,6 +27,11 @@ class SeedClassController extends Controller
         }
 
         $seedClasses = $query->latest('updated_at')->paginate(10)->appends($request->query());
+
+        // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)
+        if ($request->ajax()) {
+            return view('admin.seed-classes.partials.table-content', compact('seedClasses'));
+        }
 
         return view('admin.seed-classes.index', compact('seedClasses'));
     }

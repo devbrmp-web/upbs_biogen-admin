@@ -10,15 +10,15 @@ class SeedLot extends Model
     use HasFactory;
 
     protected $fillable = [
+        'lot_code',
         'variety_id',
         'seed_class_id',
-        'lot_code',
         'production_year',
         'quantity',
         'unit',
         'price_per_unit',
+        'description',
         'is_sellable',
-        'notes',
     ];
 
     protected $casts = [

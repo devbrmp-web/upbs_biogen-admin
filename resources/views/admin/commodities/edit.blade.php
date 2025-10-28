@@ -25,6 +25,7 @@
                 <form action="{{ route('admin.commodities.update', $commodity) }}" method="POST" enctype="multipart/form-data" id="commodityImageForm">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="return" value="{{ request()->input('return', route('admin.commodities.index')) }}">
 
                     <div class="row">
                         <div class="col-lg-12">
@@ -65,7 +66,7 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="{{ route('admin.commodities.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.commodities.index')) }}" class="btn btn-light">Cancel</a>
                         <button type="submit" class="btn btn-primary">Update Commodity</button>
                     </div>
                 </form>

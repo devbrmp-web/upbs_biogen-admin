@@ -29,7 +29,17 @@ class AdminUserController extends Controller
             });
         }
 
-        $admins = $query->latest('updated_at')->paginate(10)->appends($request->query());
+        // Order: superadmin first (role_id=1), then admin (role_id=2), tie-break by created_at ASC, then id ASC
+        $admins = $query->orderBy('role_id', 'ASC')
+                       ->orderBy('created_at', 'ASC')
+                       ->orderBy('id', 'ASC')
+                       ->paginate(10)
+                       ->appends($request->query());
+
+        // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)
+        if ($request->ajax()) {
+            return view('admin.admin-users.partials.table-content', compact('admins'));
+        }
 
         return view('admin.admin-users.index', compact('admins'));
     }

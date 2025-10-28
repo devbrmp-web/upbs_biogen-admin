@@ -56,9 +56,8 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label" for="minimum_limit">Minimum Limit</label>
-                                -<input type="number" name="minimum_limit" id="minimum_limit" value="{{ old('minimum_limit') }}" step="0.01" min="1" class="form-control" placeholder="Enter minimum limit (>= 1)" required>
-                                +<input type="number" name="minimum_limit" id="minimum_limit" value="{{ old('minimum_limit') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="1" class="form-control" placeholder="Enter minimum limit (integer, >= 1)" required>
-                                <small class="text-muted">Nilai minimum limit harus >= 1. Digunakan untuk menentukan status stok.</small>
+                                <input type="number" name="minimum_limit" id="minimum_limit" value="{{ old('minimum_limit') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="1" class="form-control" placeholder="Enter minimum limit (integer, >= 1)" required>
+                                <small class="text-muted">Minimum limit must be >= 1. Used to determine stock status.</small>
                                 @error('minimum_limit')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
                         </div>
@@ -75,16 +74,14 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label" for="stock_bs_kg">Stock BS (kg)</label>
-                                -<input type="number" name="stock_bs_kg" id="stock_bs_kg" value="{{ old('stock_bs_kg') }}" step="0.01" min="0" class="form-control" placeholder="Enter stock BS in kg">
-                                +<input type="number" name="stock_bs_kg" id="stock_bs_kg" value="{{ old('stock_bs_kg') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control" placeholder="Enter stock BS in kg (integer)">
+                                <input type="number" name="stock_bs_kg" id="stock_bs_kg" value="{{ old('stock_bs_kg') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control" placeholder="Enter stock BS in kg (integer)">
                                 @error('stock_bs_kg')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label" for="stock_fs_kg">Stock FS (kg)</label>
-                                -<input type="number" name="stock_fs_kg" id="stock_fs_kg" value="{{ old('stock_fs_kg') }}" step="0.01" min="0" class="form-control" placeholder="Enter stock FS in kg">
-                                +<input type="number" name="stock_fs_kg" id="stock_fs_kg" value="{{ old('stock_fs_kg') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control" placeholder="Enter stock FS in kg (integer)">
+                                <input type="number" name="stock_fs_kg" id="stock_fs_kg" value="{{ old('stock_fs_kg') }}" step="1" inputmode="numeric" pattern="[0-9]*" min="0" class="form-control" placeholder="Enter stock FS in kg (integer)">
                                 @error('stock_fs_kg')<div class="text-danger small">{{ $message }}</div>@enderror
                             </div>
                         </div>

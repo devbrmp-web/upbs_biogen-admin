@@ -8,19 +8,32 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="card-title">Seed Lots</h4>
-                    <a href="{{ route('admin.seed-lots.create') }}" class="btn btn-primary">
+                    @php
+                        // Build sanitized return URL (remove ajax flags, keep allowed filters) and ensure it's within admin area
+                        $returnUrl = request()->fullUrl();
+                        $parts = parse_url($returnUrl);
+                        $path = $parts['path'] ?? '';
+                        $q = [];
+                        if (!empty($parts['query'])) { parse_str($parts['query'], $q); }
+                        unset($q['ajax'], $q['X-Requested-With']);
+                        $allowed = ['q','search','variety_id','seed_class_id','is_sellable','page'];
+                        $q = array_intersect_key($q, array_flip($allowed));
+                        $rawSanitizedReturn = url($path) . (count($q) ? ('?' . http_build_query($q)) : '');
+                        $sanitizedReturn = sanitizeReturnUrl($rawSanitizedReturn, route('admin.seed-lots.index'));
+                    @endphp
+                    <a href="{{ route('admin.seed-lots.create', array_merge(request()->query(), ['return' => $sanitizedReturn])) }}" class="btn btn-primary">
                         <i class="bx bx-plus"></i> Add New Seed Lot
                     </a>
                 </div>
 
                 <!-- Search & Filter Form -->
-                <form method="GET" action="{{ route('admin.seed-lots.index') }}" class="mb-3">
+                <form method="GET" action="{{ route('admin.seed-lots.index') }}" class="mb-3" id="searchForm" data-index-url="{{ route('admin.seed-lots.index') }}" role="search">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <input type="text" name="q" class="form-control" placeholder="Search by lot code..." value="{{ request('q') }}">
+                            <input type="text" name="q" class="form-control" placeholder="Search by lot code..." value="{{ request('q') }}" id="searchInput">
                         </div>
                         <div class="col-md-2">
-                            <select name="variety_id" class="form-select">
+                            <select name="variety_id" class="form-select" id="varietyFilter">
                                 <option value="">All Varieties</option>
                                 @foreach($varieties as $variety)
                                     <option value="{{ $variety->id }}" {{ request('variety_id') == $variety->id ? 'selected' : '' }}>
@@ -30,7 +43,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="seed_class_id" class="form-select">
+                            <select name="seed_class_id" class="form-select" id="seedClassFilter">
                                 <option value="">All Seed Classes</option>
                                 @foreach($seedClasses as $seedClass)
                                     <option value="{{ $seedClass->id }}" {{ request('seed_class_id') == $seedClass->id ? 'selected' : '' }}>
@@ -40,22 +53,23 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="is_sellable" class="form-select">
+                            <select name="is_sellable" class="form-select" id="statusFilter">
                                 <option value="">All Status</option>
                                 <option value="1" {{ request('is_sellable') === '1' ? 'selected' : '' }}>Sellable</option>
                                 <option value="0" {{ request('is_sellable') === '0' ? 'selected' : '' }}>Not Sellable</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <div class="d-flex gap-1">
+                            <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-outline-primary">
                                     <i class="bx bx-search"></i> Search
                                 </button>
-                                @if(request()->hasAny(['q', 'variety_id', 'seed_class_id', 'is_sellable']))
-                                    <a href="{{ route('admin.seed-lots.index') }}" class="btn btn-outline-secondary">
-                                        <i class="bx bx-x"></i> Clear
-                                    </a>
-                                @endif
+                                @php
+                                    $hasFilter = filled(request('q')) || filled(request('variety_id')) || filled(request('seed_class_id')) || (request()->has('is_sellable') && request('is_sellable') !== '');
+                                @endphp
+                                <a href="{{ route('admin.seed-lots.index') }}" id="clearFiltersBtn" class="btn btn-outline-secondary {{ $hasFilter ? '' : 'd-none' }}" title="Clear all filters" aria-label="Clear filters">
+                                    <i class="bx bx-x"></i> Clear
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -75,84 +89,15 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="bg-light bg-opacity-50">
-                            <tr>
-                                <th>Lot Code</th>
-                                <th>Variety</th>
-                                <th>Seed Class</th>
-                                <th>Production Year</th>
-                                <th>Quantity</th>
-                                <th>Price/Unit</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($seedLots as $seedLot)
-                            <tr>
-                                <td><code>{{ $seedLot->lot_code }}</code></td>
-                                <td>
-                                    <a href="{{ route('admin.varieties.show', $seedLot->variety) }}" class="text-decoration-none fw-semibold">
-                                        {{ $seedLot->variety->name ?? 'N/A' }}
-                                    </a>
-                                    @if($seedLot->variety && $seedLot->variety->commodity)
-                                        <br><small class="text-muted">{{ $seedLot->variety->commodity->name }}</small>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ $seedLot->seedClass->name ?? 'N/A' }}</span>
-                                </td>
-                                <td>{{ $seedLot->production_year }}</td>
-                                <td>{{ number_format($seedLot->quantity, 0) }} {{ $seedLot->unit }}</td>
-                                <td>Rp {{ number_format($seedLot->price_per_unit, 0, ',', '.') }}</td>
-                                <td>
-                                    @if($seedLot->is_sellable)
-                                        <span class="badge bg-success">Sellable</span>
-                                    @else
-                                        <span class="badge bg-warning">Not Sellable</span>
-                                    @endif
-                                </td>
-                                <td>{{ $seedLot->created_at?->format('d M Y') }}</td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.seed-lots.show', $seedLot) }}" class="btn btn-sm btn-info" title="View">
-                                            <i class="bx bx-show"></i>
-                                        </a>
-                                        <a href="{{ route('admin.seed-lots.edit', $seedLot) }}" class="btn btn-sm btn-light" title="Edit">
-                                            <i class="bx bx-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-danger" title="Delete" 
-                                                onclick="confirmDelete('{{ $seedLot->id }}', '{{ $seedLot->lot_code }}')">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="bx bx-info-circle fs-1"></i>
-                                        <p class="mt-2">No seed lots found.</p>
-                                        <a href="{{ route('admin.seed-lots.create') }}" class="btn btn-primary">
-                                            <i class="bx bx-plus"></i> Add First Seed Lot
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if($seedLots instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    <div class="d-flex justify-content-center mt-3 seed-lots-pagination">
-                        {{ $seedLots->withQueryString()->links('custom.pagination') }}
+                <div id="list-root" class="position-relative">
+                    <div id="sr-status" class="visually-hidden" aria-live="polite"></div>
+                    <div id="loadingOverlay" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 10;" aria-busy="false">
+                        <div class="spinner-border text-primary" role="status" aria-label="Loading seed lots">
+                            <span class="ms-2">Loading list...</span>
+                        </div>
                     </div>
-                @endif
+                    @include('admin.seed-lots.partials.table-content')
+                </div>
             </div>
         </div>
     </div>
@@ -175,6 +120,7 @@
                 <form id="deleteForm" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
+                    <input type="hidden" name="return" value="{{ $sanitizedReturn }}">
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </div>
@@ -186,9 +132,281 @@
 
 @push('scripts')
 <script>
-function confirmDelete(id, lotCode) {
+// AJAX Progressive Enhancement for Seed Lots (consistent with other list pages)
+document.addEventListener('DOMContentLoaded', function() {
+    let searchTimeout;
+    let currentController = null;
+    const searchInput = document.getElementById('searchInput');
+    const varietyFilter = document.getElementById('varietyFilter');
+    const seedClassFilter = document.getElementById('seedClassFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchForm = document.getElementById('searchForm');
+    const listRoot = document.getElementById('list-root');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const srStatus = document.getElementById('sr-status');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+
+    // Debounced search function
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performAjaxSearch();
+        }, 500);
+    }
+
+    // Show/hide loading state
+    function setLoading(isLoading) {
+        if (!loadingOverlay) return;
+        if (isLoading) {
+            loadingOverlay.classList.remove('d-none');
+            loadingOverlay.setAttribute('aria-busy', 'true');
+            srStatus && (srStatus.textContent = 'Loading, please wait...');
+        } else {
+            loadingOverlay.classList.add('d-none');
+            loadingOverlay.setAttribute('aria-busy', 'false');
+            srStatus && (srStatus.textContent = 'List updated.');
+        }
+    }
+
+    function hasActiveFilters(urlObj) {
+        const q = urlObj.searchParams.get('q') || urlObj.searchParams.get('search') || '';
+        const variety = urlObj.searchParams.get('variety_id') || '';
+        const seedClass = urlObj.searchParams.get('seed_class_id') || '';
+        const sellable = urlObj.searchParams.get('is_sellable');
+        return (q && q.trim().length) || variety || seedClass || (sellable !== null && sellable !== '');
+    }
+
+    function updateClearVisibility(urlObj) {
+        if (!clearBtn) return;
+        const visible = hasActiveFilters(urlObj);
+        clearBtn.classList.toggle('d-none', !visible);
+    }
+
+    // Perform AJAX search
+    function performAjaxSearch() {
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams(formData);
+        params.append('ajax', '1');
+
+        setLoading(true);
+
+        const indexUrl = searchForm.getAttribute('data-index-url') || `{{ route('admin.seed-lots.index') }}`;
+        // Abort previous request if any
+        if (currentController) currentController.abort();
+        currentController = new AbortController();
+        fetch(`${indexUrl}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            },
+            signal: currentController.signal,
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Parse the response and replace list-body
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBody = tmp.querySelector('#list-body');
+            const oldBody = listRoot.querySelector('#list-body');
+            if (newBody && oldBody) {
+                oldBody.replaceWith(newBody);
+                attachPaginationHandlers();
+            }
+
+            // Update URL without page reload; reset page on filter change
+            const url = new URL(window.location);
+            // Remove page param when filters/search changed
+            url.searchParams.delete('page');
+            for (const [key, value] of params.entries()) {
+                if (key === 'ajax') continue;
+                if (value) {
+                    url.searchParams.set(key, value);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            }
+            window.history.pushState({}, '', url);
+            updateClearVisibility(url);
+        })
+        .catch(error => {
+            console.error('AJAX search failed:', error);
+            // Fallback to normal form submission
+            searchForm.submit();
+        })
+        .finally(() => {
+            setLoading(false);
+        });
+    }
+
+    // Attach pagination click handlers
+    function attachPaginationHandlers() {
+        const paginationContainer = listRoot.querySelector('#paginationContainer');
+        if (!paginationContainer) return;
+        const paginationLinks = paginationContainer.querySelectorAll('a[href]');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                url.searchParams.append('ajax', '1');
+                setLoading(true);
+                // Abort previous request
+                if (currentController) currentController.abort();
+                currentController = new AbortController();
+                fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    },
+                    signal: currentController.signal,
+                    credentials: 'same-origin'
+                })
+                .then(resp => resp.text())
+                .then(html => {
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = html;
+                    const newBody = tmp.querySelector('#list-body');
+                    const oldBody = listRoot.querySelector('#list-body');
+                    if (newBody && oldBody) {
+                        oldBody.replaceWith(newBody);
+                        attachPaginationHandlers();
+                    }
+                    // Update URL without ajax flag
+                    try {
+                        const clean = new URL(this.href);
+                        clean.searchParams.delete('ajax');
+                        window.history.pushState({}, '', clean.toString());
+                        updateClearVisibility(clean);
+                    } catch {
+                        window.history.pushState({}, '', this.href);
+                        updateClearVisibility(new URL(window.location.href));
+                    }
+                })
+                .catch(error => {
+                    console.error('AJAX pagination failed:', error);
+                    window.location.href = this.href;
+                })
+                .finally(() => setLoading(false));
+            });
+        });
+    }
+
+    // Event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', debounceSearch);
+    }
+
+    if (varietyFilter) {
+        varietyFilter.addEventListener('change', performAjaxSearch);
+    }
+
+    if (seedClassFilter) {
+        seedClassFilter.addEventListener('change', performAjaxSearch);
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', performAjaxSearch);
+    }
+
+    // Initial pagination handlers
+    attachPaginationHandlers();
+
+    // Prevent default form submission when AJAX is available
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        performAjaxSearch();
+    });
+
+    // Clear filters (AJAX mode)
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Reset form fields
+            if (searchInput) searchInput.value = '';
+            if (varietyFilter) varietyFilter.value = '';
+            if (seedClassFilter) seedClassFilter.value = '';
+            if (statusFilter) statusFilter.value = '';
+
+            const url = new URL(`{{ route('admin.seed-lots.index') }}`, window.location.origin);
+            url.searchParams.set('ajax', '1');
+            setLoading(true);
+            // Abort previous request
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+            fetch(url.toString(), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                },
+                signal: currentController.signal,
+                credentials: 'same-origin'
+            })
+            .then(resp => resp.text())
+            .then(html => {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                const newBody = tmp.querySelector('#list-body');
+                const oldBody = listRoot.querySelector('#list-body');
+                if (newBody && oldBody) {
+                    oldBody.replaceWith(newBody);
+                    attachPaginationHandlers();
+                }
+                // Push clean URL
+                window.history.pushState({}, '', `{{ route('admin.seed-lots.index') }}`);
+                updateClearVisibility(new URL(window.location.href));
+            })
+            .catch(() => {
+                window.location.href = `{{ route('admin.seed-lots.index') }}`;
+            })
+            .finally(() => setLoading(false));
+        });
+    }
+
+    // Handle back/forward navigation
+    window.addEventListener('popstate', () => {
+        const url = new URL(window.location.href);
+        // Sync form values with URL
+        if (searchInput) searchInput.value = url.searchParams.get('q') || url.searchParams.get('search') || '';
+        if (varietyFilter) varietyFilter.value = url.searchParams.get('variety_id') || '';
+        if (seedClassFilter) seedClassFilter.value = url.searchParams.get('seed_class_id') || '';
+        if (statusFilter) statusFilter.value = url.searchParams.get('is_sellable') ?? '';
+        // Fetch current state
+        url.searchParams.set('ajax', '1');
+        setLoading(true);
+        if (currentController) currentController.abort();
+        currentController = new AbortController();
+        fetch(url.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+            signal: currentController.signal,
+            credentials: 'same-origin'
+        })
+        .then(resp => resp.text())
+        .then(html => {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBody = tmp.querySelector('#list-body');
+            const oldBody = listRoot.querySelector('#list-body');
+            if (newBody && oldBody) {
+                oldBody.replaceWith(newBody);
+                attachPaginationHandlers();
+            }
+            updateClearVisibility(new URL(window.location.href));
+        })
+        .catch(err => console.error(err))
+        .finally(() => setLoading(false));
+    });
+});
+
+function confirmDelete(lotCode) {
     document.getElementById('deleteItemName').textContent = lotCode;
-    document.getElementById('deleteForm').action = '{{ route("admin.seed-lots.destroy", ":id") }}'.replace(':id', id);
+    document.getElementById('deleteForm').action = '{{ route("admin.seed-lots.destroy", ":lotCode") }}'.replace(':lotCode', lotCode);
     
     // Try Bootstrap modal first
     if (typeof bootstrap !== 'undefined') {
@@ -198,10 +416,8 @@ function confirmDelete(id, lotCode) {
         // Fallback to jQuery modal
         $('#deleteModal').modal('show');
     } else {
-        // Fallback to native confirm
-        if (confirm('Are you sure you want to delete the seed lot "' + lotCode + '"?')) {
-            document.getElementById('deleteForm').submit();
-        }
+        // If no modal library available, show error message instead of browser confirm
+        alert('Modal library not available. Please refresh the page and try again.');
     }
 }
 </script>

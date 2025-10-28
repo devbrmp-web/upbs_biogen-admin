@@ -6,87 +6,29 @@
     <div class="col">
         <div class="card">
             <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between gap-3">
-                    <div class="search-bar">
+                <div class="d-flex flex-wrap justify-content-between gap-3 align-items-center">
+                    <div class="search-bar d-flex align-items-center gap-2" role="search">
                         <span><i class="bx bx-search-alt"></i></span>
                         <input type="search" class="form-control" id="search" placeholder="Search commodities..." value="{{ request('search', request('q')) }}" />
+                        <a href="{{ route('admin.commodities.index') }}" id="clearFilters" class="btn btn-outline-secondary {{ request()->hasAny(['search','q']) ? '' : 'd-none' }}" aria-label="Clear filters">Clear</a>
                     </div>
                     <div>
-                        <a href="{{ route('admin.commodities.create') }}" class="btn btn-primary">
+                        <a href="{{ route('admin.commodities.create', ['return' => request()->fullUrl()]) }}" class="btn btn-primary">
                             + Add Commodity
                         </a>
                     </div>
                 </div>
                 <!-- end row -->
             </div>
-            <div>
-                <div class="table-responsive table-centered">
-                    <table class="table text-nowrap mb-0">
-                        <thead class="bg-light bg-opacity-50">
-                            <tr>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>Slug</th>
-                                <th>Varieties Count</th>
-                                <th>Created</th>
-                                <th>Updated</th>
-                                <th class="text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <!-- end thead-->
-                        <tbody>
-                            @forelse($commodities as $commodity)
-                            <tr>
-                                <td>
-                                    @if($commodity->image_path)
-                                            <img src="{{ asset('storage/' . $commodity->image_path) }}" alt="{{ $commodity->name }}" class="img-fluid" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />
-                                    @else
-                                        <div class="avatar-sm">
-                                            <span class="avatar-title bg-light text-secondary rounded">
-                                                <i class="bx bx-image"></i>
-                                            </span>
-                                        </div>
-                                    @endif
-                                </td>
-                                <td>{{ $commodity->name }}</td>
-                                <td>
-                                    <code class="text-muted">{{ $commodity->slug }}</code>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info">{{ $commodity->varieties_count ?? 0 }}</span>
-                                </td>
-                                <td>{{ $commodity->created_at?->format('Y-m-d H:i') }}</td>
-                                <td>{{ $commodity->updated_at?->format('Y-m-d H:i') }}</td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.commodities.show', $commodity) }}" class="btn btn-sm btn-info" title="View"><i class="bx bx-show"></i></a>
-                                        <a href="{{ route('admin.commodities.edit', $commodity) }}" class="btn btn-sm btn-light" title="Edit"><i class="bx bx-pencil"></i></a>
-                                        <form id="delete-form-{{ $commodity->id }}" action="{{ route('admin.commodities.destroy', $commodity) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" data-delete-form="delete-form-{{ $commodity->id }}" class="btn btn-sm btn-danger js-delete-btn" title="Delete"><i class="bx bx-trash"></i></button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="bx bx-package fs-1 d-block mb-2"></i>
-                                        No commodities found
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            <div id="list-root" class="position-relative">
+                <div id="sr-status" class="visually-hidden" aria-live="polite"></div>
+                <div id="loading-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-none" style="backdrop-filter: blur(1px); background-color: rgba(255,255,255,0.6);">
+                    <div class="d-flex align-items-center justify-content-center h-100">
+                        <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
+                        <span class="ms-2">Loading...</span>
+                    </div>
                 </div>
-                @if(isset($commodities) && method_exists($commodities, 'links'))
-                <div class="card-footer">
-                    {{ $commodities->links('custom.pagination') }}
-                </div>
-                @endif
+                @include('admin.commodities.partials.table-content')
             </div>
         </div>
     </div>
@@ -118,85 +60,179 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Delete modal logic (delegated, survives AJAX)
     let targetFormId = null;
     const modalEl = document.getElementById('confirmDeleteModal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
-    const searchInput = document.getElementById('search');
-    
-    if (!modalEl || !confirmBtn) {
-        console.error('Modal elements not found');
-        return;
-    }
-    
-    // Initialize Bootstrap modal
     let bsModal = null;
-    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         bsModal = new bootstrap.Modal(modalEl);
     }
-    
-    // Handle delete button clicks
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.js-delete-btn');
-        if (btn) {
-            e.preventDefault();
-            
-            targetFormId = btn.getAttribute('data-delete-form');
-            
-            if (bsModal) {
-                bsModal.show();
-            } else if (typeof $ !== 'undefined') {
-                $('#confirmDeleteModal').modal('show');
-            } else {
-                if (confirm('Are you sure you want to delete this commodity?')) {
-                    const form = document.getElementById(targetFormId);
-                    if (form) form.submit();
-                }
+        if (!btn) return;
+        e.preventDefault();
+        targetFormId = btn.getAttribute('data-delete-form');
+        if (bsModal) {
+            bsModal.show();
+        } else if (typeof $ !== 'undefined') {
+            $('#confirmDeleteModal').modal('show');
+        } else {
+            if (confirm('Are you sure you want to delete this commodity?')) {
+                const form = document.getElementById(targetFormId);
+                if (form) form.submit();
             }
         }
     });
-    
-    // Handle confirm button click
-    confirmBtn.addEventListener('click', function() {
-        if (targetFormId) {
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            if (!targetFormId) return;
             const form = document.getElementById(targetFormId);
-            if (form) {
-                form.submit();
-            }
-            
+            if (form) form.submit();
             if (bsModal) {
                 bsModal.hide();
             } else if (typeof $ !== 'undefined') {
                 $('#confirmDeleteModal').modal('hide');
             }
-        }
-    });
+        });
+    }
 
-    // Handle search input to update URL params
-    function updateSearch() {
-        const url = new URL(window.location);
-        const query = searchInput ? searchInput.value.trim() : '';
-        if (query !== '') {
-            // Prefer 'search' param (controller supports both 'search' and 'q')
-            url.searchParams.set('search', query);
+    // Progressive enhancement for search + pagination
+    const root = document.getElementById('list-root');
+    const overlay = document.getElementById('loading-overlay');
+    const srStatus = document.getElementById('sr-status');
+    const searchInput = document.getElementById('search');
+    const clearBtn = document.getElementById('clearFilters');
+    let debounceTimer = null;
+    let currentController = null;
+
+    function showOverlay() { if (overlay) { overlay.classList.remove('d-none'); overlay.setAttribute('aria-busy', 'true'); } }
+    function hideOverlay() { if (overlay) { overlay.classList.add('d-none'); overlay.setAttribute('aria-busy', 'false'); } }
+    function announce(msg) { if (srStatus) srStatus.textContent = msg; }
+
+    function buildUrl(baseUrl) {
+        const url = new URL(baseUrl || window.location.href);
+        const q = searchInput ? searchInput.value.trim() : '';
+        url.searchParams.delete('page');
+        if (q) {
+            url.searchParams.set('search', q);
+            url.searchParams.delete('q');
         } else {
             url.searchParams.delete('search');
             url.searchParams.delete('q');
         }
-        window.location.href = url.toString();
+        url.searchParams.set('ajax', '1');
+        return url;
     }
 
-    if (searchInput) {
-        // Trigger on Enter key
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                updateSearch();
+    function updateClearVisibility(url) {
+        if (!clearBtn) return;
+        const has = (url.searchParams.get('search') || url.searchParams.get('q') || '').trim().length > 0;
+        clearBtn.classList.toggle('d-none', !has);
+    }
+
+    async function fetchAndRender(url) {
+        const bodyContainer = root ? root.querySelector('#list-body') : null;
+        if (!bodyContainer) return window.location.assign(url.toString());
+        showOverlay();
+        announce('Loading, please wait...');
+        try {
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+            const resp = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }, signal: currentController.signal, credentials: 'same-origin' });
+            if (!resp.ok) throw new Error('Network error');
+            const html = await resp.text();
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newBody = tmp.querySelector('#list-body');
+            const oldBody = document.getElementById('list-body');
+            if (newBody && oldBody) {
+                oldBody.replaceWith(newBody);
+            } else {
+                bodyContainer.innerHTML = html;
             }
-        });
-        // Trigger on blur
-        searchInput.addEventListener('blur', function() {
-            updateSearch();
+            announce('List updated.');
+            hideOverlay();
+            // Update URL without ajax flag
+            const clean = new URL(url.toString());
+            clean.searchParams.delete('ajax');
+            history.pushState({}, '', clean.toString());
+            updateClearVisibility(clean);
+            attachPaginationHandlers();
+        } catch (err) {
+            hideOverlay();
+            announce('Failed to load.');
+            console.error(err);
+        }
+    }
+
+    function attachPaginationHandlers() {
+        if (!root) return;
+        root.querySelectorAll('a.page-link').forEach(a => {
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageUrl = new URL(a.href);
+                // Keep current filters
+                const url = buildUrl(window.location.href);
+                const p = pageUrl.searchParams.get('page');
+                if (p) url.searchParams.set('page', p);
+                fetchAndRender(url);
+                const clean = new URL(url.toString());
+                clean.searchParams.delete('ajax');
+                history.pushState({}, '', clean.toString());
+                updateClearVisibility(clean);
+            });
         });
     }
+
+    function debounce(fn, delay = 400) {
+        return function(...args) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
+    const onSearchChange = debounce(() => {
+        const url = buildUrl('{{ route('admin.commodities.index') }}');
+        fetchAndRender(url);
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', onSearchChange);
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                onSearchChange();
+            }
+        });
+        searchInput.addEventListener('blur', onSearchChange);
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+            const url = new URL('{{ route('admin.commodities.index') }}', window.location.origin);
+            url.searchParams.set('ajax', '1');
+            fetchAndRender(url);
+            history.pushState({}, '', '{{ route('admin.commodities.index') }}');
+            updateClearVisibility(new URL(window.location.href));
+        });
+    }
+
+    window.addEventListener('popstate', function() {
+        const url = new URL(window.location.href);
+        const q = url.searchParams.get('search') || url.searchParams.get('q') || '';
+        if (searchInput) searchInput.value = q;
+        url.searchParams.set('ajax', '1');
+        fetchAndRender(url);
+        updateClearVisibility(new URL(window.location.href));
+    });
+
+    // Initial pagination handlers
+    attachPaginationHandlers();
+    // Ensure Clear button visibility on load
+    updateClearVisibility(new URL(window.location.href));
 });
 </script>
 @endpush

@@ -14,7 +14,7 @@
                 </div>
 
                 <!-- Search Form -->
-                <form method="GET" action="{{ route('admin.seed-classes.index') }}" class="mb-3">
+                <form method="GET" action="{{ route('admin.seed-classes.index') }}" class="mb-3" role="search">
                     <div class="row g-2">
                         <div class="col-md-6">
                             <input type="text" name="search" id="search" class="form-control" placeholder="Search by name or code..." value="{{ request('search') ?: request('q') }}">
@@ -23,11 +23,9 @@
                             <button type="submit" class="btn btn-outline-primary">
                                 <i class="bx bx-search"></i> Search
                             </button>
-                            @if(request()->hasAny(['search', 'q']))
-                                <a href="{{ route('admin.seed-classes.index') }}" class="btn btn-outline-secondary">
-                                    <i class="bx bx-x"></i> Clear
-                                </a>
-                            @endif
+                            <a href="{{ route('admin.seed-classes.index') }}" id="clearFilters" class="btn btn-outline-secondary {{ request()->hasAny(['search','q']) ? '' : 'd-none' }}" aria-label="Clear filters">
+                                <i class="bx bx-x"></i> Clear
+                            </a>
                         </div>
                     </div>
                 </form>
@@ -46,67 +44,16 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="bg-light bg-opacity-50">
-                            <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Seed Lots</th>
-                                <th>Created</th>
-                                <th>Updated</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($seedClasses as $seedClass)
-                            <tr>
-                                <td><code>{{ $seedClass->code }}</code></td>
-                                <td class="fw-semibold">{{ $seedClass->name }}</td>
-                                <td>{{ Str::limit($seedClass->description, 50) ?: 'No description' }}</td>
-                                <td>
-                                    <span class="badge bg-info">{{ $seedClass->seed_lots_count ?? $seedClass->seedLots->count() }}</span>
-                                </td>
-                                <td>{{ $seedClass->created_at?->format('d M Y') }}</td>
-                                <td>{{ $seedClass->updated_at?->format('d M Y') }}</td>
-                                <td class="text-end">
-                                    <div class="d-inline-flex gap-1">
-                                        <a href="{{ route('admin.seed-classes.show', $seedClass) }}" class="btn btn-sm btn-info" title="View">
-                                            <i class="bx bx-show"></i>
-                                        </a>
-                                        <a href="{{ route('admin.seed-classes.edit', $seedClass) }}" class="btn btn-sm btn-light" title="Edit">
-                                            <i class="bx bx-pencil"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-danger" title="Delete" 
-                                                onclick="confirmDelete('{{ $seedClass->code }}', '{{ $seedClass->name }}')">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="bx bx-info-circle fs-1"></i>
-                                        <p class="mt-2">No seed classes found.</p>
-                                        <a href="{{ route('admin.seed-classes.create') }}" class="btn btn-primary">
-                                            <i class="bx bx-plus"></i> Add First Seed Class
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if($seedClasses instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    <div class="d-flex justify-content-center mt-3">
-                        {{ $seedClasses->withQueryString()->links() }}
+                <div id="list-root" class="position-relative">
+                    <div id="sr-status" class="visually-hidden" aria-live="polite"></div>
+                    <div id="loading-overlay" class="position-absolute top-0 start-0 w-100 h-100 d-none" style="backdrop-filter: blur(1px); background-color: rgba(255,255,255,0.6);">
+                        <div class="d-flex align-items-center justify-content-center h-100">
+                            <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
+                            <span class="ms-2">Loading...</span>
+                        </div>
                     </div>
-                @endif
+                    @include('admin.seed-classes.partials.table-content')
+                </div>
             </div>
         </div>
     </div>
@@ -158,5 +105,158 @@ function confirmDelete(code, name) {
         }
     }
 }
+
+// Progressive enhancement for AJAX list updates
+document.addEventListener('DOMContentLoaded', () => {
+    const listRoot = document.getElementById('list-root');
+    const srStatus = document.getElementById('sr-status');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const searchInput = document.getElementById('search');
+    const clearBtn = document.getElementById('clearFilters');
+    const indexUrl = '{{ route('admin.seed-classes.index') }}';
+
+    let debounceTimer = null;
+    let currentController = null;
+
+    function setLoading(isLoading, msg = '') {
+        if (!loadingOverlay) return;
+        loadingOverlay.classList.toggle('d-none', !isLoading);
+        if (srStatus) {
+            srStatus.textContent = msg || (isLoading ? 'Loading results…' : 'List updated');
+        }
+        listRoot?.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    }
+
+    function buildUrl(baseUrl, params) {
+        const url = new URL(baseUrl, window.location.origin);
+        Object.entries(params || {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && String(value).length) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
+        });
+        url.searchParams.set('ajax', '1');
+        return url.toString();
+    }
+
+    async function updateList(url) {
+        try {
+            setLoading(true, 'Loading results…');
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+            const resp = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                },
+                credentials: 'same-origin',
+                signal: currentController.signal,
+            });
+            const html = await resp.text();
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newListBody = tmp.querySelector('#list-body');
+            const oldListBody = listRoot.querySelector('#list-body');
+            if (newListBody && oldListBody) {
+                oldListBody.replaceWith(newListBody);
+                setLoading(false, 'List updated');
+            } else {
+                // Fallback: replace entire listRoot contents
+                listRoot.innerHTML = html;
+                setLoading(false, 'List updated');
+            }
+            // Clean URL in history (remove ajax)
+            try {
+                const clean = new URL(url);
+                clean.searchParams.delete('ajax');
+                window.history.pushState({}, '', clean.toString());
+                updateClearVisibility(clean);
+            } catch {}
+        } catch (err) {
+            console.error(err);
+            setLoading(false, 'Failed to load results');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger mt-2';
+            alert.textContent = 'Failed to load results. Please try again.';
+            listRoot.appendChild(alert);
+        }
+    }
+
+    function updateClearVisibility(urlObj) {
+        if (!clearBtn) return;
+        const hasSearch = (urlObj.searchParams.get('search') || urlObj.searchParams.get('q') || '').trim().length > 0;
+        clearBtn.classList.toggle('d-none', !hasSearch);
+    }
+
+    function onSearchChange() {
+        const q = searchInput?.value?.trim() || '';
+        const url = buildUrl(indexUrl, { search: q });
+        updateList(url);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(onSearchChange, 300);
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(debounceTimer);
+                onSearchChange();
+            }
+        });
+    }
+
+    // Intercept form submission as progressive enhancement
+    const searchForm = document.querySelector('form[role="search"]');
+    if (searchForm) {
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            onSearchChange();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+            const url = buildUrl(indexUrl, {});
+            updateList(url);
+        });
+    }
+
+    // Handle pagination links
+    listRoot.addEventListener('click', (e) => {
+        const target = e.target.closest('a');
+        if (!target) return;
+        // Only intercept pagination links inside list-root
+        const href = target.getAttribute('href');
+        const isPagination = target.closest('.card-footer') || (href && href.includes('page='));
+        if (isPagination) {
+            e.preventDefault();
+            // Preserve current search
+            const q = searchInput?.value?.trim() || '';
+            const urlObj = new URL(href, window.location.origin);
+            if (q) urlObj.searchParams.set('search', q);
+            urlObj.searchParams.set('ajax', '1');
+            const finalUrl = urlObj.toString();
+            updateList(finalUrl);
+        }
+    });
+
+    // Restore state on back/forward
+    window.addEventListener('popstate', function() {
+        const url = new URL(window.location.href);
+        if (searchInput) searchInput.value = url.searchParams.get('search') || url.searchParams.get('q') || '';
+        url.searchParams.set('ajax', '1');
+        updateList(url.toString());
+        updateClearVisibility(new URL(window.location.href));
+    });
+
+    // Initialize clear visibility
+    updateClearVisibility(new URL(window.location.href));
+});
 </script>
 @endpush

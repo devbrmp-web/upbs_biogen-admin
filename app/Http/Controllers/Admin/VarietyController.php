@@ -7,6 +7,7 @@ use App\Models\Variety;
 use App\Models\Commodity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class VarietyController extends Controller
@@ -49,6 +50,11 @@ class VarietyController extends Controller
         $varieties = $query->latest('updated_at')->paginate(10)->appends($request->query());
         $commodities = Commodity::orderBy('name')->get();
 
+        // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)
+        if ($request->ajax()) {
+            return view('admin.varieties.partials.table-content', compact('varieties'));
+        }
+
         return view('admin.varieties.index', compact('varieties', 'commodities'));
     }
 
@@ -74,7 +80,7 @@ class VarietyController extends Controller
             // SKU kini opsional; jika kosong akan digenerate otomatis oleh model
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
             'description' => 'required|string',
-            'price' => 'required|integer|min:0',
+            'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -85,10 +91,13 @@ class VarietyController extends Controller
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
+        
+        // Harden price as integer
+        $validated['price'] = (int) $validated['price'];
 
         Variety::create($validated);
 
-        return redirect()->route('admin.varieties.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index'))) 
             ->with('success', 'Variety created successfully.');
     }
 
@@ -174,7 +183,7 @@ class VarietyController extends Controller
                 Rule::unique('varieties', 'sku')->ignore($variety->id),
             ],
             'description' => 'required|string',
-            'price' => 'required|integer|min:0',
+            'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -191,17 +200,20 @@ class VarietyController extends Controller
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['planlet'] = $validated['planlet'] ?? 0;
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
+        
+        // Harden price as integer
+        $validated['price'] = (int) $validated['price'];
 
         $variety->update($validated);
 
-        return redirect()->route('admin.varieties.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index'))) 
             ->with('success', 'Variety updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Variety $variety)
+    public function destroy(Request $request, Variety $variety)
     {
         // Delete image if exists
         if ($variety->image_path) {
@@ -210,7 +222,29 @@ class VarietyController extends Controller
 
         $variety->delete();
 
-        return redirect()->route('admin.varieties.index')
+        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index'))) 
             ->with('success', 'Variety deleted successfully.');
+    }
+
+    /**
+     * Sanitize return URL to prevent open redirects and ensure it stays within app domain.
+     */
+    private function sanitizeReturnUrl(Request $request, string $fallbackUrl): string
+    {
+        $return = $request->string('return')->trim()->toString();
+        if (!$return) {
+            return $fallbackUrl;
+        }
+
+        // Basic hardening
+        if (Str::contains($return, ['javascript:', "\n", "\r"])) {
+            return $fallbackUrl;
+        }
+
+        $appUrl = rtrim(config('app.url'), '/');
+        if (Str::startsWith($return, [$appUrl, '/'])) {
+            return $return;
+        }
+        return $fallbackUrl;
     }
 }

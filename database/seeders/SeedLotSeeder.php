@@ -44,7 +44,7 @@ class SeedLotSeeder extends Seeder
                 'unit' => 'kg',
                 'price_per_unit' => rand(40000, 80000),
                 'is_sellable' => true,
-                'notes' => 'High quality breeder seed lot for ' . $variety->name,
+                'description' => 'High quality breeder seed lot for ' . $variety->name,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -59,7 +59,7 @@ class SeedLotSeeder extends Seeder
                 'unit' => 'kg',
                 'price_per_unit' => rand(30000, 60000),
                 'is_sellable' => true,
-                'notes' => 'Foundation seed lot for ' . $variety->name,
+                'description' => 'Foundation seed lot for ' . $variety->name,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -75,7 +75,7 @@ class SeedLotSeeder extends Seeder
                     'unit' => 'kg',
                     'price_per_unit' => rand(35000, 70000),
                     'is_sellable' => rand(0, 1) == 1,
-                    'notes' => 'Previous year breeder seed lot for ' . $variety->name,
+                    'description' => 'Previous year breeder seed lot for ' . $variety->name,
                     'created_at' => now()->subYear(),
                     'updated_at' => now()->subYear(),
                 ];

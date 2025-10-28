@@ -24,6 +24,7 @@
 
                 <form action="{{ route('admin.varieties.store') }}" method="POST" enctype="multipart/form-data" id="varietyImageForm">
                     @csrf
+                    <input type="hidden" name="return" value="{{ request()->input('return', route('admin.varieties.index')) }}">
 
                     <div class="row">
                         <div class="col-lg-6">
@@ -59,14 +60,14 @@
 
                     <div class="row">
                         <div class="col-lg-12">
-                            <small class="text-muted d-block mb-2">SKU akan digenerate otomatis saat simpan.</small>
+                            <small class="text-muted d-block mb-2">SKU will be auto-generated when saved.</small>
                         </div>
                         <div class="col-lg-6">
                             <!-- Price Field -->
                             <div class="mb-3">
                                 <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                       id="price" name="price" value="{{ old('price') }}" step="1" min="0" inputmode="numeric" required>
+                                       id="price" name="price" value="{{ old('price') }}" step="1" min="0" inputmode="numeric" pattern="[0-9]*" required>
                                 @error('price')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -120,7 +121,7 @@
                     <!-- Help Text -->
                     <div class="alert alert-info">
                         <i class="bx bx-info-circle me-2"></i>
-                        <strong>Stock Management:</strong> Total stok (kg) dihitung otomatis dari Seed Lots berunit kg yang dapat dijual. Planlet tidak dihitung ke total kg karena satuannya per botol.
+                        <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Planlets are not counted in total kg as they are measured per bottle.
                     </div>
 
                     <div class="row">
@@ -151,7 +152,7 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="{{ route('admin.varieties.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.varieties.index')) }}" class="btn btn-light">Cancel</a>
                         <button type="submit" class="btn btn-primary">Save Variety</button>
                     </div>
                 </form>
@@ -174,7 +175,7 @@
             const el = document.getElementById(id);
             if (!el) return;
             const sanitize = function(val){
-                // Hanya digit (0-9), hapus titik/koma/karakter lain
+                // Only digits (0-9), remove dots/commas/other characters
                 const digits = String(val).replace(/[^0-9]/g,'');
                 return digits;
             };
@@ -259,6 +260,16 @@
                 } catch(err) {
                     console.error(err);
                 }
+            });
+        }
+    });
+
+    // Price input filtering - only allow digits
+    document.addEventListener('DOMContentLoaded', () => {
+        const priceEl = document.getElementById('price');
+        if (priceEl) {
+            priceEl.addEventListener('input', () => {
+                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
             });
         }
     });

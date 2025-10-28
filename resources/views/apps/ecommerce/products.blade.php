@@ -75,14 +75,22 @@
                                 </td>
                                 <td>{{ number_format($product->total_stock, 2) }}</td>
                                 <td>
-                                    @php($status = $product->stock_status)
-                                    @if($status === 'Tersedia')
-                                        <span class="text-success">{{ $status }}</span>
-                                    @elseif($status === 'Restock')
-                                        <span class="text-warning">{{ $status }}</span>
-                                    @else
-                                        <span class="text-danger">{{ $status }}</span>
-                                    @endif
+                                    @php
+                                        $statusRaw = strtolower((string)($product->stock_status ?? ''));
+                                        $statusLabel = match($statusRaw) {
+                                            'available' => 'Available',
+                                            'restock' => 'Restock',
+                                            'out of stock', 'out-of-stock', 'out_of_stock' => 'Out of Stock',
+                                            default => ucfirst($product->stock_status ?? 'Unknown')
+                                        };
+                                        $statusClass = match($statusLabel) {
+                                            'Available' => 'text-success',
+                                            'Restock' => 'text-warning',
+                                            'Out of Stock' => 'text-danger',
+                                            default => 'text-muted'
+                                        };
+                                    @endphp
+                                    <span class="{{ $statusClass }}">{{ $statusLabel }}</span>
                                 </td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-1">

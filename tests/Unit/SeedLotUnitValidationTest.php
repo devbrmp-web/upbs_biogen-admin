@@ -55,7 +55,7 @@ class SeedLotUnitValidationTest extends TestCase
         $request = new StoreSeedLotRequest();
         
         // Valid units for BS
-        $validUnits = ['kg', 'gram', 'ton'];
+        $validUnits = ['kg', 'ton'];
         foreach ($validUnits as $unit) {
             $data = $this->getBaseSeedLotData([
                 'seed_class_id' => $this->bsSeedClass->id,
@@ -90,7 +90,7 @@ class SeedLotUnitValidationTest extends TestCase
         $request = new StoreSeedLotRequest();
         
         // Valid units for FS
-        $validUnits = ['kg', 'gram', 'ton'];
+        $validUnits = ['kg', 'ton'];
         foreach ($validUnits as $unit) {
             $data = $this->getBaseSeedLotData([
                 'seed_class_id' => $this->fsSeedClass->id,
@@ -139,7 +139,7 @@ class SeedLotUnitValidationTest extends TestCase
         }
         
         // Invalid units for Planlet
-        $invalidUnits = ['kg', 'gram', 'ton'];
+        $invalidUnits = ['kg', 'ton'];
         foreach ($invalidUnits as $unit) {
             $data = $this->getBaseSeedLotData([
                 'seed_class_id' => $this->plSeedClass->id,
@@ -171,7 +171,7 @@ class SeedLotUnitValidationTest extends TestCase
         });
         
         // Valid units for BS
-        $validUnits = ['kg', 'gram', 'ton'];
+        $validUnits = ['kg', 'ton'];
         foreach ($validUnits as $unit) {
             $data = $this->getBaseSeedLotData([
                 'seed_class_id' => $this->bsSeedClass->id,
@@ -217,7 +217,7 @@ class SeedLotUnitValidationTest extends TestCase
         
         $unitError = $validator->errors()->first('unit');
         $this->assertStringContainsString('Breeder Seed (BS) and Foundation Seed (FS)', $unitError);
-        $this->assertStringContainsString('kg, gram, ton', $unitError);
+        $this->assertStringContainsString('kg or ton', $unitError);
     }
 
     #[Test]
@@ -229,7 +229,7 @@ class SeedLotUnitValidationTest extends TestCase
         );
         
         $request = new StoreSeedLotRequest();
-        $allUnits = ['kg', 'gram', 'ton', 'piece', 'bottle'];
+        $allUnits = ['kg', 'ton', 'piece', 'bottle'];
         
         foreach ($allUnits as $unit) {
             $data = $this->getBaseSeedLotData([
@@ -315,7 +315,7 @@ class SeedLotUnitValidationTest extends TestCase
             'unit' => 'kg',
             'price_per_unit' => 2000,
             'is_sellable' => true,
-            'notes' => 'Test notes',
+            'description' => 'Test description',
         ], $overrides);
     }
 }

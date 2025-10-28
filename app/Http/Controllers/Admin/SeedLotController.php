@@ -10,6 +10,7 @@ use App\Models\Variety;
 use App\Models\SeedClass;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class SeedLotController extends Controller
 {
@@ -21,10 +22,11 @@ class SeedLotController extends Controller
         $query = SeedLot::with(['variety.commodity', 'seedClass']);
 
         // Filter by search query
-        if ($q = $request->string('q')->trim()->toString()) {
+        if ($request->filled('q')) {
+            $q = $request->string('q')->trim()->toString();
             $query->where(function ($builder) use ($q) {
                 $builder->where('lot_code', 'like', "%{$q}%")
-                    ->orWhere('notes', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%")
                     ->orWhereHas('variety', function ($variety) use ($q) {
                         $variety->where('name', 'like', "%{$q}%");
                     })
@@ -36,37 +38,34 @@ class SeedLotController extends Controller
         }
 
         // Filter by variety
-        if ($varietyId = $request->integer('variety_id')) {
-            $query->where('variety_id', $varietyId);
+        if ($request->filled('variety_id')) {
+            $query->where('variety_id', $request->integer('variety_id'));
         }
 
         // Filter by seed class
-        if ($seedClassId = $request->integer('seed_class_id')) {
-            $query->where('seed_class_id', $seedClassId);
+        if ($request->filled('seed_class_id')) {
+            $query->where('seed_class_id', $request->integer('seed_class_id'));
         }
 
-        // Filter by sellable status
-        if ($request->has('is_sellable')) {
-            $query->where('is_sellable', $request->boolean('is_sellable'));
+        // Filter by sellable status - only apply if value is not empty (All Status = empty string)
+        if ($request->filled('is_sellable') && $request->input('is_sellable') !== '') {
+            $query->where('is_sellable', (int) $request->input('is_sellable') === 1);
         }
 
-        $seedLots = $query->latest('updated_at')->paginate(10)->appends($request->query());
-        
-        // Load dropdown data separately to avoid duplicate queries
-        // Use separate queries to avoid conflicts with eager loading
-        $varieties = \DB::table('varieties')
-            ->join('commodities', 'varieties.commodity_id', '=', 'commodities.id')
-            ->select('varieties.id', 'varieties.name', 'commodities.name as commodity_name')
-            ->orderBy('varieties.name')
-            ->get();
-            
-        $seedClasses = \DB::table('seed_classes')
-            ->select('id', 'name', 'code')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        $seedLots = $query->latest('updated_at')->paginate(10)->withQueryString();
 
-        return view('admin.seed-lots.index', compact('seedLots', 'varieties', 'seedClasses'));
+        // AJAX support - return partial view for AJAX requests (ignore query ?ajax=1 on normal navigation)
+        if ($request->ajax()) {
+            return view('admin.seed-lots.partials.table-content', [
+                'seedLots' => $seedLots,
+            ]);
+        }
+
+        return view('admin.seed-lots.index', [
+            'seedLots' => $seedLots,
+            'varieties' => Variety::orderBy('name')->get(),
+            'seedClasses' => SeedClass::orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -74,20 +73,11 @@ class SeedLotController extends Controller
      */
     public function create(Request $request)
     {
-        $varieties = Variety::select('id', 'name', 'commodity_id')
-            ->with('commodity:id,name')
-            ->orderBy('name')
-            ->get();
-            
-        $seedClasses = SeedClass::select('id', 'name', 'code')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-        
-        // Pre-select variety if provided in query parameter
-        $selectedVarietyId = $request->integer('variety_id');
-        
-        return view('admin.seed-lots.create', compact('varieties', 'seedClasses', 'selectedVarietyId'));
+        return view('admin.seed-lots.create', [
+            'varieties' => Variety::orderBy('name')->get(),
+            'seedClasses' => SeedClass::orderBy('name')->get(),
+            'selectedVarietyId' => $request->integer('variety_id'),
+        ]);
     }
 
     /**
@@ -97,9 +87,31 @@ class SeedLotController extends Controller
     {
         $validated = $request->validated();
 
+        // Normalize unit and quantity for BS/FS when using 'ton' -> convert to kg
+        if (!empty($validated['seed_class_id'])) {
+            $seedClass = SeedClass::find($validated['seed_class_id']);
+            if ($seedClass && in_array($seedClass->code, ['BS', 'FS'])) {
+                if (isset($validated['unit']) && $validated['unit'] === 'ton') {
+                    $validated['quantity'] = (int) ($validated['quantity'] * 1000);
+                    // Normalize price to per kg when incoming unit is ton
+                    $validated['price_per_unit'] = (int) ($validated['price_per_unit'] / 1000);
+                }
+                // Always store as kg for BS/FS
+                $validated['unit'] = 'kg';
+            }
+        }
+
         $seedLot = SeedLot::create($validated);
 
-        // Redirect back to variety show page if variety_id was provided
+        // Prefer sanitized return URL jika disediakan untuk mempertahankan filter/paginasi
+        if ($return = $request->input('return')) {
+            $sanitized = $this->sanitizeReturnUrl($return, route('admin.seed-lots.index'));
+            if ($sanitized) {
+                return redirect()->to($sanitized)->with('success', 'Seed lot created successfully.');
+            }
+        }
+
+        // Fallback: jika variety_id disediakan, kembali ke halaman Variety
         if ($request->filled('variety_id')) {
             $variety = Variety::findOrFail($request->variety_id);
             return redirect()->route('admin.varieties.show', $variety)
@@ -115,9 +127,9 @@ class SeedLotController extends Controller
      */
     public function show(SeedLot $seedLot)
     {
-        $seedLot->load(['variety.commodity', 'seedClass']);
-        
-        return view('admin.seed-lots.show', compact('seedLot'));
+        return view('admin.seed-lots.show', [
+            'seedLot' => $seedLot->load(['variety.commodity', 'seedClass']),
+        ]);
     }
 
     /**
@@ -125,10 +137,11 @@ class SeedLotController extends Controller
      */
     public function edit(SeedLot $seedLot)
     {
-        $varieties = Variety::with('commodity')->orderBy('name')->get();
-        $seedClasses = SeedClass::where('is_active', true)->orderBy('name')->get();
-        
-        return view('admin.seed-lots.edit', compact('seedLot', 'varieties', 'seedClasses'));
+        return view('admin.seed-lots.edit', [
+            'seedLot' => $seedLot->load(['variety.commodity', 'seedClass']),
+            'varieties' => Variety::orderBy('name')->get(),
+            'seedClasses' => SeedClass::orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -138,9 +151,31 @@ class SeedLotController extends Controller
     {
         $validated = $request->validated();
 
+        // Normalize unit and quantity for BS/FS when using 'ton' -> convert to kg
+        if (!empty($validated['seed_class_id'])) {
+            $seedClass = SeedClass::find($validated['seed_class_id']);
+            if ($seedClass && in_array($seedClass->code, ['BS', 'FS'])) {
+                if (isset($validated['unit']) && $validated['unit'] === 'ton') {
+                    $validated['quantity'] = (int) ($validated['quantity'] * 1000);
+                    // Normalize price to per kg when incoming unit is ton
+                    $validated['price_per_unit'] = (int) ($validated['price_per_unit'] / 1000);
+                }
+                // Always store as kg for BS/FS
+                $validated['unit'] = 'kg';
+            }
+        }
+
         $seedLot->update($validated);
 
-        // Redirect back to variety show page if variety_id was provided
+        // Prefer sanitized return URL jika disediakan untuk mempertahankan filter/paginasi
+        if ($return = $request->input('return')) {
+            $sanitized = $this->sanitizeReturnUrl($return, route('admin.seed-lots.index'));
+            if ($sanitized) {
+                return redirect()->to($sanitized)->with('success', 'Seed lot updated successfully.');
+            }
+        }
+
+        // Fallback: jika variety_id disediakan, kembali ke halaman Variety
         if ($request->filled('variety_id')) {
             $variety = Variety::findOrFail($request->variety_id);
             return redirect()->route('admin.varieties.show', $variety)
@@ -159,7 +194,15 @@ class SeedLotController extends Controller
         $varietyId = $seedLot->variety_id;
         $seedLot->delete();
 
-        // Redirect back to variety show page if variety_id was provided
+        // Prefer sanitized return URL jika disediakan untuk mempertahankan filter/paginasi
+        if ($return = $request->input('return')) {
+            $sanitized = $this->sanitizeReturnUrl($return, route('admin.seed-lots.index'));
+            if ($sanitized) {
+                return redirect()->to($sanitized)->with('success', 'Seed lot deleted successfully.');
+            }
+        }
+
+        // Fallback: jika variety_id disediakan, kembali ke halaman Variety
         if ($request->filled('variety_id')) {
             $variety = Variety::findOrFail($request->variety_id);
             return redirect()->route('admin.varieties.show', $variety)
@@ -168,5 +211,41 @@ class SeedLotController extends Controller
 
         return redirect()->route('admin.seed-lots.index')
             ->with('success', 'Seed lot deleted successfully.');
+    }
+
+    /**
+     * Sanitasi URL return: pastikan internal (/admin), hapus flag AJAX & header, pertahankan filter aman.
+     * Jika tidak valid, kembalikan fallback URL indeks penuh.
+     */
+    protected function sanitizeReturnUrl(?string $return, string $fallback): ?string
+    {
+        if (!$return) return $fallback;
+        $adminBase = url('/admin');
+        if (!\Illuminate\Support\Str::startsWith($return, $adminBase)) {
+            return $fallback; // outside domain or not under /admin
+        }
+
+        $parts = parse_url($return);
+        $path = $parts['path'] ?? '/admin';
+        $query = [];
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+
+        // Allowed filter keys across list pages
+        $allowed = [
+            'q', 'search', 'variety_id', 'seed_class_id', 'is_sellable', 'page', 'commodity', 'stock_status'
+        ];
+
+        // Remove flags that trigger partials
+        unset($query['ajax'], $query['X-Requested-With']);
+        // Keep only allowed params
+        $query = array_intersect_key($query, array_flip($allowed));
+
+        $sanitized = url($path);
+        if (!empty($query)) {
+            $sanitized .= '?' . http_build_query($query);
+        }
+        return $sanitized ?: $fallback;
     }
 }

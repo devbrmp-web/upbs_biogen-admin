@@ -58,8 +58,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Empty Variety',
             'sku' => 'EMPTY-VAR-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Clear any existing cache
@@ -67,11 +67,11 @@ class VarietyCacheEdgeCasesTest extends TestCase
 
         // Test total stock for variety with no seed lots
         $totalStock = $variety->total_stock;
-        $this->assertEquals(0.0, $totalStock);
+        $this->assertEquals(0, $totalStock);
 
         // Test stock status for variety with no seed lots
         $stockStatus = $variety->stock_status;
-        $this->assertEquals('Habis', $stockStatus);
+        $this->assertEquals('Out of Stock', $stockStatus);
 
         // Verify cache is created even for empty results
         $totalStockCacheKey = "variety_total_stock_{$variety->id}";
@@ -79,8 +79,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
         
         $this->assertTrue(Cache::has($totalStockCacheKey));
         $this->assertTrue(Cache::has($stockStatusCacheKey));
-        $this->assertEquals(0.0, Cache::get($totalStockCacheKey));
-        $this->assertEquals('Habis', Cache::get($stockStatusCacheKey));
+        $this->assertEquals(0, Cache::get($totalStockCacheKey));
+        $this->assertEquals('Out of Stock', Cache::get($stockStatusCacheKey));
     }
 
     #[Test]
@@ -90,8 +90,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Non-Sellable Variety',
             'sku' => 'NON-SELL-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create non-sellable seed lots
@@ -100,9 +100,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-NON-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false, // Not sellable
         ]);
 
@@ -111,9 +111,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-NON-001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false, // Not sellable
         ]);
 
@@ -122,11 +122,11 @@ class VarietyCacheEdgeCasesTest extends TestCase
 
         // Test total stock (should be 0 for non-sellable lots)
         $totalStock = $variety->total_stock;
-        $this->assertEquals(0.0, $totalStock);
+        $this->assertEquals(0, $totalStock);
 
-        // Test stock status (should be 'Habis' for non-sellable lots)
+        // Test stock status (should be 'Out of Stock' for non-sellable lots)
         $stockStatus = $variety->stock_status;
-        $this->assertEquals('Habis', $stockStatus);
+        $this->assertEquals('Out of Stock', $stockStatus);
     }
 
     #[Test]
@@ -136,8 +136,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Mixed Variety',
             'sku' => 'MIXED-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create sellable seed lot
@@ -146,9 +146,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-SELL-001',
             'production_year' => 2024,
-            'quantity' => 25.0,
+            'quantity' => 25,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -158,9 +158,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-NON-001',
             'production_year' => 2024,
-            'quantity' => 75.0,
+            'quantity' => 75,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false,
         ]);
 
@@ -169,11 +169,11 @@ class VarietyCacheEdgeCasesTest extends TestCase
 
         // Test total stock (should only count sellable lots)
         $totalStock = $variety->total_stock;
-        $this->assertEquals(25.0, $totalStock);
+        $this->assertEquals(25, $totalStock);
 
-        // Test stock status (should be 'Tersedia' as sellable stock > minimum)
+        // Test stock status (should be 'Available' as sellable stock > minimum)
         $stockStatus = $variety->stock_status;
-        $this->assertEquals('Tersedia', $stockStatus);
+        $this->assertEquals('Available', $stockStatus);
     }
 
     #[Test]
@@ -183,8 +183,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Exact Minimum Variety',
             'sku' => 'EXACT-MIN-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 50.0, // Set minimum to exactly match stock
+            'price' => 50000,
+            'minimum_limit' => 50, // Set minimum to exactly match stock
         ]);
 
         // Create seed lot with exact minimum quantity
@@ -193,9 +193,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-EXACT-001',
             'production_year' => 2024,
-            'quantity' => 50.0, // Exactly at minimum
+            'quantity' => 50, // Exactly at minimum
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -219,8 +219,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Below Minimum Variety',
             'sku' => 'BELOW-MIN-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 50.0,
+            'price' => 50000,
+            'minimum_limit' => 50,
         ]);
 
         // Create seed lot with quantity just below minimum
@@ -229,9 +229,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-BELOW-001',
             'production_year' => 2024,
-            'quantity' => 49.9, // Just below minimum
+            'quantity' => 49, // Just below minimum
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -250,8 +250,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Sellability Change Variety',
             'sku' => 'SELL-CHANGE-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         $seedLot = SeedLot::create([
@@ -259,17 +259,17 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-CHANGE-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
         // Cache the values when sellable
         $totalStock1 = $variety->total_stock;
         $stockStatus1 = $variety->stock_status;
-        $this->assertEquals(50.0, $totalStock1);
-        $this->assertEquals('Tersedia', $stockStatus1);
+        $this->assertEquals(50, $totalStock1);
+        $this->assertEquals('Available', $stockStatus1);
 
         $totalStockCacheKey = "variety_total_stock_{$variety->id}";
         $stockStatusCacheKey = "variety_stock_status_{$variety->id}";
@@ -288,8 +288,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
         // Verify new values are correct
         $totalStock2 = $variety->fresh()->total_stock;
         $stockStatus2 = $variety->fresh()->stock_status;
-        $this->assertEquals(0.0, $totalStock2);
-        $this->assertEquals('Habis', $stockStatus2);
+        $this->assertEquals(0, $totalStock2);
+        $this->assertEquals('Out of Stock', $stockStatus2);
     }
 
     #[Test]
@@ -299,8 +299,8 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'name' => 'Concurrent Access Variety',
             'sku' => 'CONCURRENT-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         SeedLot::create([
@@ -308,9 +308,9 @@ class VarietyCacheEdgeCasesTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-CONCURRENT-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -325,12 +325,12 @@ class VarietyCacheEdgeCasesTest extends TestCase
 
         // All results should be consistent
         foreach ($results as $result) {
-            $this->assertEquals(50.0, $result);
+            $this->assertEquals(50, $result);
         }
 
         // Cache should exist and be consistent
         $cacheKey = "variety_total_stock_{$variety->id}";
         $this->assertTrue(Cache::has($cacheKey));
-        $this->assertEquals(50.0, Cache::get($cacheKey));
+        $this->assertEquals(50, Cache::get($cacheKey));
     }
 }

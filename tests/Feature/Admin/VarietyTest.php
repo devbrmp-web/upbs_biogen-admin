@@ -336,7 +336,7 @@ class VarietyTest extends TestCase
         ]);
 
         // No seed lots created, so total_stock should be 0
-        $this->assertEquals('Habis', $outOfStockVariety->stock_status);
+        $this->assertEquals('Out of Stock', $outOfStockVariety->stock_status);
 
         // Test 'restock' status (low stock)
         $lowStockVariety = Variety::create([
@@ -410,7 +410,7 @@ class VarietyTest extends TestCase
             'is_sellable' => true,
         ]);
 
-        $this->assertEquals('Tersedia', $availableVariety->stock_status);
+        $this->assertEquals('Available', $availableVariety->stock_status);
     }
 
     public function test_variety_total_stock_attribute(): void

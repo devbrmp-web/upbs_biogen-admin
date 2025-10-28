@@ -47,8 +47,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create sellable seed lots
@@ -57,9 +57,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -68,9 +68,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 60000.00,
+            'price_per_unit' => 60000,
             'is_sellable' => true,
         ]);
 
@@ -80,14 +80,14 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-002',
             'production_year' => 2024,
-            'quantity' => 20.0,
+            'quantity' => 20,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false, // Not sellable
         ]);
 
         // Total should only include sellable lots: 50 + 30 = 80
-        $this->assertEquals(80.0, $variety->total_stock);
+        $this->assertEquals(80, $variety->total_stock);
     }
 
     #[Test]
@@ -97,12 +97,12 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Empty Variety',
             'sku' => 'EMPTY-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // No seed lots created
-        $this->assertEquals(0.0, $variety->total_stock);
+        $this->assertEquals(0, $variety->total_stock);
     }
 
     #[Test]
@@ -112,8 +112,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Zero Quantity Variety',
             'sku' => 'ZERO-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // Create seed lot with zero quantity
@@ -122,13 +122,13 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-ZERO-001',
             'production_year' => 2024,
-            'quantity' => 0.0,
+            'quantity' => 0,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
-        $this->assertEquals(0.0, $variety->total_stock);
+        $this->assertEquals(0, $variety->total_stock);
     }
 
     #[Test]
@@ -138,12 +138,12 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'No Stock Variety',
             'sku' => 'NO-STOCK-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 10.0,
+            'price' => 50000,
+            'minimum_limit' => 10,
         ]);
 
         // No seed lots
-        $this->assertEquals('Habis', $variety->stock_status);
+        $this->assertEquals('Out of Stock', $variety->stock_status);
 
         // Only non-sellable seed lots
         SeedLot::create([
@@ -151,15 +151,15 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-NON-SELL-001',
             'production_year' => 2024,
-            'quantity' => 50.0,
+            'quantity' => 50,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => false,
         ]);
 
         // Refresh the variety to clear any cached values
         $variety = $variety->fresh();
-        $this->assertEquals('Habis', $variety->stock_status);
+        $this->assertEquals('Out of Stock', $variety->stock_status);
     }
 
     #[Test]
@@ -169,8 +169,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Limited Stock Variety',
             'sku' => 'LIMITED-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 50.0, // High minimum
+            'price' => 50000,
+            'minimum_limit' => 50, // High minimum
         ]);
 
         // Create seed lot with quantity below minimum
@@ -179,9 +179,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-LIMITED-001',
             'production_year' => 2024,
-            'quantity' => 30.0, // Below minimum of 50
+            'quantity' => 30, // Below minimum of 50
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -195,8 +195,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Exact Minimum Variety',
             'sku' => 'EXACT-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 50.0,
+            'price' => 50000,
+            'minimum_limit' => 50,
         ]);
 
         // Create seed lot with quantity exactly at minimum
@@ -205,9 +205,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-EXACT-001',
             'production_year' => 2024,
-            'quantity' => 50.0, // Exactly at minimum
+            'quantity' => 50, // Exactly at minimum
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -215,14 +215,14 @@ class VarietyStockCalculationTest extends TestCase
     }
 
     #[Test]
-    public function stock_status_returns_tersedia_when_above_minimum()
+    public function stock_status_returns_available_when_above_minimum()
     {
         $variety = Variety::create([
             'name' => 'Available Stock Variety',
             'sku' => 'AVAILABLE-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 30.0,
+            'price' => 50000,
+            'minimum_limit' => 30,
         ]);
 
         // Create seed lot with quantity above minimum
@@ -231,13 +231,13 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-AVAILABLE-001',
             'production_year' => 2024,
-            'quantity' => 50.0, // Above minimum of 30
+            'quantity' => 50, // Above minimum of 30
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
-        $this->assertEquals('Tersedia', $variety->stock_status);
+        $this->assertEquals('Available', $variety->stock_status);
     }
 
     #[Test]
@@ -247,7 +247,7 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Decimal Variety',
             'sku' => 'DEC-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
+            'price' => 50000,
             'minimum_limit' => 25, // integer-only policy
         ]);
 
@@ -259,7 +259,7 @@ class VarietyStockCalculationTest extends TestCase
             'production_year' => 2024,
             'quantity' => 16, // rounded from 15.75 to integer
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -271,14 +271,14 @@ class VarietyStockCalculationTest extends TestCase
             'production_year' => 2024,
             'quantity' => 12, // rounded from 12.25 to integer
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
         // Total: 16 + 12 = 28
-        // 28 > 25 (minimum), so should be 'Tersedia'
+        // 28 > 25 (minimum), so should be 'Available'
         $this->assertEquals(28, $variety->total_stock);
-        $this->assertEquals('Tersedia', $variety->stock_status);
+        $this->assertEquals('Available', $variety->stock_status);
     }
 
 
@@ -292,8 +292,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Large Quantity Variety',
             'sku' => 'LARGE-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 1000.0,
+            'price' => 50000,
+            'minimum_limit' => 1000,
         ]);
 
         // Create seed lot with large quantity
@@ -302,14 +302,14 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-LARGE-001',
             'production_year' => 2024,
-            'quantity' => 50000.0, // Large quantity
+            'quantity' => 50000, // Large quantity
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
-        $this->assertEquals(50000.0, $variety->total_stock);
-        $this->assertEquals('Tersedia', $variety->stock_status);
+        $this->assertEquals(50000, $variety->total_stock);
+        $this->assertEquals('Available', $variety->stock_status);
     }
 
     #[Test]
@@ -319,8 +319,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Consistent Variety',
             'sku' => 'CONSISTENT-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 20.0,
+            'price' => 50000,
+            'minimum_limit' => 20,
         ]);
 
         SeedLot::create([
@@ -328,9 +328,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-CONSISTENT-001',
             'production_year' => 2024,
-            'quantity' => 35.0,
+            'quantity' => 35,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -345,11 +345,11 @@ class VarietyStockCalculationTest extends TestCase
 
         $this->assertEquals($stock1, $stock2);
         $this->assertEquals($stock2, $stock3);
-        $this->assertEquals(35.0, $stock1);
+        $this->assertEquals(35, $stock1);
 
         $this->assertEquals($status1, $status2);
         $this->assertEquals($status2, $status3);
-        $this->assertEquals('Tersedia', $status1);
+        $this->assertEquals('Available', $status1);
     }
 
     #[Test]
@@ -359,8 +359,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Dynamic Variety',
             'sku' => 'DYNAMIC-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 25.0,
+            'price' => 50000,
+            'minimum_limit' => 25,
         ]);
 
         $seedLot = SeedLot::create([
@@ -368,25 +368,25 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-DYNAMIC-001',
             'production_year' => 2024,
-            'quantity' => 30.0,
+            'quantity' => 30,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
         // Initial state
-        $this->assertEquals(30.0, $variety->total_stock);
-        $this->assertEquals('Tersedia', $variety->stock_status);
+        $this->assertEquals(30, $variety->total_stock);
+        $this->assertEquals('Available', $variety->stock_status);
 
         // Update quantity
-        $seedLot->update(['quantity' => 20.0]);
+        $seedLot->update(['quantity' => 20]);
         
         // Clear cache to ensure fresh calculation
         Cache::flush();
         $variety = $variety->fresh();
 
         // Updated state
-        $this->assertEquals(20.0, $variety->total_stock);
+        $this->assertEquals(20, $variety->total_stock);
         $this->assertEquals('Restock', $variety->stock_status); // 20 <= 25 (minimum)
 
         // Make non-sellable
@@ -397,8 +397,8 @@ class VarietyStockCalculationTest extends TestCase
         $variety = $variety->fresh();
 
         // Final state
-        $this->assertEquals(0.0, $variety->total_stock);
-        $this->assertEquals('Habis', $variety->stock_status);
+        $this->assertEquals(0, $variety->total_stock);
+        $this->assertEquals('Out of Stock', $variety->stock_status);
     }
 
     #[Test]
@@ -408,8 +408,8 @@ class VarietyStockCalculationTest extends TestCase
             'name' => 'Unit Filter Variety',
             'sku' => 'UNIT-FILTER-001',
             'commodity_id' => $this->commodity->id,
-            'price' => 50000.00,
-            'minimum_limit' => 5.0,
+            'price' => 50000,
+            'minimum_limit' => 5,
         ]);
 
         // Ensure PL class exists
@@ -424,9 +424,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->bsSeedClass->id,
             'lot_code' => 'BS-KG-001',
             'production_year' => 2024,
-            'quantity' => 10.0,
+            'quantity' => 10,
             'unit' => 'kg',
-            'price_per_unit' => 50000.00,
+            'price_per_unit' => 50000,
             'is_sellable' => true,
         ]);
 
@@ -435,32 +435,21 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-KG-001',
             'production_year' => 2024,
-            'quantity' => 5.0,
+            'quantity' => 5,
             'unit' => 'kg',
-            'price_per_unit' => 60000.00,
+            'price_per_unit' => 60000,
             'is_sellable' => true,
         ]);
 
-        // Non-kg weight units (should be ignored)
-        SeedLot::create([
-            'variety_id' => $variety->id,
-            'seed_class_id' => $this->bsSeedClass->id,
-            'lot_code' => 'BS-GRAM-001',
-            'production_year' => 2024,
-            'quantity' => 3000.0, // grams
-            'unit' => 'gram',
-            'price_per_unit' => 100.00,
-            'is_sellable' => true,
-        ]);
 
         SeedLot::create([
             'variety_id' => $variety->id,
             'seed_class_id' => $this->fsSeedClass->id,
             'lot_code' => 'FS-TON-001',
             'production_year' => 2024,
-            'quantity' => 0.4, // tons
+            'quantity' => 1, // tons (ignored in total_stock because only 'kg' is summed)
             'unit' => 'ton',
-            'price_per_unit' => 1000000.00,
+            'price_per_unit' => 1000000,
             'is_sellable' => true,
         ]);
 
@@ -470,9 +459,9 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $plSeedClass->id,
             'lot_code' => 'PL-BOTTLE-001',
             'production_year' => 2024,
-            'quantity' => 10.0,
+            'quantity' => 10,
             'unit' => 'bottle',
-            'price_per_unit' => 75000.00,
+            'price_per_unit' => 75000,
             'is_sellable' => true,
         ]);
 
@@ -481,19 +470,19 @@ class VarietyStockCalculationTest extends TestCase
             'seed_class_id' => $plSeedClass->id,
             'lot_code' => 'PL-PIECE-001',
             'production_year' => 2024,
-            'quantity' => 25.0,
+            'quantity' => 25,
             'unit' => 'piece',
-            'price_per_unit' => 15000.00,
+            'price_per_unit' => 15000,
             'is_sellable' => true,
         ]);
 
         // Only KG units should be counted: 10 (BS) + 5 (FS) = 15
-        $this->assertEquals(15.0, $variety->total_stock);
+        $this->assertEquals(15, $variety->total_stock);
 
         // Also verify subquery calculations
         $varWithCalc = Variety::withStockCalculations()->find($variety->id);
-        $this->assertEquals(15.0, (float) $varWithCalc->total_stock_calculated);
-        $this->assertEquals(10.0, (float) $varWithCalc->bs_stock_calculated);
-        $this->assertEquals(5.0, (float) $varWithCalc->fs_stock_calculated);
+        $this->assertEquals(15, (int) $varWithCalc->total_stock_calculated);
+        $this->assertEquals(10, (int) $varWithCalc->bs_stock_calculated);
+        $this->assertEquals(5, (int) $varWithCalc->fs_stock_calculated);
     }
 }
