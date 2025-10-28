@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     const searchInput = document.getElementById('search');
     const clearBtn = document.getElementById('clearFilters');
-    const indexUrl = '{{ route('admin.seed-classes.index') }}';
+    const indexUrl = '{{ route("admin.seed-classes.index") }}';
 
     let debounceTimer = null;
     let currentController = null;

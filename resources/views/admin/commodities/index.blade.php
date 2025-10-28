@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const onSearchChange = debounce(() => {
-        const url = buildUrl('{{ route('admin.commodities.index') }}');
+        const url = buildUrl('{{ route("admin.commodities.index") }}');
         fetchAndRender(url);
     });
 
@@ -212,10 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
         clearBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (searchInput) searchInput.value = '';
-            const url = new URL('{{ route('admin.commodities.index') }}', window.location.origin);
+            const url = new URL('{{ route("admin.commodities.index") }}', window.location.origin);
             url.searchParams.set('ajax', '1');
             fetchAndRender(url);
-            history.pushState({}, '', '{{ route('admin.commodities.index') }}');
+            history.pushState({}, '', '{{ route("admin.commodities.index") }}');
             updateClearVisibility(new URL(window.location.href));
         });
     }

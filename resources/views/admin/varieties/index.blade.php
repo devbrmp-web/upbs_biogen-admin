@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const onFilterChange = debounce(() => {
-        const url = buildUrl('{{ route('admin.varieties.index') }}');
+        const url = buildUrl("{{ route('admin.varieties.index') }}");
         fetchAndRender(url);
     });
 
@@ -248,10 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (commodityFilter) commodityFilter.value = '';
             if (stockFilter) stockFilter.value = '';
             if (searchInput) searchInput.value = '';
-            const url = new URL('{{ route('admin.varieties.index') }}', window.location.origin);
+            const url = new URL('{{ route("admin.varieties.index") }}', window.location.origin);
             url.searchParams.set('ajax', '1');
             fetchAndRender(url);
-            history.pushState({}, '', '{{ route('admin.varieties.index') }}');
+            history.pushState({}, '', '{{ route("admin.varieties.index") }}');
             updateClearVisibility(new URL(window.location.href));
         });
     }

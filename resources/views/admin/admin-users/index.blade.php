@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const srStatus = document.getElementById('sr-status');
     const searchInput = document.getElementById('search');
     const clearBtn = document.getElementById('clearFilters');
-    const indexUrl = '{{ route('admin.admin-users.index') }}';
+    const indexUrl = '{{ route("admin.admin-users.index") }}';
     let currentController = null;
 
     function showOverlay() { if (overlay) overlay.classList.remove('d-none'); }
