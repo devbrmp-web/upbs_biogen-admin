@@ -7,16 +7,19 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class SeedClassTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $adminUser;
 
     protected function setUp(): void
     {
         parent::setUp();
+        
+        $this->createSeedClasses();
         
         // Use existing admin role or create if not exists
         $adminRole = Role::firstOrCreate(

@@ -1,6 +1,6 @@
 <div id="list-body">
     <div class="table-responsive table-centered">
-        <table class="table text-nowrap mb-0">
+        <table class="table table-hover text-nowrap mb-0">
             <thead class="bg-light bg-opacity-50">
                 <tr>
                     <th>Code</th>
@@ -45,9 +45,11 @@
             </tbody>
         </table>
     </div>
-    @if(isset($seedClasses) && method_exists($seedClasses, 'links'))
-    <div class="card-footer">
-        {{ $seedClasses->links('custom.pagination') }}
+    @if(isset($seedClasses) && $seedClasses->hasPages())
+    <div class="card-footer border-top">
+        <nav aria-label="Page Navigation">
+            {{ $seedClasses->links('custom.pagination') }}
+        </nav>
     </div>
     @endif
 </div>

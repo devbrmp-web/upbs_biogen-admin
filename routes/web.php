@@ -42,6 +42,21 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Seed Lots
         Route::resource('seed-lots', \App\Http\Controllers\Admin\SeedLotController::class);
+
+        // Orders
+        Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'show', 'destroy']);
+        Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Admin\OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('orders/bulk-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');
+        Route::post('orders/bulk-update-status', [\App\Http\Controllers\Admin\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
+        Route::post('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
+
+        // Audit Logs
+        Route::resource('audit-logs', \App\Http\Controllers\Admin\AuditLogController::class)->only(['index', 'show']);
+
+        // Profile & Help
+        Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'show'])->name('profile');
+        Route::get('help', [\App\Http\Controllers\Admin\HelpController::class, 'index'])->name('help');
     });
 
 // Super Admin only routes
@@ -56,3 +71,24 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureSuperAdmin::class])
 // Root publik sementara
 Route::get('/', fn() => redirect('/login'));
 
+// Client routes (public)
+Route::prefix('client')->name('client.')->group(function () {
+    // Checkout
+    Route::get('/checkout', [\App\Http\Controllers\Client\CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [\App\Http\Controllers\Client\CheckoutController::class, 'process'])->name('checkout.process');
+
+    // Order confirmation (simple placeholder view/response)
+    Route::get('/orders/confirmation/{order_code}', function (string $order_code) {
+        return response()->view('client.orders.confirmation', ['order_code' => $order_code], 200)->header('Content-Type', 'text/html');
+    })->name('order.confirmation');
+
+    // Order tracking route used in email templates
+    Route::get('/orders/track', function () {
+        return response('Order Tracking Placeholder', 200);
+    })->name('orders.track');
+});
+
+// Webhook routes (no CSRF protection needed)
+Route::post('/webhook/payment', [\App\Http\Controllers\WebhookController::class, 'handlePayment'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhook.payment');

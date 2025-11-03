@@ -1,0 +1,142 @@
+// Breakpoints Configuration
+// Centralized breakpoint definitions for consistent responsive design
+
+// Standard Bootstrap 5 breakpoints
+$grid-breakpoints: (
+    xs: 0,
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px,
+    xxl: 1400px,
+) !default;
+
+// Container max widths
+$container-max-widths: (
+    sm: 540px,
+    md: 720px,
+    lg: 960px,
+    xl: 1140px,
+    xxl: 1320px,
+) !default;
+
+// Custom breakpoint mixins for better performance
+@mixin media-xs {
+    @media (max-width: #{map-get($grid-breakpoints, sm) - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin media-sm {
+    @media (min-width: #{map-get($grid-breakpoints, sm)}) {
+        @content;
+    }
+}
+
+@mixin media-sm-down {
+    @media (max-width: #{map-get($grid-breakpoints, md) - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin media-md {
+    @media (min-width: #{map-get($grid-breakpoints, md)}) {
+        @content;
+    }
+}
+
+@mixin media-md-down {
+    @media (max-width: #{map-get($grid-breakpoints, lg) - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin media-lg {
+    @media (min-width: #{map-get($grid-breakpoints, lg)}) {
+        @content;
+    }
+}
+
+@mixin media-lg-down {
+    @media (max-width: #{map-get($grid-breakpoints, xl) - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin media-xl {
+    @media (min-width: #{map-get($grid-breakpoints, xl)}) {
+        @content;
+    }
+}
+
+@mixin media-xl-down {
+    @media (max-width: #{map-get($grid-breakpoints, xxl) - 0.02px}) {
+        @content;
+    }
+}
+
+@mixin media-xxl {
+    @media (min-width: #{map-get($grid-breakpoints, xxl)}) {
+        @content;
+    }
+}
+
+// Custom breakpoints for specific use cases
+@mixin media-mobile-portrait {
+    @media (max-width: 480px) and (orientation: portrait) {
+        @content;
+    }
+}
+
+@mixin media-mobile-landscape {
+    @media (max-width: 768px) and (orientation: landscape) {
+        @content;
+    }
+}
+
+@mixin media-tablet {
+    @media (min-width: 768px) and (max-width: 1024px) {
+        @content;
+    }
+}
+
+@mixin media-desktop {
+    @media (min-width: 1025px) {
+        @content;
+    }
+}
+
+// High DPI / Retina displays
+@mixin media-retina {
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        @content;
+    }
+}
+
+// Print styles
+@mixin media-print {
+    @media print {
+        @content;
+    }
+}
+
+// Reduced motion preference
+@mixin media-reduced-motion {
+    @media (prefers-reduced-motion: reduce) {
+        @content;
+    }
+}
+
+// Dark mode preference
+@mixin media-dark-mode {
+    @media (prefers-color-scheme: dark) {
+        @content;
+    }
+}
+
+// High contrast preference
+@mixin media-high-contrast {
+    @media (prefers-contrast: high) {
+        @content;
+    }
+}

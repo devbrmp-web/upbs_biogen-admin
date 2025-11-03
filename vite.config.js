@@ -20,6 +20,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/config.js',
                 'resources/js/layout.js',
+                'resources/js/responsive-enhancements.js',
                 'resources/js/pages/dashboard.analytics.js',
                 'resources/js/pages/dashboard.finance.js',
                 'resources/js/pages/dashboard.sales.js',
@@ -60,9 +61,9 @@ export default defineConfig({
                 'resources/js/components/apexchart-radialbar.js',
                 'resources/js/components/extended-rating.js',
                 'resources/js/components/extended-sweetalert.js',
-                'resources/js/components/ui-toasts.js'
-                ,
-                'resources/js/seed-lot-validation.js'
+                'resources/js/components/ui-toasts.js',
+                'resources/js/seed-lot-validation.js',
+                'resources/js/theme-improvements.js'
             ],
             refresh: true,
         }),

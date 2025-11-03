@@ -24,7 +24,7 @@ class Chat {
     initChats() {
         const self = this;
         this.chatContainer = document.querySelector('.chat-conversation-list');
-        // console.log(this.chatContainer);
+
         this.simplebar = new SimpleBar(this.chatContainer);
 
         this.scrollPosition = 0;

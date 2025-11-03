@@ -12,10 +12,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class VarietyManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $admin;
     protected Commodity $commodity;
@@ -32,8 +33,11 @@ class VarietyManagementTest extends TestCase
         $this->admin = User::factory()->superAdmin()->create();
         $this->actingAs($this->admin);
         
+        // Create seed classes
+        $this->createSeedClasses();
+        
         $this->commodity = Commodity::factory()->create();
-        // Use existing seed classes from base TestCase
+        // Initialize seed classes
         $this->seedClass = SeedClass::where('code', 'BS')->first();
         $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();

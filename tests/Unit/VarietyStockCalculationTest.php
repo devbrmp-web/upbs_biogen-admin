@@ -10,10 +10,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class VarietyStockCalculationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected Commodity $commodity;
     protected SeedClass $bsSeedClass;
@@ -22,6 +23,7 @@ class VarietyStockCalculationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->createSeedClasses();
 
         // Create test commodity
         $this->commodity = Commodity::create([
@@ -29,15 +31,9 @@ class VarietyStockCalculationTest extends TestCase
             'slug' => 'test-commodity',
         ]);
 
-        // Create seed classes
-        $this->bsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'BS'],
-            ['name' => 'BS', 'description' => 'Breeder Seed']
-        );
-        $this->fsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'FS'],
-            ['name' => 'FS', 'description' => 'Benih Sumber']
-        );
+        // Get seed classes
+        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
     }
 
     #[Test]

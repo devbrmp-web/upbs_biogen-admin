@@ -22,12 +22,12 @@ class AdminAuthTest extends TestCase
             'description' => 'Administrator'
         ]);
         
-        // Buat user admin untuk testing
+        // Buat user admin untuk testing dengan role_id 1 (sesuai controller logic)
         User::create([
             'name' => 'Test Admin',
             'email' => 'test@biogen.local',
             'password' => Hash::make('password'),
-            'role_id' => $role->id
+            'role_id' => 1  // Hardcode role_id 1 untuk admin
         ]);
     }
 

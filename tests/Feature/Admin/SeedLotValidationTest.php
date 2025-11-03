@@ -10,10 +10,11 @@ use App\Models\SeedLot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class SeedLotValidationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $admin;
     protected Commodity $commodity;
@@ -29,12 +30,15 @@ class SeedLotValidationTest extends TestCase
         // Create admin user with proper role
         $this->admin = User::factory()->superAdmin()->create();
         
+        // Create seed classes
+        $this->createSeedClasses();
+        
         $this->commodity = Commodity::factory()->create();
         $this->variety = Variety::factory()->create([
             'commodity_id' => $this->commodity->id,
         ]);
         
-        // Use existing seed classes from base TestCase
+        // Initialize seed classes
         $this->basicSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
         $this->planletSeedClass = SeedClass::where('code', 'PL')->first();

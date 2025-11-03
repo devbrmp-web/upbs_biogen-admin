@@ -86,9 +86,11 @@
         </table>
     </div>
 
-    @if($seedLots instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        <div class="d-flex justify-content-center mt-3 seed-lots-pagination" id="paginationContainer">
-            {{ $seedLots->withQueryString()->links('custom.pagination') }}
+    @if($seedLots instanceof \Illuminate\Pagination\LengthAwarePaginator && $seedLots->hasPages())
+        <div class="card-footer border-top">
+            <nav aria-label="Page Navigation">
+                {{ $seedLots->withQueryString()->links('custom.pagination') }}
+            </nav>
         </div>
     @endif
 </div>

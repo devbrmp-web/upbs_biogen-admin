@@ -11,10 +11,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class VarietyQueryOptimizationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $admin;
     protected Commodity $commodity;
@@ -25,6 +26,10 @@ class VarietyQueryOptimizationTest extends TestCase
     {
         parent::setUp();
         
+        // Create seed classes first
+        $this->createSeedClasses();
+        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        
         // Create admin user with proper role
         $this->admin = User::factory()->superAdmin()->create();
         $this->actingAs($this->admin);
@@ -33,9 +38,6 @@ class VarietyQueryOptimizationTest extends TestCase
         $this->variety = Variety::factory()->create([
             'commodity_id' => $this->commodity->id,
         ]);
-        
-        // Use existing seed class from base TestCase
-        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
     }
 
     #[Test]

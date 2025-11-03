@@ -11,7 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'validate.session' => \App\Http\Middleware\ValidateSession::class,
+        ]);
+        
+        $middleware->web(append: [
+            \App\Http\Middleware\ValidateSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

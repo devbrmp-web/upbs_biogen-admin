@@ -7,14 +7,9 @@
         <div class="card-body px-3 py-5">
             {{-- Logo --}}
             <div class="mx-auto mb-4 text-center auth-logo">
-                <a href="{{ route('login') }}" class="logo-dark">
-                    <img src="/images/logo-sm.png" height="30" class="me-1" alt="logo sm" />
-                    <img src="/images/logo-dark.png" height="24" alt="logo dark" />
-                </a>
-
-                <a href="{{ route('login') }}" class="logo-light">
-                    <img src="/images/logo-sm.png" height="30" class="me-1" alt="logo sm" />
-                    <img src="/images/logo-light.png" height="24" alt="logo light" />
+                <a href="{{ route('login') }}" class="d-flex align-items-center justify-content-center text-decoration-none">
+                    <img src="/images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png" height="40" class="me-2 auth-logo-img" alt="Kementan Logo" />
+                    <span class="fw-bold fs-16 auth-logo-text">UPBS BRMP Biogen</span>
                 </a>
             </div>
 

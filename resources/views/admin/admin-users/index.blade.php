@@ -166,5 +166,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize clear visibility
     updateClearVisibility(new URL(window.location.href));
 });
+
+// Delete confirmation function
+function confirmDelete(adminName, adminId) {
+    if (confirm(`Are you sure you want to delete admin user "${adminName}"? This action cannot be undone.`)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ route('admin.admin-users.index') }}/${adminId}`;
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        // Add method override
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        form.appendChild(methodInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 @endpush

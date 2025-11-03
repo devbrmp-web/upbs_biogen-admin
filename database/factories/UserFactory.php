@@ -52,5 +52,15 @@ class UserFactory extends Factory
         ]);
     }
 
+    /**
+     * Create a non-admin user (no role).
+     */
+    public function nonAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => null,
+        ]);
+    }
+
 
 }

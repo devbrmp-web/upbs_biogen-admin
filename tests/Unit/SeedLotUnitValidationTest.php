@@ -13,10 +13,11 @@ use Illuminate\Support\Facades\Validator;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class SeedLotUnitValidationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected Variety $variety;
     protected SeedClass $bsSeedClass;
@@ -26,27 +27,17 @@ class SeedLotUnitValidationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->createSeedClasses();
         
         $commodity = Commodity::factory()->create();
         $this->variety = Variety::factory()->create([
             'commodity_id' => $commodity->id,
         ]);
         
-        // Use firstOrCreate to avoid unique constraint violations
-        $this->bsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'BS'],
-            ['name' => 'Breeder Seed']
-        );
-        
-        $this->fsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'FS'],
-            ['name' => 'Foundation Seed']
-        );
-        
-        $this->plSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'PL'],
-            ['name' => 'Planlet']
-        );
+        // Get seed classes
+        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
+        $this->plSeedClass = SeedClass::where('code', 'PL')->first();
     }
 
     #[Test]

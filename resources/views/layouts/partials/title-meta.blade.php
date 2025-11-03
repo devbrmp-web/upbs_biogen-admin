@@ -4,4 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta content="UPBS BRMP Biogen Admin Panel" name="description" />
 <meta name="author" content="UPBS Biogen"/>
-<link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+<link rel="apple-touch-icon" href="{{ asset('favicon.ico') }}">

@@ -10,10 +10,17 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class DatabaseRelationshipsTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSeedClasses();
+    }
 
     public function test_commodity_has_many_varieties(): void
     {

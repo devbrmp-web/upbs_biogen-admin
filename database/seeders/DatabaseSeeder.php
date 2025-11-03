@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             VarietySeeder::class,
             SeedClassSeeder::class,
             SeedLotSeeder::class,
+            DemoDataSeeder::class,
+            PlanletSeedLotSeeder::class,
+            DemoOrderSeeder::class,
         ]);
     }
 }

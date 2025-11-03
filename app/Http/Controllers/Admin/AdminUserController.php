@@ -33,7 +33,7 @@ class AdminUserController extends Controller
         $admins = $query->orderBy('role_id', 'ASC')
                        ->orderBy('created_at', 'ASC')
                        ->orderBy('id', 'ASC')
-                       ->paginate(10)
+                       ->paginate(15)
                        ->appends($request->query());
 
         // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)

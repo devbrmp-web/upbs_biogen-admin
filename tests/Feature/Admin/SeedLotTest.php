@@ -10,10 +10,11 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class SeedLotTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $adminUser;
     protected Commodity $commodity;
@@ -25,6 +26,9 @@ class SeedLotTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Create seed classes
+        $this->createSeedClasses();
         
         // Use existing admin role or create if not exists
         $adminRole = Role::firstOrCreate(
@@ -57,7 +61,7 @@ class SeedLotTest extends TestCase
             'is_active' => true,
         ]);
 
-        // Use existing seed classes from base TestCase
+        // Initialize seed classes
         $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
         $this->plSeedClass = SeedClass::where('code', 'PL')->first();

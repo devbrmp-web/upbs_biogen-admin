@@ -11,10 +11,11 @@ use App\Models\Variety;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Traits\CreatesSeedClasses;
 
 class SeedLotStockValidationTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSeedClasses;
 
     protected User $admin;
     protected Commodity $commodity;
@@ -25,13 +26,12 @@ class SeedLotStockValidationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->createSeedClasses();
 
-        // Create admin role and user
-        $adminRole = Role::create(['name' => 'admin']);
-        $this->admin = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@test.com',
-            'role_id' => 1, // Super admin role ID
+        // Create admin role and user (role_id 1 for super_admin as per EnsureAdmin middleware)
+        $adminRole = Role::firstOrCreate(['id' => 1], ['name' => 'super_admin']);
+        $this->admin = User::factory()->create([
+            'role_id' => $adminRole->id,
         ]);
 
         // Create test commodity
@@ -49,15 +49,9 @@ class SeedLotStockValidationTest extends TestCase
             'minimum_limit' => 10,
         ]);
 
-        // Create seed classes
-        $this->bsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'BS'],
-            ['name' => 'BS', 'description' => 'Breeder Seed']
-        );
-        $this->fsSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'FS'],
-            ['name' => 'FS', 'description' => 'Benih Sumber']
-        );
+        // Get seed classes
+        $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
+        $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
     }
 
     #[Test]
@@ -75,6 +69,8 @@ class SeedLotStockValidationTest extends TestCase
             'price_per_unit' => 50000,
         ]);
 
+        // Should return validation error for missing variety_id
+        $response->assertStatus(302); // Redirect back with errors
         $response->assertSessionHasErrors('variety_id');
 
         // Test missing seed_class_id
