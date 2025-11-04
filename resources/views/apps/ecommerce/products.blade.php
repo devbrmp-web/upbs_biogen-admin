@@ -150,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEl = document.getElementById('confirmDeleteModal');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     
-    console.log('Modal elements found:', {modalEl, confirmBtn, bootstrap: typeof bootstrap});
     
     if (!modalEl || !confirmBtn) {
         console.error('Modal elements not found');
@@ -161,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let bsModal = null;
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         bsModal = new bootstrap.Modal(modalEl);
-        console.log('Bootstrap modal initialized');
     } else {
         console.error('Bootstrap not available');
     }
@@ -171,10 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = e.target.closest('.js-delete-btn');
         if (btn) {
             e.preventDefault();
-            console.log('Delete button clicked:', btn);
-            
             targetFormId = btn.getAttribute('data-delete-form');
-            console.log('Target form ID:', targetFormId);
             
             if (bsModal) {
                 bsModal.show();
@@ -195,11 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle confirm button click
     confirmBtn.addEventListener('click', function() {
-        console.log('Confirm delete clicked, target form:', targetFormId);
         
         if (targetFormId) {
             const form = document.getElementById(targetFormId);
-            console.log('Form found:', form);
             
             if (form) {
                 form.submit();
