@@ -134,8 +134,7 @@ class OrderManagementEmailTest extends TestCase
             $response->assertSessionHasNoErrors();
             
         } catch (\Exception $e) {
-            dump('Exception during checkout: ' . $e->getMessage());
-            dump('Trace: ' . $e->getTraceAsString());
+            // Re-throw exception without debug dumps to keep test output clean
             throw $e;
         }
 
