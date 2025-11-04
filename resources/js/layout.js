@@ -113,6 +113,11 @@ class ThemeLayout {
           this.config.theme = color;
           this.html.setAttribute('data-bs-theme', color);
           this.setSwitchFromConfig();
+          
+          // Notify theme manager if available
+          if (window.themeManager) {
+               window.themeManager.onThemeChange(color);
+          }
      }
 
      changeTopbarColor(color) {
@@ -159,10 +164,18 @@ class ThemeLayout {
           var themeColorToggle = document.getElementById('light-dark-mode');
           if (themeColorToggle) {
                themeColorToggle.addEventListener('click', function (e) {
-                    if (self.config.theme === 'light') {
-                         self.changeThemeMode('dark');
+                    e.preventDefault();
+                    
+                    // Use theme manager if available for smoother transitions
+                    if (window.themeManager && !window.themeManager.isTransitioning) {
+                         window.themeManager.toggleTheme();
                     } else {
-                         self.changeThemeMode('light');
+                         // Fallback to original implementation
+                         if (self.config.theme === 'light') {
+                              self.changeThemeMode('dark');
+                         } else {
+                              self.changeThemeMode('light');
+                         }
                     }
                });
           }
@@ -190,7 +203,7 @@ class ThemeLayout {
                          self.showBackdrop();
                     }
 
-                    // Todo: old implementation
+            
                     self.html.classList.toggle('sidebar-enable');
                });
           }

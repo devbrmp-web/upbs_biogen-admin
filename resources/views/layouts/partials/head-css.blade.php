@@ -1,2 +1,2 @@
 @vite(['resources/scss/icons.scss','resources/scss/app.scss'])
-@vite(['resources/js/config.js','resources/js/layout.js'])
+@vite(['resources/js/config.js','resources/js/layout.js','resources/js/responsive-enhancements.js','resources/js/theme-improvements.js'])

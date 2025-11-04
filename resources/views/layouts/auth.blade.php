@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
     @include('layouts.partials/title-meta', ['title' => $title])
     @yield('css')
@@ -17,5 +17,13 @@
 </div>
 
 @include('layouts.partials/footer-scripts')
+
+<script>
+// Remove no-js class to enable transitions after page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.documentElement.classList.remove('no-js');
+});
+</script>
+
 </body>
 </html>

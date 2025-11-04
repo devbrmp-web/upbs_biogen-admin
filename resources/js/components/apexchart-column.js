@@ -662,7 +662,6 @@ var options = {
 
     },
     xaxis: {
-        // TODO: uncomment below and fix the error
         //type: 'datetime',
         categories: [
             '2021-01-01', '2021-02-01', '2021-03-01', '2021-04-01', '2021-05-01', '2021-06-01',
@@ -704,7 +703,7 @@ var options = {
         },
         events: {
             click: function (chart, w, e) {
-                console.log(chart, w, e)
+                // Chart click event handler
             }
         },
     },

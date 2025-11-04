@@ -1,0 +1,426 @@
+/**
+ * Theme Transitions - Prevent visual glitches during theme switching
+ */
+
+// Prevent FOUC (Flash of Unstyled Content)
+.theme-loading,
+html.no-js {
+    * {
+        transition: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+    }
+    
+    // Ensure theme is applied immediately during loading
+    &[data-bs-theme="dark"] {
+        background-color: #1a1d29 !important;
+        color: #adb5bd !important;
+    }
+    
+    &[data-bs-theme="light"] {
+        background-color: #ffffff !important;
+        color: #495057 !important;
+    }
+}
+
+// Smooth theme transitions
+.theme-transitioning {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0); // GPU acceleration
+    will-change: background-color, color, border-color, box-shadow;
+    backface-visibility: hidden; // Prevent flickering
+
+    *,
+    *::before,
+    *::after {
+        transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                   box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0); // GPU acceleration
+        backface-visibility: hidden; // Prevent flickering
+    }
+}
+
+// Logo transitions to prevent flicker
+.logo-box {
+    .logo-light,
+    .logo-dark {
+        transition: opacity 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform: translateZ(0); // GPU acceleration
+        backface-visibility: hidden;
+    }
+    
+    // Show appropriate logo based on theme
+    .logo-light {
+        opacity: 1;
+    }
+    
+    .logo-dark {
+        opacity: 0;
+    }
+}
+
+[data-bs-theme="dark"] {
+    .logo-box {
+        .logo-light {
+            opacity: 0;
+        }
+        
+        .logo-dark {
+            opacity: 1;
+        }
+    }
+}
+
+// Auth page logo transitions
+.auth-logo {
+    .auth-logo-img,
+    .auth-logo-text {
+        transition: opacity 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0); // GPU acceleration
+        backface-visibility: hidden;
+    }
+    
+    .auth-logo-text {
+        color: var(--bs-body-color) !important;
+    }
+}
+
+// Prevent auth logo duplication during theme switch
+.theme-loading .auth-logo,
+html.no-js .auth-logo {
+    .auth-logo-img,
+    .auth-logo-text {
+        transition: none !important;
+    }
+}
+
+// Topbar smooth transitions
+.topbar {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0); // GPU acceleration
+    will-change: background-color, border-color, box-shadow;
+}
+
+// Sidebar smooth transitions
+.main-nav {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0); // GPU acceleration
+    will-change: background-color, border-color;
+    
+    .navbar-nav {
+        .nav-link {
+            transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                       color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            transform: translateZ(0);
+            will-change: background-color, color;
+            
+            &:hover,
+            &.active {
+                transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                           color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            }
+        }
+    }
+}
+
+// Content area transitions
+.content-page {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color;
+}
+
+// Card transitions
+.card {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color, border-color, box-shadow;
+    
+    .card-header,
+    .card-body,
+    .card-footer {
+        transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0);
+        will-change: background-color, border-color;
+    }
+}
+
+// Form elements transitions
+.form-control,
+.form-select,
+.form-check-input {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color, border-color, color;
+}
+
+// Button transitions
+.btn {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color, border-color, color, box-shadow;
+}
+
+// Table transitions
+.table {
+    transition: color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: color;
+    
+    th,
+    td {
+        transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                   color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0);
+        will-change: background-color, border-color, color;
+    }
+    
+    &.table-striped {
+        tbody tr:nth-of-type(odd) {
+            transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            transform: translateZ(0);
+        }
+    }
+    
+    &.table-hover {
+        tbody tr:hover {
+            transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        }
+    }
+}
+
+// Modal transitions
+.modal-content {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color, border-color;
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0);
+        will-change: background-color, border-color;
+    }
+}
+
+// Dropdown transitions
+.dropdown-menu {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+               border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+               box-shadow 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color, border-color, box-shadow;
+    
+    .dropdown-item {
+        transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                   color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        transform: translateZ(0);
+        will-change: background-color, color;
+    }
+}
+
+// Pagination transitions (enhance existing pagination styles)
+.pagination {
+    .page-link {
+        transition: background-color 0.3s ease, 
+                   border-color 0.3s ease,
+                   color 0.3s ease !important;
+    }
+}
+
+// Alert transitions
+.alert {
+    transition: background-color 0.3s ease, 
+               border-color 0.3s ease,
+               color 0.3s ease !important;
+}
+
+// Badge transitions
+.badge {
+    transition: background-color 0.3s ease, 
+               color 0.3s ease !important;
+}
+
+// Progress bar transitions
+.progress {
+    transition: background-color 0.3s ease !important;
+    
+    .progress-bar {
+        transition: background-color 0.3s ease !important;
+    }
+}
+
+// Breadcrumb transitions
+.breadcrumb {
+    transition: background-color 0.3s ease !important;
+    
+    .breadcrumb-item {
+        transition: color 0.3s ease !important;
+        
+        a {
+            transition: color 0.3s ease !important;
+        }
+    }
+}
+
+// List group transitions
+.list-group {
+    .list-group-item {
+        transition: background-color 0.3s ease, 
+                   border-color 0.3s ease,
+                   color 0.3s ease !important;
+    }
+}
+
+// Nav tabs/pills transitions
+.nav-tabs,
+.nav-pills {
+    .nav-link {
+        transition: background-color 0.3s ease, 
+                   border-color 0.3s ease,
+                   color 0.3s ease !important;
+    }
+}
+
+// Accordion transitions
+.accordion {
+    .accordion-item {
+        transition: border-color 0.3s ease !important;
+    }
+    
+    .accordion-header {
+        .accordion-button {
+            transition: background-color 0.3s ease, 
+                       color 0.3s ease,
+                       box-shadow 0.3s ease !important;
+        }
+    }
+    
+    .accordion-body {
+        transition: background-color 0.3s ease !important;
+    }
+}
+
+// Offcanvas transitions
+.offcanvas {
+    transition: background-color 0.3s ease !important;
+    
+    .offcanvas-header,
+    .offcanvas-body {
+        transition: background-color 0.3s ease, 
+                   border-color 0.3s ease !important;
+    }
+}
+
+// Toast transitions
+.toast {
+    transition: background-color 0.3s ease, 
+               border-color 0.3s ease !important;
+    
+    .toast-header,
+    .toast-body {
+        transition: background-color 0.3s ease, 
+                   border-color 0.3s ease !important;
+    }
+}
+
+// Prevent transitions during page load
+html.no-js {
+    * {
+        transition: none !important;
+    }
+}
+
+// Remove no-js class after page load
+html {
+    &.no-js {
+        * {
+            transition: none !important;
+        }
+    }
+}
+
+// Specific fixes for common glitch areas
+.navbar-brand {
+    transition: color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: color;
+}
+
+.text-muted {
+    transition: color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: color;
+}
+
+.border {
+    transition: border-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: border-color;
+}
+
+.bg-light,
+.bg-dark,
+.bg-primary,
+.bg-secondary,
+.bg-success,
+.bg-danger,
+.bg-warning,
+.bg-info {
+    transition: background-color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: background-color;
+}
+
+// Icon transitions
+iconify-icon {
+    transition: color 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transform: translateZ(0);
+    will-change: color;
+}
+
+// Simplebar scrollbar transitions
+.simplebar-scrollbar {
+    transition: background-color 0.3s ease !important;
+    
+    &::before {
+        transition: background-color 0.3s ease !important;
+    }
+}
+
+// Custom scrollbar for webkit browsers
+::-webkit-scrollbar {
+    transition: background-color 0.3s ease !important;
+}
+
+::-webkit-scrollbar-track {
+    transition: background-color 0.3s ease !important;
+}
+
+::-webkit-scrollbar-thumb {
+    transition: background-color 0.3s ease !important;
+}

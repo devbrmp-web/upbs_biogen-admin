@@ -31,30 +31,64 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
         // Dashboard
         Route::view('/dashboard', 'dashboards.analytics')->name('dashboard');
 
-        // Categories: read-only index
-        Route::get('/categories', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('categories.index');
-        // Categories: create (signed) and store
-        Route::middleware('signed')->group(function () {
-            Route::get('/categories/create', [\App\Http\Controllers\Admin\CategoryController::class, 'create'])->middleware('signed')->name('categories.create');
-        });
-        Route::post('/categories', [\App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('categories.store');
-        // Categories: edit
-        Route::get('/categories/{category}/edit', [\App\Http\Controllers\Admin\CategoryController::class, 'edit'])->name('categories.edit');
-        // Categories: update
-        Route::put('/categories/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
-        // Categories: destroy
-        Route::delete('/categories/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
+        // Commodities (formerly Categories)
+        Route::resource('commodities', \App\Http\Controllers\Admin\CommodityController::class);
 
-        // Products
-        Route::get('/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
-        Route::get('/products/create', [\App\Http\Controllers\Admin\ProductController::class, 'create'])->middleware('signed')->name('products.create');
-        Route::post('/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('products.store');
-        Route::get('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'show'])->name('products.show');
-        Route::get('/products/{product}/edit', [\App\Http\Controllers\Admin\ProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('products.update');
-        Route::delete('/products/{product}', [\App\Http\Controllers\Admin\ProductController::class, 'destroy'])->name('products.destroy');
+        // Varieties (formerly Products)
+        Route::resource('varieties', \App\Http\Controllers\Admin\VarietyController::class);
+
+        // Seed Classes
+        Route::resource('seed-classes', \App\Http\Controllers\Admin\SeedClassController::class);
+
+        // Seed Lots
+        Route::resource('seed-lots', \App\Http\Controllers\Admin\SeedLotController::class);
+
+        // Orders
+        Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'show', 'destroy']);
+        Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Admin\OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('orders/bulk-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');
+        Route::post('orders/bulk-update-status', [\App\Http\Controllers\Admin\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
+        Route::post('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
+
+        // Audit Logs
+        Route::resource('audit-logs', \App\Http\Controllers\Admin\AuditLogController::class)->only(['index', 'show']);
+
+        // Profile & Help
+        Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'show'])->name('profile');
+        Route::get('help', [\App\Http\Controllers\Admin\HelpController::class, 'index'])->name('help');
+    });
+
+// Super Admin only routes
+Route::middleware(['auth', \App\Http\Middleware\EnsureSuperAdmin::class])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        // Admin User Management (Super Admin only)
+        Route::resource('admin-users', \App\Http\Controllers\Admin\AdminUserController::class)
+            ->parameters(['admin-users' => 'adminUser']);
     });
 
 // Root publik sementara
 Route::get('/', fn() => redirect('/login'));
 
+// Client routes (public)
+Route::prefix('client')->name('client.')->group(function () {
+    // Checkout
+    Route::get('/checkout', [\App\Http\Controllers\Client\CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/process', [\App\Http\Controllers\Client\CheckoutController::class, 'process'])->name('checkout.process');
+
+    // Order confirmation (simple placeholder view/response)
+    Route::get('/orders/confirmation/{order_code}', function (string $order_code) {
+        return response()->view('client.orders.confirmation', ['order_code' => $order_code], 200)->header('Content-Type', 'text/html');
+    })->name('order.confirmation');
+
+    // Order tracking route used in email templates
+    Route::get('/orders/track', function () {
+        return response('Order Tracking Placeholder', 200);
+    })->name('orders.track');
+});
+
+// Webhook routes (no CSRF protection needed)
+Route::post('/webhook/payment', [\App\Http\Controllers\WebhookController::class, 'handlePayment'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhook.payment');

@@ -25,7 +25,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => $adminName,
                 'role_id' => $adminRoleId,
-                'password_hash' => Hash::make($adminPassword),
+                'password' => Hash::make($adminPassword),
                 'remember_token' => null
             ]
         );

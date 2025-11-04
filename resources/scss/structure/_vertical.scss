@@ -18,17 +18,17 @@
     }
 
     .logo-lg {
-        margin-left: 6px;
-        height: $logo-lg-height;
-    }
-
-    .logo-light {
-        display: none;
-    }
-
-    .logo-dark {
+        margin-left: 0;
         display: block;
+        height: $logo-lg-height; // tinggi konsisten dan proporsional
+        width: auto;             // lebar menyesuaikan proporsi
+        max-width: 100%;         // jangan melebihi lebar box
+        object-fit: contain;     // jaga proporsi gambar
     }
+
+    // Default (Light theme): tampilkan logo-light, sembunyikan logo-dark
+    .logo-light { display: block; }
+    .logo-dark { display: none; }
 }
 
 .wrapper {
@@ -568,13 +568,8 @@ html[data-menu-color='dark'],
 html[data-menu-color='brand'] {
     .main-nav {
         .logo-box {
-            .logo-light {
-                display: block;
-            }
-
-            .logo-dark {
-                display: none;
-            }
+            .logo-light { display: none !important; }
+            .logo-dark { display: block !important; }
         }
     }
 }
@@ -590,6 +585,34 @@ html[data-menu-color='brand'] {
             &::after {
                 transform: rotate(270deg);
             }
+        }
+    }
+}
+
+// At Small Hover mode when hovered, center the logo
+html[data-menu-size='sm-hover'] {
+    .main-nav {
+        .logo-box {
+            text-align: center;
+        }
+    }
+}
+
+// Small Hover Active - center the logo too
+html[data-menu-size='sm-hover-active'] {
+    .main-nav {
+        .logo-box {
+            text-align: center;
+        }
+    }
+}
+
+// Theme-based logo visibility for dark mode
+html[data-bs-theme='dark'] {
+    .main-nav {
+        .logo-box {
+            .logo-light { display: none !important; }
+            .logo-dark { display: block !important; }
         }
     }
 }

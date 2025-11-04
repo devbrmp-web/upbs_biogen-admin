@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'password_hash')) {
-                $table->string('password_hash')->nullable();
+            if (!Schema::hasColumn('users', 'password')) {
+                $table->string('password')->nullable();
             }
             
             if (!Schema::hasColumn('users', 'role_id')) {
@@ -36,7 +36,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('password_hash');
+            $table->dropColumn('password');
             $table->dropForeign(['role_id']);
             $table->dropColumn('role_id');
             $table->dropColumn('remember_token');

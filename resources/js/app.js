@@ -23,6 +23,9 @@ import Choices from 'choices.js';
 
 import 'iconify-icon';
 import 'simplebar'
+
+// Theme improvements for smooth transitions
+import './theme-improvements.js';
 import {
     Autoplay,
     EffectCoverflow,

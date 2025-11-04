@@ -12,11 +12,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Jalankan seeder roles terlebih dahulu
+        // Jalankan seeder roles terlebih dahulu, kemudian superadmin sebelum admin biasa
         $this->call([
             RoleSeeder::class,
-            AdminUserSeeder::class,
-            UserSeeder::class,
+            UserSeeder::class,        // Creates superadmin first
+            AdminUserSeeder::class,   // Creates regular admin after superadmin
+            CommoditySeeder::class,
+            VarietySeeder::class,
+            SeedClassSeeder::class,
+            SeedLotSeeder::class,
+            DemoDataSeeder::class,
+            PlanletSeedLotSeeder::class,
+            DemoOrderSeeder::class,
         ]);
     }
 }

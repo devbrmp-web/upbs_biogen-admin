@@ -7,6 +7,7 @@
 @import './node_modules/bootstrap/scss/variables';
 @import 'config/variables';
 @import 'config/variables-dark';
+@import 'config/breakpoints';
 
 @import 'config/variables-custom';
 @import 'config/theme-mode';
@@ -45,6 +46,13 @@
 @import 'components/type';
 @import 'components/tooltip';
 @import 'components/widgets';
+@import 'components/responsive-improvements';
+@import 'components/pagination-improvements';
+@import 'theme-transitions';
+
+// Utilities
+@import 'utilities/responsive-utilities';
+@import 'utilities/performance-optimizations';
 
 // Plugin
 @import 'plugins/simplebar';

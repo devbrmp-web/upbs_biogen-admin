@@ -1,18 +1,15 @@
+{{-- Footer --}}
 <footer class="footer">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12 text-center">
-                <script>
-                    document.write(new Date().getFullYear())
-                </script>
-                &copy; Reback. Crafted by
-                <iconify-icon
-                    icon="iconamoon:heart-duotone"
-                    class="fs-18 align-middle text-danger"
-                ></iconify-icon>
-                <a href="" class="fw-bold footer-text" target="_blank"
-                >Techzaa</a
-                >
+            <div class="col-sm-6">
+                <script>document.write(new Date().getFullYear());</script>
+                &copy; UPBS Biogen. All rights reserved.
+            </div>
+            <div class="col-sm-6">
+                <div class="text-sm-end">
+                    <span class="text-muted">UPBS BRMP Biogen Admin Panel</span>
+                </div>
             </div>
         </div>
     </div>

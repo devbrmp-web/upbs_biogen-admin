@@ -20,7 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password_hash',
+        'password',
         'role_id',
     ];
 
@@ -30,7 +30,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password_hash',
+        'password',
         'remember_token',
     ];
 
@@ -42,7 +42,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password_hash' => 'hashed',
+            'password' => 'hashed',
         ];
     }
     
@@ -53,7 +53,7 @@ class User extends Authenticatable
      */
     public function getAuthPasswordName(): string
     {
-        return 'password_hash';
+        return 'password';
     }
     
     /**
@@ -73,6 +73,6 @@ class User extends Authenticatable
      */
     public function getAuthPassword(): string
     {
-        return $this->password_hash;
+        return $this->password;
     }
 }
