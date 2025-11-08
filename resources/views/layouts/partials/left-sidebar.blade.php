@@ -73,7 +73,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}">
                     <span class="nav-icon">
-                        <iconify-icon icon="iconamoon:receipt-duotone"></iconify-icon>
+                        <iconify-icon icon="ph:receipt-duotone"></iconify-icon>
                     </span>
                     <span class="nav-text"> Orders </span>
                 </a>
