@@ -21,8 +21,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Public API for client (guest) with rate limiting
-Route::middleware('throttle:60,1')->group(function () {
+// Public API for client (guest) dengan rate limiting
+Route::middleware('throttle:20,1')->group(function () {
     Route::get('/commodities', [CommodityController::class, 'index']);
     Route::get('/varieties', [VarietyController::class, 'index']);
     Route::get('/varieties/{slug}', [VarietyController::class, 'show']);
@@ -30,5 +30,6 @@ Route::middleware('throttle:60,1')->group(function () {
         ->name('api.orders.checkout')
         ->middleware('throttle:20,1');
     Route::get('/orders/track/{tracking_number}', [OrderController::class, 'track'])
-        ->name('api.orders.track');
+        ->name('api.orders.track')
+        ->middleware('throttle:20,1');
 });
