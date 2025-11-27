@@ -82,7 +82,8 @@ class VarietyController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            // Wajib pada create; opsional pada update
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         if ($request->hasFile('image')) {
@@ -185,15 +186,15 @@ class VarietyController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
+            // Hapus file lama jika ada
             if ($variety->image_path) {
                 Storage::disk('public')->delete($variety->image_path);
             }
-            
+            // Simpan file baru dengan nama unik di disk public
             $validated['image_path'] = $request->file('image')->store('varieties', 'public');
         }
 

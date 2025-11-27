@@ -130,11 +130,11 @@
                                         <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
                                     </div>
                                 </div>
-                                @if($variety->image)
+                                @if($variety->image_path)
                                     <div class="mt-2">
                                         <small class="text-muted d-block mb-1">Current Image:</small>
                                         <div class="border rounded p-2 d-inline-block">
-                                            <img src="{{ asset('storage/' . $variety->image) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
+                                            <img src="{{ asset('storage/' . $variety->image_path) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
                                         </div>
                                     </div>
                                 @endif
@@ -193,32 +193,8 @@
             });
         }
 
-        // Enable Dropzone drag-and-drop with preview and manual submit
-        if (typeof Dropzone !== 'undefined' && form) {
-            Dropzone.autoDiscover = false;
-            const dz = new Dropzone(form.querySelector('.dropzone'), {
-                url: form.action,
-                autoProcessQueue: false,
-                maxFiles: 1,
-                acceptedFiles: 'image/*',
-                clickable: form.querySelector('.dropzone'),
-            });
-            dz.on('addedfile', function(file){
-                if (preview && container) {
-                    preview.src = URL.createObjectURL(file);
-                    container.classList.remove('d-none');
-                }
-            });
-            dz.on('removedfile', function(){
-                if (preview && container) {
-                    preview.src = '#';
-                    container.classList.add('d-none');
-                }
-            });
-
-            // Allow normal form submission - remove preventDefault to fix 422 error
-            // The form will submit normally with proper Laravel validation
-        }
+        // Non-AJAX file upload: gunakan input file standar agar image terkirim via multipart/form-data
+        // Dropzone dinonaktifkan untuk menghindari file tidak terkirim saat submit form biasa
 
         // Price input filtering - only allow digits
         const priceEl = document.getElementById('price');

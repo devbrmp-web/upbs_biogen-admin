@@ -38,15 +38,33 @@ class OrderController extends Controller
 
             foreach ($validated['items'] as $item) {
                 $variety = Variety::query()->findOrFail($item['variety_id']);
+                $quantity = (int) $item['quantity'];
                 $seedLot = null;
                 if (!empty($item['seed_lot_id'])) {
-                    $seedLot = SeedLot::query()->findOrFail($item['seed_lot_id']);
+                    // Lock the seed lot row to avoid race conditions during stock decrement
+                    $seedLot = SeedLot::query()->lockForUpdate()->findOrFail($item['seed_lot_id']);
+
+                    if (!$seedLot->is_sellable) {
+                        throw new \RuntimeException('Selected seed lot is not sellable.');
+                    }
+                    if ($seedLot->quantity < $quantity) {
+                        throw new \RuntimeException('Insufficient seed lot stock for checkout.');
+                    }
+
+                    // Decrement seed lot stock immediately as reservation
+                    $seedLot->decrement('quantity', $quantity);
+                } else {
+                    // Fallback: validate variety stock and decrement if using variety-based stock
+                    if ($variety->stock < $quantity) {
+                        throw new \RuntimeException('Insufficient stock for checkout.');
+                    }
+                    $variety->decrement('stock', $quantity);
                 }
 
                 OrderItem::createFromVariety(
                     $order,
                     $variety,
-                    (int) $item['quantity'],
+                    $quantity,
                     $seedLot
                 );
             }
