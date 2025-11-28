@@ -87,7 +87,7 @@ class VarietyController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('varieties', 'public');
+            $validated['image_path'] = Storage::disk('public')->putFile('varieties', $request->file('image'));
         }
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
@@ -195,7 +195,7 @@ class VarietyController extends Controller
                 Storage::disk('public')->delete($variety->image_path);
             }
             // Simpan file baru dengan nama unik di disk public
-            $validated['image_path'] = $request->file('image')->store('varieties', 'public');
+            $validated['image_path'] = Storage::disk('public')->putFile('varieties', $request->file('image'));
         }
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
