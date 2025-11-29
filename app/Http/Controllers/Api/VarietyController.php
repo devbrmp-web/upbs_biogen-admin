@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Variety;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -41,7 +42,8 @@ class VarietyController extends Controller
                 // Format tampilan IDR tanpa desimal, pemisah ribuan '.'
                 'price_idr' => 'Rp '.number_format((int) $v->price, 0, ',', '.'),
                 'minimum_limit' => (int) ($v->minimum_limit ?? 0),
-                'image' => $v->image_path,
+                'image_path' => $v->image_path,
+                'image_url' => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
                 'commodity' => [
                     'name' => optional($v->commodity)->name,
                     'slug' => optional($v->commodity)->slug,
@@ -90,7 +92,8 @@ class VarietyController extends Controller
             'slug' => $v->slug,
             'sku' => $v->sku,
             'description' => $v->description,
-            'image' => $v->image_path,
+            'image_path' => $v->image_path,
+            'image_url' => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
             'price_cents' => ((int) $v->price) * 100,
             // Format tampilan IDR tanpa desimal, pemisah ribuan '.'
             'price_idr' => 'Rp '.number_format((int) $v->price, 0, ',', '.'),

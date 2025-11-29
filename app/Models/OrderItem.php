@@ -56,7 +56,22 @@ class OrderItem extends Model
         parent::boot();
         
         static::saving(function ($orderItem) {
-            $orderItem->total_price = $orderItem->unit_price * $orderItem->quantity;
+            $seedClassCode = null;
+            $seedLot = $orderItem->relationLoaded('seedLot') ? $orderItem->seedLot : $orderItem->seedLot()->with('seedClass')->first();
+            if ($seedLot && $seedLot->seedClass) {
+                $seedClassCode = $seedLot->seedClass->code;
+            }
+
+            if ($seedClassCode === 'BS') {
+                $groups = intdiv((int) $orderItem->quantity, 5);
+                if ($orderItem->quantity % 5 !== 0) {
+                    $groups += 1; // should not happen due to validation, but safeguard
+                }
+                $pricePerGroup = ($seedLot ? (float) $seedLot->price_per_unit : (float) $orderItem->unit_price) * 5;
+                $orderItem->total_price = $pricePerGroup * $groups;
+            } else {
+                $orderItem->total_price = (float) $orderItem->unit_price * (int) $orderItem->quantity;
+            }
         });
     }
 
@@ -65,15 +80,18 @@ class OrderItem extends Model
      */
     public static function createFromVariety(Order $order, Variety $variety, int $quantity, SeedLot $seedLot = null): self
     {
+        $unitPrice = $seedLot ? (float) $seedLot->price_per_unit : (float) $variety->price;
+
         return static::create([
             'order_id' => $order->id,
             'variety_id' => $variety->id,
             'variety_name' => $variety->name,
             'variety_sku' => $variety->sku,
-            'unit_price' => $variety->price,
+            'unit_price' => $unitPrice,
+            'price_at_order' => $unitPrice,
             'quantity' => $quantity,
             'seed_lot_id' => $seedLot?->id,
-            'seed_class' => $seedLot?->seed_class,
+            'seed_class' => $seedLot?->seedClass?->code,
         ]);
     }
 

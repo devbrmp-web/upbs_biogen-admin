@@ -21,14 +21,11 @@ class Order extends Model
         'status',
         'shipping_method',
         'subtotal',
-        'shipping_cost',
         'total_amount',
         'pnbp_receipt_no',
         'paid_at',
         'courier_name',
-        'courier_service',
         'tracking_number',
-        'shipped_at',
         'completed_at',
         'notes',
         'payment_deadline',
@@ -36,10 +33,8 @@ class Order extends Model
 
     protected $casts = [
         'subtotal' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
-        'shipped_at' => 'datetime',
         'completed_at' => 'datetime',
         'payment_deadline' => 'datetime',
         'notes' => 'array',
@@ -200,7 +195,7 @@ class Order extends Model
 
     public function getIsShippedAttribute(): bool
     {
-        return !is_null($this->shipped_at);
+        return $this->status === self::STATUS_SHIPPED;
     }
 
     public function getIsCompletedAttribute(): bool
@@ -263,14 +258,10 @@ class Order extends Model
     {
         $updateData = [
             'status' => self::STATUS_SHIPPED,
-            'shipped_at' => now(),
         ];
 
         if (!empty($shippingData['courier_name'])) {
             $updateData['courier_name'] = $shippingData['courier_name'];
-        }
-        if (!empty($shippingData['courier_service'])) {
-            $updateData['courier_service'] = $shippingData['courier_service'];
         }
         if (!empty($shippingData['tracking_number'])) {
             $updateData['tracking_number'] = $shippingData['tracking_number'];
@@ -344,12 +335,9 @@ class Order extends Model
     public function calculateTotals(): void
     {
         $subtotal = $this->items->sum('total_price');
-        $shippingCost = $this->is_pickup ? 0 : $this->shipping_cost;
-        
         $this->update([
             'subtotal' => $subtotal,
-            'shipping_cost' => $shippingCost,
-            'total_amount' => $subtotal + $shippingCost,
+            'total_amount' => $subtotal,
         ]);
     }
 

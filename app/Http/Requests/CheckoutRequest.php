@@ -126,15 +126,52 @@ class CheckoutRequest extends FormRequest
                 }
             }
             
-            // Validate item availability and stock
+            // Validate item availability, seed class rules (BS/FS), and stock source
             if ($this->has('items') && is_array($this->items)) {
                 foreach ($this->items as $index => $item) {
-                    if (isset($item['variety_id']) && isset($item['quantity'])) {
-                        $variety = \App\Models\Variety::find($item['variety_id']);
-                        if ($variety && $variety->stock < $item['quantity']) {
+                    if (!isset($item['variety_id']) || !isset($item['quantity'])) {
+                        continue;
+                    }
+
+                    $qty = (int) $item['quantity'];
+
+                    // Prefer validating against SeedLot if provided; fallback to Variety stock
+                    if (!empty($item['seed_lot_id'])) {
+                        $seedLot = \App\Models\SeedLot::with('seedClass')->find($item['seed_lot_id']);
+                        if (!$seedLot) {
+                            $validator->errors()->add("items.{$index}.seed_lot_id", 'Selected seed lot is not available.');
+                            continue;
+                        }
+
+                        // Ensure sellable and sufficient quantity
+                        if (!$seedLot->is_sellable) {
+                            $validator->errors()->add("items.{$index}.seed_lot_id", 'Selected seed lot is not sellable.');
+                        }
+                        if ($seedLot->quantity < $qty) {
                             $validator->errors()->add(
                                 "items.{$index}.quantity",
-                                "Insufficient stock. Available: {$variety->stock}, Requested: {$item['quantity']}"
+                                "Insufficient seed lot stock. Available: {$seedLot->quantity}, Requested: {$qty}"
+                            );
+                        }
+
+                        // Enforce BS (5kg multiples) vs FS (1kg)
+                        $classCode = $seedLot->seedClass?->code;
+                        if ($classCode === 'BS' && ($qty % 5 !== 0)) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                'For BS class seeds, quantity must be in multiples of 5 kg.'
+                            );
+                        }
+                        if ($classCode === 'FS' && $qty < 1) {
+                            $validator->errors()->add("items.{$index}.quantity", 'For FS class seeds, minimum quantity is 1 kg.');
+                        }
+                    } else {
+                        // Fallback: validate against variety stock
+                        $variety = \App\Models\Variety::find($item['variety_id']);
+                        if ($variety && $variety->stock < $qty) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                "Insufficient stock. Available: {$variety->stock}, Requested: {$qty}"
                             );
                         }
                     }

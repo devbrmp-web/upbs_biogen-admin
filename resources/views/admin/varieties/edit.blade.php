@@ -121,7 +121,7 @@
                                     <div class="dz-message needsclick">
                                         <i class="h1 bx bx-cloud-upload"></i>
                                         <h3>Drop files here or click to upload.</h3>
-                                        <span class="text-muted fs-13">Select one image only (jpg, jpeg, png, webp) maximum 2MB.</span>
+                                        <span class="text-muted fs-13">Select one image only (jpg, jpeg, png, webp) maximum 4MB.</span>
                                     </div>
                                 </div>
                                 @error('image')<div class="text-danger small">{{ $message }}</div>@enderror
@@ -130,15 +130,15 @@
                                         <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
                                     </div>
                                 </div>
-                                @if($variety->image)
+                                @if($variety->image_path)
                                     <div class="mt-2">
                                         <small class="text-muted d-block mb-1">Current Image:</small>
                                         <div class="border rounded p-2 d-inline-block">
-                                            <img src="{{ asset('storage/' . $variety->image) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
+                                            <img src="{{ asset('storage/' . $variety->image_path) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
                                         </div>
                                     </div>
                                 @endif
-                                <small class="text-muted">Only 1 image (jpg, jpeg, png, webp) maximum 2MB.</small>
+                                <small class="text-muted">Only 1 image (jpg, jpeg, png, webp) maximum 4MB.</small>
                             </div>
                         </div>
                     </div>
@@ -160,6 +160,8 @@
         const input = document.getElementById('varietyImageInput');
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
+        const dzElement = document.querySelector('.dropzone');
+        const indexUrl = "{{ route('admin.varieties.index') }}";
 
         // Integer-only guard for numeric fields (price and minimum_limit)
         const intFields = ['price', 'minimum_limit'];
@@ -193,31 +195,55 @@
             });
         }
 
-        // Enable Dropzone drag-and-drop with preview and manual submit
-        if (typeof Dropzone !== 'undefined' && form) {
+        if (dzElement && form) {
             Dropzone.autoDiscover = false;
-            const dz = new Dropzone(form.querySelector('.dropzone'), {
+            const csrfToken = document.querySelector('input[name="_token"]').value;
+            const methodInput = document.querySelector('input[name="_method"]');
+            const returnInput = document.querySelector('input[name="return"]');
+
+            const dz = new Dropzone(dzElement, {
                 url: form.action,
-                autoProcessQueue: false,
+                method: 'post',
+                paramName: 'image',
+                maxFilesize: 4,
                 maxFiles: 1,
-                acceptedFiles: 'image/*',
-                clickable: form.querySelector('.dropzone'),
+                uploadMultiple: false,
+                acceptedFiles: 'image/jpeg,image/png,image/jpg,image/gif,image/webp',
+                autoProcessQueue: false,
+                addRemoveLinks: true,
+                headers: { 'X-CSRF-TOKEN': csrfToken },
             });
+
             dz.on('addedfile', function(file){
-                if (preview && container) {
-                    preview.src = URL.createObjectURL(file);
-                    container.classList.remove('d-none');
-                }
-            });
-            dz.on('removedfile', function(){
-                if (preview && container) {
-                    preview.src = '#';
-                    container.classList.add('d-none');
+                if (dz.files.length > 1) {
+                    dz.removeFile(dz.files[0]);
                 }
             });
 
-            // Allow normal form submission - remove preventDefault to fix 422 error
-            // The form will submit normally with proper Laravel validation
+            dz.on('sending', function(file, xhr, formData){
+                Array.from(form.elements).forEach(function(el){
+                    if (!el.name) return;
+                    if (el.type === 'file') return;
+                    formData.append(el.name, el.value);
+                });
+                if (methodInput && methodInput.value) {
+                    formData.append('_method', methodInput.value);
+                }
+            });
+
+            dz.on('success', function(){
+                const redirectUrl = returnInput && returnInput.value ? returnInput.value : indexUrl;
+                window.location.assign(redirectUrl);
+            });
+
+            dz.on('error', function(file, message){ console.error(message); });
+
+            form.addEventListener('submit', function(e){
+                if (dz.getQueuedFiles().length > 0) {
+                    e.preventDefault();
+                    dz.processQueue();
+                }
+            });
         }
 
         // Price input filtering - only allow digits
