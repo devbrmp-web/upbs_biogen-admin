@@ -72,6 +72,15 @@ class OrderController extends Controller
             $order->load('items');
             $order->calculateTotals();
 
+            // Auto-select courier based on total weight for delivery orders
+            if ($order->shipping_method === Order::SHIPPING_DELIVERY) {
+                $totalWeightKg = (int) $order->items->sum('quantity');
+                $courier = $totalWeightKg > 10
+                    ? Shipment::COURIER_INDAH_CARGO
+                    : Shipment::COURIER_POS_INDONESIA;
+                $order->update(['courier_name' => $courier]);
+            }
+
             Shipment::createForOrder($order);
 
             $paymentMethod = $validated['payment_method'] ?? Payment::METHOD_BANK_TRANSFER;

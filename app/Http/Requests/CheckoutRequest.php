@@ -30,7 +30,7 @@ class CheckoutRequest extends FormRequest
             
             // Shipping method (pickup is default, delivery requires call center coordination)
             'shipping_method' => 'required|in:pickup,delivery',
-            'courier_name' => 'required_if:shipping_method,delivery|in:Pos Indonesia,Indah Cargo',
+            'courier_name' => 'nullable|string|in:Pos Indonesia,Indah Cargo',
             
             // Cart items validation
             'items' => 'required|array|min:1',
@@ -115,16 +115,7 @@ class CheckoutRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Additional validation for delivery method
-            if ($this->shipping_method === 'delivery') {
-                // Ensure customer understands call center coordination requirement
-                if (!$this->has('delivery_coordination_acknowledged')) {
-                    $validator->errors()->add(
-                        'shipping_method', 
-                        'For delivery orders, you must acknowledge that shipping coordination will be handled via Call Center/WhatsApp.'
-                    );
-                }
-            }
+            // Shipping method-specific rules handled automatically in backend
             
             // Validate item availability, seed class rules (BS/FS), and stock source
             if ($this->has('items') && is_array($this->items)) {
