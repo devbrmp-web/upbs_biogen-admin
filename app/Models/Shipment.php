@@ -179,6 +179,7 @@ class Shipment extends Model
             'order_id' => $order->id,
             'shipping_method' => $order->shipping_method,
             'status' => self::STATUS_PENDING,
+            'courier_name' => $order->courier_name,
         ]);
     }
 
