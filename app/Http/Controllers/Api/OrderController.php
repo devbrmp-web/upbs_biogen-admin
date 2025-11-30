@@ -159,4 +159,42 @@ class OrderController extends Controller
             ],
         ]);
     }
+
+    public function verifyPaymentStatus(string $order_code): JsonResponse
+    {
+        $order = Order::query()->with('payment')->where('order_code', $order_code)->first();
+        if (! $order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+        $payment = $order->payment;
+        $orderId = $payment?->gateway_reference ?: $order->order_code;
+        $service = new \App\Services\MidtransService();
+        try {
+            $status = $service->getStatus($orderId);
+            if ($payment) {
+                $payment->applyMidtransStatus($status);
+            } else {
+                $mapped = match ($status['transaction_status'] ?? null) {
+                    'settlement', 'capture' => Payment::STATUS_PAID,
+                    'pending' => Payment::STATUS_PENDING,
+                    'expire' => Payment::STATUS_EXPIRED,
+                    'deny', 'cancel' => Payment::STATUS_FAILED,
+                    default => null,
+                };
+                $order->payment_type = $status['payment_type'] ?? $order->payment_type;
+                $order->transaction_id = $status['transaction_id'] ?? $order->transaction_id;
+                $order->transaction_status = $status['transaction_status'] ?? $order->transaction_status;
+                $order->settlement_time = isset($status['settlement_time']) ? \Carbon\Carbon::parse($status['settlement_time']) : $order->settlement_time;
+                $order->gross_amount = isset($status['gross_amount']) ? (float) $status['gross_amount'] : $order->gross_amount;
+                if ($mapped === Payment::STATUS_PAID) {
+                    $order->markAsPaid();
+                } else {
+                    $order->save();
+                }
+            }
+            return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
 }

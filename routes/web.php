@@ -51,6 +51,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
         Route::post('orders/bulk-update-status', [\App\Http\Controllers\Admin\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
         Route::post('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
 
+        // Payment manual sync (Midtrans GET Status)
+        Route::get('orders/{order}/payments/sync-midtrans', [\App\Http\Controllers\Admin\PaymentSyncController::class, 'syncMidtransStatus'])
+            ->name('orders.payments.sync-midtrans');
+
         // Audit Logs
         Route::resource('audit-logs', \App\Http\Controllers\Admin\AuditLogController::class)->only(['index', 'show']);
 

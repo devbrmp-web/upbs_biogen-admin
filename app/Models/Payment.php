@@ -18,10 +18,13 @@ class Payment extends Model
         'pnbp_receipt_no',
         'amount',
         'status',
+        'gateway_status',
+        'fraud_status',
         'paid_at',
         'expires_at',
         'gateway_response',
         'signature_verification',
+        'gateway_signature',
         'payment_ip',
         'notes',
     ];
@@ -171,9 +174,60 @@ class Payment extends Model
             'amount' => $order->total_amount,
             'gateway_transaction_id' => $gatewayData['transaction_id'] ?? null,
             'gateway_reference' => $gatewayData['reference'] ?? null,
+            'gateway_status' => $gatewayData['gateway_status'] ?? null,
+            'fraud_status' => $gatewayData['fraud_status'] ?? null,
             'expires_at' => $gatewayData['expires_at'] ?? now()->addHours(24),
             'gateway_response' => $gatewayData,
             'payment_ip' => request()->ip(),
         ]);
+    }
+
+    /**
+     * Apply Midtrans status mapping and persist.
+     */
+    public function applyMidtransStatus(array $midtrans): void
+    {
+        // Store raw statuses
+        $this->gateway_status = $midtrans['transaction_status'] ?? ($midtrans['status'] ?? null);
+        $this->fraud_status = $midtrans['fraud_status'] ?? null;
+        $this->gateway_signature = $midtrans['signature_key'] ?? null;
+
+        // Merge gateway response snapshot
+        $mergedResponse = array_merge($this->gateway_response ?? [], $midtrans);
+
+        // Map to internal payment status
+        $mapped = match ($this->gateway_status) {
+            'settlement', 'capture' => self::STATUS_PAID,
+            'pending' => self::STATUS_PENDING,
+            'expire' => self::STATUS_EXPIRED,
+            'deny', 'cancel' => self::STATUS_FAILED,
+            default => $this->status,
+        };
+
+        // Persist
+        $this->status = $mapped;
+        $this->gateway_response = $mergedResponse;
+
+        if ($mapped === self::STATUS_PAID && !$this->paid_at) {
+            $this->paid_at = now();
+        }
+
+        $this->save();
+
+        // Sync snapshot to order
+        $order = $this->order;
+        if ($order) {
+            $order->payment_type = $midtrans['payment_type'] ?? $order->payment_type;
+            $order->transaction_id = $midtrans['transaction_id'] ?? $order->transaction_id;
+            $order->transaction_status = $this->gateway_status;
+            $order->settlement_time = isset($midtrans['settlement_time']) ? \Carbon\Carbon::parse($midtrans['settlement_time']) : $order->settlement_time;
+            $order->gross_amount = isset($midtrans['gross_amount']) ? (float) $midtrans['gross_amount'] : $order->gross_amount;
+            $order->save();
+        }
+
+        // If paid, cascade to order
+        if ($mapped === self::STATUS_PAID) {
+            $order->markAsPaid($midtrans['pnbp_receipt_no'] ?? $this->pnbp_receipt_no);
+        }
     }
 }
