@@ -73,14 +73,10 @@ class WebhookController extends Controller
                 return response()->json(['message' => 'Payment already processed'], 200);
             }
 
-            // Update payment status based on webhook
-            if ($paymentData['status'] === 'success' || $paymentData['status'] === 'settlement') {
-                $this->processSuccessfulPayment($payment, $paymentData);
-            } elseif ($paymentData['status'] === 'failed' || $paymentData['status'] === 'deny') {
-                $this->processFailedPayment($payment, $paymentData);
-            } elseif ($paymentData['status'] === 'expired') {
-                $this->processExpiredPayment($payment, $paymentData);
-            }
+            $orderId = $payment->gateway_reference ?: $request->input('order_id');
+            $service = new \App\Services\MidtransService();
+            $status = $service->getStatus((string) $orderId);
+            $payment->applyMidtransStatus($status);
 
             Log::channel('webhooks')->info('Payment webhook processed successfully', [
                 'payment_id' => $payment->id,

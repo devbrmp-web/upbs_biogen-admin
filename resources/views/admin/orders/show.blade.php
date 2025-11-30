@@ -128,6 +128,30 @@
                                     <div>{{ $order->payment->paid_at->format('F d, Y \a\t H:i') }}</div>
                                 </div>
                             @endif
+                            @if($order->payment_type)
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Payment Type</label>
+                                    <div>{{ ucwords(str_replace('_', ' ', $order->payment_type)) }}</div>
+                                </div>
+                            @endif
+                            @if($order->transaction_id)
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Transaction ID</label>
+                                    <div class="font-monospace">{{ $order->transaction_id }}</div>
+                                </div>
+                            @endif
+                            @if($order->transaction_status)
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Transaction Status</label>
+                                    <div>{{ ucfirst($order->transaction_status) }}</div>
+                                </div>
+                            @endif
+                            @if($order->settlement_time)
+                                <div class="mb-0">
+                                    <label class="form-label text-muted">Settlement Time</label>
+                                    <div>{{ $order->settlement_time->format('F d, Y \a\t H:i') }}</div>
+                                </div>
+                            @endif
                         @else
                             <div class="text-muted">No payment information available.</div>
                         @endif
