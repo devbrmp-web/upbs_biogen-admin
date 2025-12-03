@@ -28,6 +28,9 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::get('/commodities', [CommodityController::class, 'index']);
     Route::get('/varieties', [VarietyController::class, 'index']);
     Route::get('/varieties/{slug}', [VarietyController::class, 'show']);
+    Route::get('/seed-classes/{id}/varieties', [VarietyController::class, 'bySeedClass'])
+        ->whereNumber('id')
+        ->middleware('throttle:20,1');
     Route::get('/seed-classes', [SeedClassController::class, 'index'])->name('api.seed-classes.index');
     Route::get('/seed-classes/{code}', [SeedClassController::class, 'show'])->name('api.seed-classes.show');
     Route::get('/seed-lots', [SeedLotController::class, 'index'])->name('api.seed-lots.index');
