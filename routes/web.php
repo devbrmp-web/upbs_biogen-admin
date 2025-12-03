@@ -80,6 +80,8 @@ Route::prefix('client')->name('client.')->group(function () {
     // Checkout
     Route::get('/checkout', [\App\Http\Controllers\Client\CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout/process', [\App\Http\Controllers\Client\CheckoutController::class, 'process'])->name('checkout.process');
+    Route::view('/catalog', 'client.seed.index')->name('catalog');
+    Route::view('/cart', 'client.cart.index')->name('cart');
 
     // Order confirmation (simple placeholder view/response)
     Route::get('/orders/confirmation/{order_code}', function (string $order_code) {
