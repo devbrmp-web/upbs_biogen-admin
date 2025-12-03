@@ -97,6 +97,38 @@ class WebhookController extends Controller
         }
     }
 
+    public function handleMidtransNotification(Request $request): JsonResponse
+    {
+        $service = new \App\Services\MidtransService();
+        $signature = (string) ($request->input('signature_key') ?? '');
+        $params = [
+            'order_id' => $request->input('order_id'),
+            'status_code' => $request->input('status_code'),
+            'gross_amount' => $request->input('gross_amount'),
+        ];
+        if (!$service->verifySignature($signature, $params)) {
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+
+        $order = Order::query()->where('order_code', (string) $request->input('order_id'))->first();
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        $payment = Payment::query()->where('order_id', $order->id)->first();
+        if (!$payment) {
+            $payment = Payment::createForOrder($order, Payment::METHOD_BANK_TRANSFER);
+        }
+
+        $payment->applyMidtransStatus($request->all());
+
+        if (in_array($request->input('transaction_status'), ['settlement','capture'])) {
+            $order->markAsPaid();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     /**
      * Process successful payment
      */

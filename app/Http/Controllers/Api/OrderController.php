@@ -72,6 +72,9 @@ class OrderController extends Controller
             $order->load('items');
             $order->calculateTotals();
 
+            $serviceFee = round($order->subtotal * 0.01, 2);
+            $order->update(['total_amount' => $order->subtotal + $serviceFee]);
+
             // Auto-select courier based on total weight for delivery orders
             if ($order->shipping_method === Order::SHIPPING_DELIVERY) {
                 $totalWeightKg = (int) $order->items->sum('quantity');
@@ -89,29 +92,45 @@ class OrderController extends Controller
             return $order->fresh(['items', 'payment', 'shipment']);
         });
 
-        return response()->json([
-            'data' => [
-                'order_code' => $order->order_code,
-                'status' => $order->status,
-                'shipping_method' => $order->shipping_method,
-                'totals' => [
-                    'subtotal' => (int) $order->subtotal,
-                    'shipping_cost' => (int) $order->shipping_cost,
-                    'total_amount' => (int) $order->total_amount,
+        try {
+            $service = new \App\Services\MidtransService();
+            $snap = $service->createSnapToken($order);
+            $payment = $order->payment;
+            if ($payment) {
+                $payment->gateway_reference = $order->order_code;
+                $payment->gateway_status = 'pending';
+                $payment->gateway_response = array_merge($payment->gateway_response ?? [], $snap);
+                $payment->snap_token = $snap['token'] ?? null;
+                $payment->redirect_url = $snap['redirect_url'] ?? null;
+                $payment->save();
+            }
+
+            return response()->json([
+                'data' => [
+                    'order_code' => $order->order_code,
+                    'snap_token' => $snap['token'] ?? null,
+                    'payment_url' => $snap['redirect_url'] ?? null,
                 ],
-                'payment' => [
-                    'method' => $order->payment?->payment_method,
-                    'status' => $order->payment?->status ?? Payment::STATUS_PENDING,
-                    'expires_at' => optional($order->payment?->expires_at)->toIso8601String(),
-                ],
-                'shipment' => [
-                    'shipping_method' => $order->shipment?->shipping_method ?? $order->shipping_method,
-                    'status' => $order->shipment?->status ?? Shipment::STATUS_PENDING,
-                    'tracking_number' => $order->tracking_number,
-                ],
-                'instructions' => $order->getShippingInstructions(),
-            ],
-        ]);
+            ]);
+        } catch (\Throwable $e) {
+            // Rollback reserved stock
+            try {
+                DB::transaction(function() use ($order) {
+                    foreach ($order->items as $it) {
+                        if ($it->seed_lot_id) {
+                            $lot = \App\Models\SeedLot::query()->lockForUpdate()->find($it->seed_lot_id);
+                            if ($lot) { $lot->increment('quantity', $it->quantity); }
+                        } else {
+                            $var = \App\Models\Variety::query()->lockForUpdate()->find($it->variety_id);
+                            if ($var) { $var->increment('stock', $it->quantity); }
+                        }
+                    }
+                });
+            } catch (\Throwable $re) {}
+            return response()->json([
+                'message' => 'Failed to initialize payment',
+            ], 502);
+        }
     }
 
     public function track(TrackOrderRequest $request): JsonResponse

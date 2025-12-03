@@ -10,10 +10,11 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             if (Schema::hasColumn('orders', 'courier_name')) {
-                $table->string('courier_name', 50)
-                    ->nullable()
-                    ->collation('utf8mb4_unicode_ci')
-                    ->change();
+                $col = $table->string('courier_name', 50)->nullable();
+                if (config('database.default') !== 'sqlite') {
+                    $col->collation('utf8mb4_unicode_ci');
+                }
+                $col->change();
             }
 
             if (Schema::hasColumn('orders', 'shipping_cost')) {
@@ -42,12 +43,12 @@ return new class extends Migration
             }
 
             if (Schema::hasColumn('orders', 'courier_name')) {
-                $table->string('courier_name', 50)
-                    ->nullable()
-                    ->collation('utf8mb4_unicode_ci')
-                    ->change();
+                $col = $table->string('courier_name', 50)->nullable();
+                if (config('database.default') !== 'sqlite') {
+                    $col->collation('utf8mb4_unicode_ci');
+                }
+                $col->change();
             }
         });
     }
 };
-

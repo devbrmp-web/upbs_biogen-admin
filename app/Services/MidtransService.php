@@ -3,46 +3,82 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class MidtransService
 {
-    private string $baseUrl;
-    private string $serverKey;
+    protected string $serverKey;
+    protected string $baseUrl;
 
     public function __construct()
     {
-        $cfg = config('payment.midtrans');
-        $this->baseUrl = rtrim($cfg['base_url'] ?? 'https://api.sandbox.midtrans.com', '/');
-        $this->serverKey = (string) ($cfg['server_key'] ?? '');
+        $this->serverKey = (string) config('midtrans.server_key');
+        $this->baseUrl = rtrim((string) config('midtrans.base_url'), '/');
     }
 
-    /**
-     * Get transaction status from Midtrans by order ID (merchant order_id).
-     * Returns array as provided by Midtrans.
-     */
+    public function createTransaction(array $payload): array
+    {
+        $url = $this->baseUrl . '/snap/v1/transactions';
+        $auth = base64_encode($this->serverKey . ':');
+        $res = Http::withHeaders([
+            'Authorization' => 'Basic ' . $auth,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post($url, $payload);
+
+        if ($res->failed()) {
+            throw new \RuntimeException('Midtrans create transaction failed');
+        }
+
+        return $res->json();
+    }
+
     public function getStatus(string $orderId): array
     {
-        if (empty($this->serverKey)) {
-            throw new \RuntimeException('MIDTRANS_SERVER_KEY is not configured');
+        $url = $this->baseUrl . '/v2/' . $orderId . '/status';
+        $auth = base64_encode($this->serverKey . ':');
+        $res = Http::withHeaders([
+            'Authorization' => 'Basic ' . $auth,
+            'Accept' => 'application/json',
+        ])->get($url);
+
+        if ($res->failed()) {
+            throw new \RuntimeException('Midtrans get status failed');
         }
 
-        $url = $this->baseUrl . '/v2/' . urlencode($orderId) . '/status';
+        return $res->json();
+    }
 
-        $response = Http::withBasicAuth($this->serverKey, '')
-            ->acceptJson()
-            ->get($url);
+    public function verifySignature(string $signatureKey, array $params): bool
+    {
+        $orderId = (string) ($params['order_id'] ?? '');
+        $statusCode = (string) ($params['status_code'] ?? '');
+        $grossAmount = (string) ($params['gross_amount'] ?? '');
+        $expected = hash('sha512', $orderId . $statusCode . $grossAmount . $this->serverKey);
+        return hash_equals($expected, (string) $signatureKey);
+    }
 
-        if ($response->failed()) {
-            Log::error('Midtrans status request failed', [
-                'order_id' => $orderId,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            throw new \RuntimeException('Failed to fetch status from Midtrans');
-        }
-
-        return $response->json();
+    public function createSnapToken(\App\Models\Order $order): array
+    {
+        $payload = [
+            'transaction_details' => [
+                'order_id' => $order->order_code,
+                'gross_amount' => (int) round($order->total_amount),
+            ],
+            'customer_details' => [
+                'first_name' => $order->customer_name,
+                'email' => $order->customer_email,
+                'phone' => $order->customer_phone,
+            ],
+            'item_details' => $order->items->map(function($item) {
+                return [
+                    'id' => $item->variety_id,
+                    'price' => (int) round($item->unit_price),
+                    'quantity' => (int) $item->quantity,
+                    'name' => $item->variety_name,
+                    'category' => optional($item->variety->commodity)->name,
+                ];
+            })->toArray(),
+        ];
+        return $this->createTransaction($payload);
     }
 }
-
