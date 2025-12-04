@@ -137,46 +137,97 @@ class OrderController extends Controller
     {
         $validated = $request->validated();
         $trackingNumber = (string) ($validated['tracking_number'] ?? '');
+        $orderCode = (string) ($validated['order_code'] ?? '');
+        $phone = (string) ($validated['phone'] ?? '');
 
-        $order = Order::query()
-            ->with(['shipment', 'payment', 'orderItems'])
-            ->where('tracking_number', $trackingNumber)
-            ->first();
+        $query = Order::query()->with(['shipment', 'payment', 'orderItems']);
+        $order = null;
+        $shipment = null;
 
-        $shipment = $order?->shipment;
-
-        if (! $order) {
-            $shipment = Shipment::query()
-                ->with(['order.payment', 'order.orderItems'])
-                ->where('tracking_number', $trackingNumber)
-                ->first();
-
-            $order = $shipment?->order;
+        if ($trackingNumber !== '') {
+            $order = $query->where('tracking_number', $trackingNumber)->first();
+            $shipment = $order?->shipment;
+            if (!$order) {
+                $shipment = Shipment::query()
+                    ->with(['order.payment', 'order.orderItems'])
+                    ->where('tracking_number', $trackingNumber)
+                    ->first();
+                $order = $shipment?->order;
+            }
+        } elseif ($orderCode !== '') {
+            $order = $query->where('order_code', $orderCode)->first();
+            $shipment = $order?->shipment;
+        } elseif ($phone !== '') {
+            $order = $query->where('customer_phone', $phone)->orderByDesc('created_at')->first();
+            $shipment = $order?->shipment;
         }
 
         if (! $order) {
             return response()->json([
-                'message' => 'Tracking number not found'
+                'message' => 'Order not found'
             ], 404);
         }
 
-        $courierName = $shipment?->courier_name ?: $order->courier_name;
-        $courierService = $shipment?->courier_service ?: $order->courier_service;
-
-        return response()->json([
-            'tracking_number' => $trackingNumber,
+        $payloadOrder = [
             'order_code' => $order->order_code,
             'status' => $order->status,
+            'subtotal' => (float) $order->subtotal,
+            'total_amount' => (float) $order->total_amount,
+            'customer_name' => $order->customer_name,
+            'customer_phone' => $order->customer_phone,
+            'customer_address' => $order->customer_address,
+            'courier_name' => $shipment?->courier_name ?: $order->courier_name,
+            'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
-            'courier' => [
-                'name' => $courierName,
-                'service' => $courierService,
-            ],
-            'timestamps' => [
-                'shipped_at' => optional($order->shipped_at)->toIso8601String(),
-                'delivered_at' => optional($shipment?->delivered_at)->toIso8601String(),
-            ],
+            'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'items' => $order->orderItems->map(function ($it) {
+                return [
+                    'variety_id' => $it->variety_id,
+                    'name' => $it->name,
+                    'quantity' => (int) $it->quantity,
+                    'unit_price' => (float) $it->unit_price,
+                    'seed_lot_id' => $it->seed_lot_id,
+                    'seed_class_code' => $it->seed_class_code,
+                ];
+            })->toArray(),
+        ];
+
+        return response()->json([
+            'order' => $payloadOrder,
         ]);
+    }
+
+    public function getPublicOrder(string $order_code): JsonResponse
+    {
+        $order = Order::query()->with(['shipment', 'payment', 'orderItems'])->where('order_code', $order_code)->first();
+        if (! $order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+        $shipment = $order->shipment;
+        $data = [
+            'order_code' => $order->order_code,
+            'status' => $order->status,
+            'subtotal' => (float) $order->subtotal,
+            'total_amount' => (float) $order->total_amount,
+            'customer_name' => $order->customer_name,
+            'customer_phone' => $order->customer_phone,
+            'customer_address' => $order->customer_address,
+            'courier_name' => $shipment?->courier_name ?: $order->courier_name,
+            'courier_service' => $shipment?->courier_service ?: $order->courier_service,
+            'shipment_status' => $shipment?->status,
+            'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'items' => $order->orderItems->map(function ($it) {
+                return [
+                    'variety_id' => $it->variety_id,
+                    'name' => $it->name,
+                    'quantity' => (int) $it->quantity,
+                    'unit_price' => (float) $it->unit_price,
+                    'seed_lot_id' => $it->seed_lot_id,
+                    'seed_class_code' => $it->seed_class_code,
+                ];
+            })->toArray(),
+        ];
+        return response()->json(['data' => $data]);
     }
 
     public function verifyPaymentStatus(string $order_code): JsonResponse

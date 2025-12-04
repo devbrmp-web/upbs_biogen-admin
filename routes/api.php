@@ -42,6 +42,12 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::get('/orders/track/{tracking_number}', [OrderController::class, 'track'])
         ->name('api.orders.track')
         ->middleware('throttle:20,1');
+    Route::get('/orders/track', [OrderController::class, 'track'])
+        ->name('api.orders.track.query')
+        ->middleware('throttle:20,1');
+    Route::get('/orders/{order_code}', [OrderController::class, 'getPublicOrder'])
+        ->name('api.orders.show')
+        ->middleware('throttle:20,1');
     Route::get('/orders/{order_code}/payment/status', [OrderController::class, 'verifyPaymentStatus'])
         ->name('api.orders.payment.status')
         ->middleware('throttle:20,1');

@@ -33,7 +33,7 @@
                     <a href="{{ route('admin.orders.show', $order) }}?return={{ urlencode(request()->fullUrl()) }}" class="text-decoration-none fw-semibold">
                         {{ $order->order_code }}
                     </a>
-                    <button class="btn btn-sm btn-link text-muted copy-order-code" data-code="{{ $order->order_code }}" title="Copy order code">
+                    <button class="btn btn-sm btn-outline-secondary copy-order-code" data-code="{{ $order->order_code }}" title="Copy order code">
                         <i class="bx bx-copy"></i>
                     </button>
                 </td>
@@ -80,7 +80,7 @@
                 </td>
                 <td class="text-end">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bx bx-dots-horizontal-rounded"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
