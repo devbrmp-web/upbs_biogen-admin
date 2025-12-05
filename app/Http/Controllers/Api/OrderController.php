@@ -13,123 +13,120 @@ use App\Models\Shipment;
 use App\Models\Variety;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class OrderController extends Controller
 {
-    public function store(CheckoutRequest $request): JsonResponse
+    public function store(CheckoutRequest $request)
     {
-        $validated = $request->validated();
-
-        $order = DB::transaction(function () use ($validated) {
-            $order = Order::query()->create([
-                'customer_name' => $validated['customer_name'],
-                'customer_address' => $validated['customer_address'],
-                'customer_phone' => $validated['customer_phone'],
-                'customer_email' => $validated['customer_email'] ?? null,
-                'shipping_method' => $validated['shipping_method'],
-                'courier_name' => $validated['shipping_method'] === Order::SHIPPING_DELIVERY
-                    ? ($validated['courier_name'] ?? null)
-                    : null,
-                'status' => Order::STATUS_AWAITING_PAYMENT,
-                'shipping_cost' => 0,
-                'subtotal' => 0,
-                'total_amount' => 0,
-            ]);
-
-            foreach ($validated['items'] as $item) {
-                $variety = Variety::query()->findOrFail($item['variety_id']);
-                $quantity = (int) $item['quantity'];
-                $seedLot = null;
-                if (!empty($item['seed_lot_id'])) {
-                    // Lock the seed lot row to avoid race conditions during stock decrement
-                    $seedLot = SeedLot::query()->lockForUpdate()->findOrFail($item['seed_lot_id']);
-
-                    if (!$seedLot->is_sellable) {
-                        throw new \RuntimeException('Selected seed lot is not sellable.');
-                    }
-                    if ($seedLot->quantity < $quantity) {
-                        throw new \RuntimeException('Insufficient seed lot stock for checkout.');
-                    }
-
-                    // Decrement seed lot stock immediately as reservation
-                    $seedLot->decrement('quantity', $quantity);
-                } else {
-                    // Fallback: validate variety stock and decrement if using variety-based stock
-                    if ($variety->stock < $quantity) {
-                        throw new \RuntimeException('Insufficient stock for checkout.');
-                    }
-                    $variety->decrement('stock', $quantity);
-                }
-
-                OrderItem::createFromVariety(
-                    $order,
-                    $variety,
-                    $quantity,
-                    $seedLot
-                );
-            }
-
-            $order->load('items');
-            $order->calculateTotals();
-
-            $serviceFee = round($order->subtotal * 0.01, 2);
-            $order->update(['total_amount' => $order->subtotal + $serviceFee]);
-
-            // Auto-select courier based on total weight for delivery orders
-            if ($order->shipping_method === Order::SHIPPING_DELIVERY) {
-                $totalWeightKg = (int) $order->items->sum('quantity');
-                $courier = $totalWeightKg > 10
-                    ? Shipment::COURIER_INDAH_CARGO
-                    : Shipment::COURIER_POS_INDONESIA;
-                $order->update(['courier_name' => $courier]);
-            }
-
-            Shipment::createForOrder($order);
-
-            $paymentMethod = $validated['payment_method'] ?? Payment::METHOD_BANK_TRANSFER;
-            Payment::createForOrder($order, $paymentMethod);
-
-            return $order->fresh(['items', 'payment', 'shipment']);
-        });
+        DB::beginTransaction();
 
         try {
-            $service = new \App\Services\MidtransService();
-            $snap = $service->createSnapToken($order);
-            $payment = $order->payment;
-            if ($payment) {
-                $payment->gateway_reference = $order->order_code;
-                $payment->gateway_status = 'pending';
-                $payment->gateway_response = array_merge($payment->gateway_response ?? [], $snap);
-                $payment->snap_token = $snap['token'] ?? null;
-                $payment->redirect_url = $snap['redirect_url'] ?? null;
-                $payment->save();
+
+            // Buat order (order_code auto by model)
+            $order = Order::create([
+                'customer_name'     => $request->customer_name,
+                'customer_address'  => $request->customer_address,
+                'customer_phone'    => $request->customer_phone,
+                'customer_email'    => $request->customer_email,
+                'shipping_method'   => $request->shipping_method,
+                'courier_name'      => $request->courier_name,
+                'courier_service'   => $request->courier_service,
+                'status'            => Order::STATUS_AWAITING_PAYMENT,
+                'subtotal'          => 0,
+                'shipping_cost'     => 0,
+                'total_amount'      => 0,
+            ]);
+
+            $subtotal = 0;
+
+            foreach ($request->items as $item) {
+
+                // === Ambil data produk ===
+                if (!empty($item['seed_lot_id'])) {
+
+                    $seedLot = SeedLot::with('variety', 'seedClass')->findOrFail($item['seed_lot_id']);
+                    $variety = $seedLot->variety;
+
+                    // Jika seed lot punya price_per_unit → pakai
+                    $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
+
+                    $seedClassCode = $seedLot->seedClass?->code;
+
+                } else {
+
+                    $variety = Variety::findOrFail($item['variety_id']);
+                    $unitPrice = (float) $variety->price;
+                    $seedLot = null;
+                    $seedClassCode = null;
+                }
+
+                $quantity = (int) $item['quantity'];
+
+                // Snapshot variety wajib → SESUAI MIGRATION
+                $itemData = [
+                    'order_id'       => $order->id,
+                    'variety_id'     => $variety->id,
+                    'variety_name'   => $variety->name,
+                    'variety_sku'    => $variety->sku,
+                    'unit_price'     => $unitPrice,
+                    'price_at_order' => $unitPrice,
+                    'quantity'       => $quantity,
+                    'seed_lot_id'    => $seedLot?->id,
+                    'seed_class'     => $seedClassCode,
+                ];
+
+                // Create → total_price otomatis dihitung via boot() model
+                $orderItem = OrderItem::create($itemData);
+
+                // Tambah subtotal (pakai total_price yg sudah dihitung model)
+                $subtotal += $orderItem->total_price;
             }
 
-            return response()->json([
-                'data' => [
-                    'order_code' => $order->order_code,
-                    'snap_token' => $snap['token'] ?? null,
-                    'payment_url' => $snap['redirect_url'] ?? null,
-                ],
+            // === Update order total ===
+            $order->update([
+                'subtotal'     => $subtotal,
+                'total_amount' => $subtotal, // pickup → shipping_cost = 0
             ]);
-        } catch (\Throwable $e) {
-            // Rollback reserved stock
-            try {
-                DB::transaction(function() use ($order) {
-                    foreach ($order->items as $it) {
-                        if ($it->seed_lot_id) {
-                            $lot = \App\Models\SeedLot::query()->lockForUpdate()->find($it->seed_lot_id);
-                            if ($lot) { $lot->increment('quantity', $it->quantity); }
-                        } else {
-                            $var = \App\Models\Variety::query()->lockForUpdate()->find($it->variety_id);
-                            if ($var) { $var->increment('stock', $it->quantity); }
-                        }
-                    }
-                });
-            } catch (\Throwable $re) {}
+
+            // === Midtrans ===
+            Config::$serverKey     = config('services.midtrans.serverKey');
+            Config::$isProduction  = config('services.midtrans.isProduction');
+            Config::$isSanitized   = config('services.midtrans.isSanitized');
+            Config::$is3ds         = config('services.midtrans.is3ds');
+
+            $payload = [
+                'transaction_details' => [
+                    'order_id'     => $order->order_code,
+                    'gross_amount' => (int) $subtotal,
+                ],
+                'customer_details' => [
+                    'first_name' => $order->customer_name,
+                    'email'      => $order->customer_email,
+                    'phone'      => $order->customer_phone,
+                ],
+            ];
+
+            $snapToken = Snap::getSnapToken($payload);
+
+            DB::commit();
+
             return response()->json([
-                'message' => 'Failed to initialize payment',
-            ], 502);
+                'success' => true,
+                'data' => [
+                    'snap_token' => $snapToken,
+                    'order_code' => $order->order_code,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 

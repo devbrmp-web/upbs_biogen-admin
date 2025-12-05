@@ -3,168 +3,115 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\SeedLot;
+use App\Models\Variety;
+use App\Models\SeedClass;
 
 class CheckoutRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
+    public function authorize()
     {
-        return true; // Guest checkout allowed
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
+    public function rules()
     {
         return [
-            // Customer information (required for guest checkout)
-            'customer_name' => 'required|string|max:100',
-            'customer_address' => 'required|string|max:500',
-            'customer_phone' => 'required|string|max:20|regex:/^[\+]?[0-9\-\(\)\s]+$/',
-            'customer_email' => 'nullable|email|max:100',
-            
-            // Shipping method (pickup is default, delivery requires call center coordination)
-            'shipping_method' => 'required|in:pickup,delivery',
-            'courier_name' => 'nullable|string|in:Pos Indonesia,Indah Cargo',
-            
-            // Cart items validation
-            'items' => 'required|array|min:1',
-            'items.*.variety_id' => 'required|exists:varieties,id',
-            'items.*.quantity' => 'required|integer|min:1|max:1000',
-            'items.*.seed_lot_id' => 'nullable|exists:seed_lots,id',
-            
-            // Payment method (for future payment gateway integration)
-            'payment_method' => 'nullable|string|in:va_bca,va_bni,va_bri,va_mandiri,qris,bank_transfer',
-            
-            // Terms and conditions
-            'terms_accepted' => 'required|accepted',
+            'customer_name'     => 'required|string|max:255',
+            'customer_email'             => 'required|email',
+            'customer_phone'             => 'required|string|max:20',
+            'customer_address'           => 'required|string',
+
+            'shipping_method'   => 'required|string',
+            'courier_name'      => 'nullable|string',
+
+            'terms_accepted'    => 'required|boolean|in:1,true',
+
+            'items'             => 'required|array|min:1',
+            'items.*.variety_id' => 'required|integer|exists:varieties,id',
+            'items.*.seed_lot_id' => 'nullable|integer|exists:seed_lots,id',
+            'items.*.quantity'  => 'required|numeric|min:1',
         ];
     }
 
-    /**
-     * Get custom validation messages.
-     */
-    public function messages(): array
+    public function messages()
     {
         return [
-            'customer_name.required' => 'Customer name is required for order processing.',
-            'customer_address.required' => 'Customer address is required for order processing.',
-            'customer_phone.required' => 'Customer phone number is required for order processing.',
-            'customer_phone.regex' => 'Please enter a valid phone number.',
-            'customer_email.email' => 'Please enter a valid email address.',
-            'shipping_method.required' => 'Please select a shipping method.',
-            'shipping_method.in' => 'Invalid shipping method selected.',
-            'courier_name.required_if' => 'Please select a courier for delivery.',
-            'courier_name.in' => 'Invalid courier selected. Please choose Pos Indonesia or Indah Cargo.',
-            'items.required' => 'At least one item must be selected for checkout.',
-            'items.min' => 'At least one item must be selected for checkout.',
-            'items.*.variety_id.required' => 'Product selection is required.',
-            'items.*.variety_id.exists' => 'Selected product is not available.',
-            'items.*.quantity.required' => 'Quantity is required for each item.',
-            'items.*.quantity.min' => 'Minimum quantity is 1.',
-            'items.*.quantity.max' => 'Maximum quantity per item is 1000.',
-            'items.*.seed_lot_id.exists' => 'Selected seed lot is not available.',
-            'terms_accepted.required' => 'You must accept the terms and conditions to proceed.',
-            'terms_accepted.accepted' => 'You must accept the terms and conditions to proceed.',
+            'terms_accepted.in' => 'Anda harus menyetujui syarat & ketentuan.',
         ];
     }
 
-    /**
-     * Get custom attributes for validator errors.
-     */
-    public function attributes(): array
+    public function prepareForValidation()
     {
-        return [
-            'customer_name' => 'customer name',
-            'customer_address' => 'customer address',
-            'customer_phone' => 'phone number',
-            'customer_email' => 'email address',
-            'shipping_method' => 'shipping method',
-            'items.*.variety_id' => 'product',
-            'items.*.quantity' => 'quantity',
-            'items.*.seed_lot_id' => 'seed lot',
-            'terms_accepted' => 'terms and conditions',
-        ];
-    }
-
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        // Set default shipping method if not provided
-        if (!$this->has('shipping_method')) {
-            $this->merge(['shipping_method' => 'pickup']);
-        }
-        
-        // Clean phone number
-        if ($this->has('customer_phone')) {
-            $phone = preg_replace('/[^\+0-9]/', '', $this->customer_phone);
-            $this->merge(['customer_phone' => $phone]);
+        if ($this->has('terms_accepted')) {
+            $this->merge([
+                'terms_accepted' => filter_var($this->terms_accepted, FILTER_VALIDATE_BOOLEAN),
+            ]);
         }
     }
 
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator($validator): void
+    public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // Shipping method-specific rules handled automatically in backend
-            
-            // Validate item availability, seed class rules (BS/FS), and stock source
-            if ($this->has('items') && is_array($this->items)) {
-                foreach ($this->items as $index => $item) {
-                    if (!isset($item['variety_id']) || !isset($item['quantity'])) {
+
+            foreach ($this->items as $item) {
+
+                // ============================
+                // CHECK SEED LOT FIRST
+                // ============================
+                if (!empty($item['seed_lot_id'])) {
+
+                    $seedLot = SeedLot::find($item['seed_lot_id']);
+
+                    if (!$seedLot) {
+                        $validator->errors()->add('items', 'Seed Lot tidak ditemukan.');
                         continue;
                     }
 
-                    $qty = (int) $item['quantity'];
+                    if (!$seedLot->is_sellable) {
+                        $validator->errors()->add('items', 'Seed Lot tidak dapat dijual.');
+                    }
 
-                    // Prefer validating against SeedLot if provided; fallback to Variety stock
-                    if (!empty($item['seed_lot_id'])) {
-                        $seedLot = \App\Models\SeedLot::with('seedClass')->find($item['seed_lot_id']);
-                        if (!$seedLot) {
-                            $validator->errors()->add("items.{$index}.seed_lot_id", 'Selected seed lot is not available.');
-                            continue;
-                        }
+                    if ($seedLot->quantity < $item['quantity']) {
+                        $validator->errors()->add(
+                            'items',
+                            'Stok Seed Lot tidak mencukupi.'
+                        );
+                    }
 
-                        // Ensure sellable and sufficient quantity
-                        if (!$seedLot->is_sellable) {
-                            $validator->errors()->add("items.{$index}.seed_lot_id", 'Selected seed lot is not sellable.');
-                        }
-                        if ($seedLot->quantity < $qty) {
-                            $validator->errors()->add(
-                                "items.{$index}.quantity",
-                                "Insufficient seed lot stock. Available: {$seedLot->quantity}, Requested: {$qty}"
-                            );
-                        }
+                    // RULE KHUSUS BERDASARKAN SEED CLASS
+                    if ($seedLot->seed_class_id) {
+                        $class = SeedClass::find($seedLot->seed_class_id);
 
-                        // Enforce BS (5kg multiples) vs FS (1kg)
-                        $classCode = $seedLot->seedClass?->code;
-                        if ($classCode === 'BS' && ($qty % 5 !== 0)) {
-                            $validator->errors()->add(
-                                "items.{$index}.quantity",
-                                'For BS class seeds, quantity must be in multiples of 5 kg.'
-                            );
+                        if ($class) {
+                            if ($class->code === 'BS' && ($item['quantity'] % 5 !== 0)) {
+                                $validator->errors()->add(
+                                    'items',
+                                    'Pembelian benih BS harus kelipatan 5 kg.'
+                                );
+                            }
+
+                            if ($class->code === 'FS' && $item['quantity'] < 1) {
+                                $validator->errors()->add(
+                                    'items',
+                                    'Pembelian benih FS minimal 1 kg.'
+                                );
+                            }
                         }
-                        if ($classCode === 'FS' && $qty < 1) {
-                            $validator->errors()->add("items.{$index}.quantity", 'For FS class seeds, minimum quantity is 1 kg.');
-                        }
-                    } else {
-                        // Fallback: validate against variety stock
-                        $variety = \App\Models\Variety::find($item['variety_id']);
-                        if ($variety && $variety->stock < $qty) {
-                            $validator->errors()->add(
-                                "items.{$index}.quantity",
-                                "Insufficient stock. Available: {$variety->stock}, Requested: {$qty}"
-                            );
-                        }
+                    }
+                }
+
+                // ============================
+                // CHECK VARIETY STOCK
+                // ============================
+                else {
+                    $variety = Variety::find($item['variety_id']);
+
+                    if ($variety && $variety->stock < $item['quantity']) {
+                        $validator->errors()->add(
+                            'items',
+                            "Stok untuk varietas {$variety->name} tidak mencukupi."
+                        );
                     }
                 }
             }
