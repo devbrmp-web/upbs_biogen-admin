@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\VarietyController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SeedClassController;
 use App\Http\Controllers\Api\SeedLotController;
+use App\Http\Controllers\WebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +42,15 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::get('/orders/track/{tracking_number}', [OrderController::class, 'track'])
         ->name('api.orders.track')
         ->middleware('throttle:20,1');
+    Route::get('/orders/track', [OrderController::class, 'track'])
+        ->name('api.orders.track.query')
+        ->middleware('throttle:20,1');
+    Route::get('/orders/{order_code}', [OrderController::class, 'getPublicOrder'])
+        ->name('api.orders.show')
+        ->middleware('throttle:20,1');
     Route::get('/orders/{order_code}/payment/status', [OrderController::class, 'verifyPaymentStatus'])
         ->name('api.orders.payment.status')
         ->middleware('throttle:20,1');
+    Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransNotification'])
+        ->name('webhooks.midtrans');
 });

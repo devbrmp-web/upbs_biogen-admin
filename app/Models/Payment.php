@@ -15,10 +15,13 @@ class Payment extends Model
         'payment_method',
         'gateway_transaction_id',
         'gateway_reference',
+        'snap_token',
+        'redirect_url',
         'pnbp_receipt_no',
         'amount',
         'status',
         'gateway_status',
+        'transaction_status',
         'fraud_status',
         'paid_at',
         'expires_at',
@@ -33,6 +36,7 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'expires_at' => 'datetime',
+        'settlement_time' => 'datetime',
         'gateway_response' => 'array',
     ];
 
@@ -128,7 +132,7 @@ class Payment extends Model
     /**
      * Business Logic Methods
      */
-    public function markAsPaid(string $pnbpReceiptNo = null, array $gatewayResponse = []): void
+    public function markAsPaid(?string $pnbpReceiptNo = null, array $gatewayResponse = []): void
     {
         $this->update([
             'status' => self::STATUS_PAID,
@@ -187,8 +191,8 @@ class Payment extends Model
      */
     public function applyMidtransStatus(array $midtrans): void
     {
-        // Store raw statuses
         $this->gateway_status = $midtrans['transaction_status'] ?? ($midtrans['status'] ?? null);
+        $this->transaction_status = $midtrans['transaction_status'] ?? $this->transaction_status;
         $this->fraud_status = $midtrans['fraud_status'] ?? null;
         $this->gateway_signature = $midtrans['signature_key'] ?? null;
 
@@ -210,6 +214,7 @@ class Payment extends Model
 
         if ($mapped === self::STATUS_PAID && !$this->paid_at) {
             $this->paid_at = now();
+            $this->settlement_time = isset($midtrans['settlement_time']) ? \Carbon\Carbon::parse($midtrans['settlement_time']) : $this->settlement_time;
         }
 
         $this->save();
