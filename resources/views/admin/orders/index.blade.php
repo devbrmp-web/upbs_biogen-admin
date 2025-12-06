@@ -101,7 +101,7 @@
                 </div>
 
                 <!-- Orders Table -->
-                <div id="ordersTableContainer" class="table-responsive">
+                <div id="ordersTableContainer" class="table-responsive" style="overflow: visible;">
                     @include('admin.orders.partials.table-content', ['orders' => $orders])
                 </div>
 
@@ -523,6 +523,41 @@
                                 toastBodyEl.textContent = 'Order code copied!';
                                 toast.show();
                             }
+                        }
+                    });
+
+                    // Fix dropdown stacking context issue in table
+                    // When a dropdown opens, we elevate the parent cell's z-index
+                    // to ensure the menu appears above subsequent rows/cells.
+                    document.addEventListener('show.bs.dropdown', function (e) {
+                        const dropdown = e.target;
+                        // Ensure we only target dropdowns inside the orders table
+                        if (!dropdown.closest('#ordersTableContainer')) return;
+
+                        const cell = dropdown.closest('td');
+                        if (cell) {
+                            cell.style.position = 'relative';
+                            cell.style.zIndex = '1000';
+                        }
+                    });
+
+                    document.addEventListener('hide.bs.dropdown', function (e) {
+                        const dropdown = e.target;
+                        if (!dropdown.closest('#ordersTableContainer')) return;
+
+                        const cell = dropdown.closest('td');
+                        if (cell) {
+                            // Clean up styles
+                            cell.style.position = '';
+                            cell.style.zIndex = '';
+                        }
+                    });
+
+                    // Ensure modals are moved to body to prevent stacking context issues
+                    document.addEventListener('show.bs.modal', function (event) {
+                        const modal = event.target;
+                        if (modal.closest('#ordersTableContainer')) {
+                            document.body.appendChild(modal);
                         }
                     });
                 });

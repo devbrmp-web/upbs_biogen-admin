@@ -118,8 +118,8 @@
 
             <!-- Status Update Modal -->
             @if($order->status !== 'cancelled' && $order->status !== 'completed')
-                <div class="modal fade" id="statusModal{{ $order->id }}" tabindex="-1">
-                    <div class="modal-dialog">
+                <div class="modal fade" id="statusModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
+                    <div class="modal-dialog" style="z-index: 1060;">
                         <div class="modal-content">
                             <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
                                 @csrf
@@ -154,8 +154,8 @@
 
             <!-- Cancel Order Modal -->
             @if($order->canTransitionTo('cancelled'))
-                <div class="modal fade" id="cancelModal{{ $order->id }}" tabindex="-1">
-                    <div class="modal-dialog">
+                <div class="modal fade" id="cancelModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
+                    <div class="modal-dialog" style="z-index: 1060;">
                         <div class="modal-content">
                             <form action="{{ route('admin.orders.cancel', $order) }}" method="POST">
                                 @csrf
@@ -186,8 +186,8 @@
 
             <!-- Delete Order Modal -->
             @if($order->status === 'cancelled')
-                <div class="modal fade" id="deleteModal{{ $order->id }}" tabindex="-1">
-                    <div class="modal-dialog">
+                <div class="modal fade" id="deleteModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
+                    <div class="modal-dialog" style="z-index: 1060;">
                         <div class="modal-content">
                             <form action="{{ route('admin.orders.destroy', $order) }}" method="POST">
                                 @csrf
