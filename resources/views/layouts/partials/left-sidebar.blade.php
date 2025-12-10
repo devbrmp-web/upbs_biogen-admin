@@ -90,6 +90,15 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}" href="{{ route('admin.audit-logs.index') }}">
+                    <span class="nav-icon">
+                        <iconify-icon icon="iconamoon:history-duotone"></iconify-icon>
+                    </span>
+                    <span class="nav-text"> Audit Logs </span>
+                </a>
+            </li>
+
         </ul>
     </div>
 </div>

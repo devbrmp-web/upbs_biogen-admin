@@ -205,7 +205,7 @@
                 url: form.action,
                 method: 'post',
                 paramName: 'image',
-                maxFilesize: 4,
+                maxFilesize: 4, // 4MB
                 maxFiles: 1,
                 uploadMultiple: false,
                 acceptedFiles: 'image/jpeg,image/png,image/jpg,image/gif,image/webp',

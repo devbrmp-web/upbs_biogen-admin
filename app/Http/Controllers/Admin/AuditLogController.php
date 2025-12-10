@@ -33,9 +33,9 @@ class AuditLogController extends Controller
             $query->where('category', $request->category);
         }
 
-        // Filter by model type
-        if ($request->filled('model_type')) {
-            $query->where('model_type', 'like', '%' . $request->model_type . '%');
+        // Filter by table name
+        if ($request->filled('table_name')) {
+            $query->where('table_name', 'like', '%' . $request->table_name . '%');
         }
 
         // Filter by date range
@@ -84,15 +84,17 @@ class AuditLogController extends Controller
             AuditLog::CATEGORY_AUTHENTICATION => 'Authentication',
         ];
 
-        $modelTypes = [
-            'Order' => 'Order',
-            'Product' => 'Product',
-            'Category' => 'Category',
-            'User' => 'User',
-            'Variety' => 'Variety',
-            'SeedLot' => 'Seed Lot',
-            'SeedClass' => 'Seed Class',
-            'Commodity' => 'Commodity',
+        $tableNames = [
+            'orders' => 'Order',
+            'order_items' => 'Order Item',
+            'payments' => 'Payment',
+            'shipments' => 'Shipment',
+            'users' => 'User',
+            'varieties' => 'Variety',
+            'seed_lots' => 'Seed Lot',
+            'seed_classes' => 'Seed Class',
+            'commodities' => 'Commodity',
+            'roles' => 'Role',
         ];
 
         return view('admin.audit-logs.index', compact(
@@ -100,7 +102,7 @@ class AuditLogController extends Controller
             'users',
             'actions',
             'categories',
-            'modelTypes'
+            'tableNames'
         ));
     }
 
