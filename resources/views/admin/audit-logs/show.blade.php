@@ -87,8 +87,8 @@
                                     </div>
                                     <div class="col-sm-8">
                                         <div>{{ $auditLog->model_name }}</div>
-                                        @if($auditLog->model_id)
-                                            <small class="text-muted">ID: {{ $auditLog->model_id }}</small>
+                                        @if($auditLog->record_id)
+                                            <small class="text-muted">ID: {{ $auditLog->record_id }}</small>
                                         @endif
                                     </div>
                                 </div>
@@ -207,7 +207,7 @@
                 </div>
 
                 <!-- Data Changes -->
-                @if($auditLog->old_values || $auditLog->new_values)
+                @if($auditLog->old_data || $auditLog->new_data)
                 <div class="row mt-4">
                     <div class="col">
                         <div class="card">
@@ -216,20 +216,20 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    @if($auditLog->old_values)
+                                    @if($auditLog->old_data)
                                     <div class="col-md-6">
                                         <h6 class="text-danger">Before Changes</h6>
                                         <div class="bg-light p-3 rounded">
-                                            <pre class="mb-0"><code>{{ json_encode($auditLog->old_values, JSON_PRETTY_PRINT) }}</code></pre>
+                                            <pre class="mb-0"><code>{{ json_encode($auditLog->old_data, JSON_PRETTY_PRINT) }}</code></pre>
                                         </div>
                                     </div>
                                     @endif
 
-                                    @if($auditLog->new_values)
+                                    @if($auditLog->new_data)
                                     <div class="col-md-6">
                                         <h6 class="text-success">After Changes</h6>
                                         <div class="bg-light p-3 rounded">
-                                            <pre class="mb-0"><code>{{ json_encode($auditLog->new_values, JSON_PRETTY_PRINT) }}</code></pre>
+                                            <pre class="mb-0"><code>{{ json_encode($auditLog->new_data, JSON_PRETTY_PRINT) }}</code></pre>
                                         </div>
                                     </div>
                                     @endif

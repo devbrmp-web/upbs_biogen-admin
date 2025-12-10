@@ -40,8 +40,8 @@
         </td>
         <td>
             <div>{{ $auditLog->model_name }}</div>
-            @if($auditLog->model_id)
-                <small class="text-muted">ID: {{ $auditLog->model_id }}</small>
+            @if($auditLog->record_id)
+                <small class="text-muted">ID: {{ $auditLog->record_id }}</small>
             @endif
         </td>
         <td>

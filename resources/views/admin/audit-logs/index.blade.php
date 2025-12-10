@@ -61,11 +61,11 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label for="model_type" class="form-label">Model Type</label>
-                                <select class="form-select" id="model_type" name="model_type">
-                                    <option value="">All Models</option>
-                                    @foreach($modelTypes as $value => $label)
-                                        <option value="{{ $value }}" {{ request('model_type') == $value ? 'selected' : '' }}>
+                                <label for="table_name" class="form-label">Table Name</label>
+                                <select class="form-select" id="table_name" name="table_name">
+                                    <option value="">All Tables</option>
+                                    @foreach($tableNames as $value => $label)
+                                        <option value="{{ $value }}" {{ request('table_name') == $value ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach

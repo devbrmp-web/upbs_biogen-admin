@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class AuditLog extends Model
 {
@@ -13,23 +14,23 @@ class AuditLog extends Model
     protected $fillable = [
         'user_id',
         'action',
-        'model_type',
-        'model_id',
+        'table_name',
+        'record_id',
         'route_name',
         'url',
         'method',
         'ip_address',
         'user_agent',
-        'old_values',
-        'new_values',
+        'old_data',
+        'new_data',
         'description',
         'metadata',
         'category',
     ];
 
     protected $casts = [
-        'old_values' => 'array',
-        'new_values' => 'array',
+        'old_data' => 'array',
+        'new_data' => 'array',
         'metadata' => 'array',
     ];
 
@@ -77,12 +78,12 @@ class AuditLog extends Model
         return $query->where('category', $category);
     }
 
-    public function scopeByModel($query, string $modelType, $modelId = null)
+    public function scopeByEntity($query, string $tableName, $recordId = null)
     {
-        $query = $query->where('model_type', $modelType);
+        $query = $query->where('table_name', $tableName);
         
-        if ($modelId !== null) {
-            $query->where('model_id', $modelId);
+        if ($recordId !== null) {
+            $query->where('record_id', $recordId);
         }
         
         return $query;
@@ -126,12 +127,11 @@ class AuditLog extends Model
 
     public function getModelNameAttribute(): string
     {
-        if (empty($this->model_type)) {
+        if (empty($this->table_name)) {
             return 'Unknown';
         }
 
-        $parts = explode('\\', $this->model_type);
-        return end($parts);
+        return ucwords(str_replace('_', ' ', Str::singular($this->table_name)));
     }
 
     /**
@@ -139,10 +139,10 @@ class AuditLog extends Model
      */
     public static function logAction(
         string $action,
-        string $modelType = null,
-        $modelId = null,
-        array $oldValues = null,
-        array $newValues = null,
+        string $tableName = null,
+        $recordId = null,
+        array $oldData = null,
+        array $newData = null,
         string $description = null,
         string $category = null,
         array $metadata = []
@@ -150,15 +150,15 @@ class AuditLog extends Model
         return static::create([
             'user_id' => auth()->id(),
             'action' => $action,
-            'model_type' => $modelType,
-            'model_id' => $modelId,
+            'table_name' => $tableName,
+            'record_id' => $recordId,
             'route_name' => request()->route()?->getName(),
             'url' => request()->fullUrl(),
             'method' => request()->method(),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
+            'old_data' => $oldData,
+            'new_data' => $newData,
             'description' => $description,
             'category' => $category,
             'metadata' => $metadata,
@@ -169,7 +169,7 @@ class AuditLog extends Model
     {
         return static::logAction(
             self::ACTION_CREATE,
-            get_class($model),
+            $model->getTable(),
             $model->getKey(),
             null,
             $model->toArray(),
@@ -182,7 +182,7 @@ class AuditLog extends Model
     {
         return static::logAction(
             self::ACTION_UPDATE,
-            get_class($model),
+            $model->getTable(),
             $model->getKey(),
             $oldValues,
             $model->toArray(),
@@ -195,7 +195,7 @@ class AuditLog extends Model
     {
         return static::logAction(
             self::ACTION_DELETE,
-            get_class($model),
+            $model->getTable(),
             $model->getKey(),
             $model->toArray(),
             null,
@@ -208,7 +208,7 @@ class AuditLog extends Model
     {
         return static::logAction(
             self::ACTION_LOGIN,
-            User::class,
+            'users',
             $user->id,
             null,
             ['email' => $user->email, 'name' => $user->name],
@@ -221,7 +221,7 @@ class AuditLog extends Model
     {
         return static::logAction(
             self::ACTION_LOGOUT,
-            User::class,
+            'users',
             $user->id,
             null,
             ['email' => $user->email, 'name' => $user->name],
