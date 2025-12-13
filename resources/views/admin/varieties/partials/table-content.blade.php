@@ -38,7 +38,7 @@
                         <span class="badge bg-primary">{{ $variety->commodity->name ?? 'N/A' }}</span>
                     </td>
                     <td>
-                        <span class="badge bg-secondary">{{ $variety->planlet ?? 0 }}</span>
+                        <span class="badge bg-secondary">{{ $variety->total_planlet ?? 0 }}</span>
                     </td>
                     <td>
                         <span class="badge bg-{{ $variety->stock_status_class }}">{{ $variety->stock_status_label }}</span>

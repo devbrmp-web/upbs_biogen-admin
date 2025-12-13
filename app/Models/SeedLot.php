@@ -15,6 +15,7 @@ class SeedLot extends Model
         'variety_id',
         'seed_class_id',
         'production_year',
+        'harvest_date',
         'quantity',
         'unit',
         'price_per_unit',
@@ -27,6 +28,7 @@ class SeedLot extends Model
         'price_per_unit' => 'float',
         'is_sellable' => 'boolean',
         'production_year' => 'integer',
+        'harvest_date' => 'date',
     ];
 
     /**
@@ -96,15 +98,5 @@ class SeedLot extends Model
         static::deleted(function ($seedLot) {
             $seedLot->clearVarietyStockCache();
         });
-    }
-
-    /**
-     * Clear variety stock cache when seed lot changes.
-     */
-    protected function clearVarietyStockCache(): void
-    {
-        if ($this->variety) {
-            $this->variety->clearStockCache();
-        }
     }
 }

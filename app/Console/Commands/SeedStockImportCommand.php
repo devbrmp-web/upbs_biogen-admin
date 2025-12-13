@@ -86,7 +86,7 @@ class SeedStockImportCommand extends Command
             $quantity = is_numeric($quantityRaw) ? (int) $quantityRaw : null;
             $price = is_numeric($priceRaw) ? (float) $priceRaw : null;
             $year = is_numeric($yearRaw) ? (int) $yearRaw : (int) date('Y');
-            $unit = in_array($unitRaw, ['kg','botol','bottle','piece'], true) ? ($unitRaw === 'bottle' ? 'botol' : $unitRaw) : 'kg';
+            $unit = in_array($unitRaw, ['kg','botol','bottle','piece'], true) ? ($unitRaw === 'botol' ? 'bottle' : $unitRaw) : 'kg';
 
             // Upsert commodity
             $commodity = Commodity::updateOrCreate(['name' => $commodityName], [ 'is_active' => true ]);

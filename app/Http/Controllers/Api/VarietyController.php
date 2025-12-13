@@ -21,7 +21,7 @@ class VarietyController extends Controller
             ->with(['commodity' => function ($q) {
                 $q->select('id', 'name', 'slug');
             }])
-            ->select(['id', 'commodity_id', 'name', 'slug', 'sku', 'price', 'minimum_limit', 'image_path'])
+            ->withStockCalculations()
             ->orderBy('name');
 
         // Optional: filter by commodity slug (?commodity=slug)
@@ -47,6 +47,11 @@ class VarietyController extends Controller
                 'commodity' => [
                     'name' => optional($v->commodity)->name,
                     'slug' => optional($v->commodity)->slug,
+                ],
+                'stock' => [
+                    'total_stock_kg' => $v->total_stock,
+                    'total_planlet' => $v->total_planlet,
+                    'status' => $v->stock_status,
                 ],
             ];
         });
@@ -120,6 +125,7 @@ class VarietyController extends Controller
         ],
         'stock' => [
             'total_stock_kg' => $v->total_stock,
+            'total_planlet' => $v->total_planlet,
             'status' => $v->stock_status,
         ],
         'stock_by_class' => $stockByClass,

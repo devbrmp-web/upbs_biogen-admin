@@ -29,7 +29,12 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
     ->prefix('admin')->name('admin.')
     ->group(function () {
         // Dashboard
-        Route::view('/dashboard', 'dashboards.analytics')->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats'])->name('dashboard.stats');
+        Route::get('/dashboard/charts', [\App\Http\Controllers\Admin\DashboardController::class, 'getCharts'])->name('dashboard.charts');
+        Route::get('/dashboard/stock', [\App\Http\Controllers\Admin\DashboardController::class, 'getStock'])->name('dashboard.stock');
+        Route::get('/dashboard/top-products', [\App\Http\Controllers\Admin\DashboardController::class, 'getTopProducts'])->name('dashboard.top-products');
+        Route::get('/dashboard/heatmap', [\App\Http\Controllers\Admin\DashboardController::class, 'getHeatmap'])->name('dashboard.heatmap');
 
         // Commodities (formerly Categories)
         Route::resource('commodities', \App\Http\Controllers\Admin\CommodityController::class);

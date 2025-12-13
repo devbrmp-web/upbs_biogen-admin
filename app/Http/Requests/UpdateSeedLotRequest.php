@@ -27,6 +27,7 @@ class UpdateSeedLotRequest extends FormRequest
             'seed_class_id' => 'required|exists:seed_classes,id',
             'lot_code' => 'required|string|max:50|unique:seed_lots,lot_code,' . $seedLot->id,
             'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
+            'harvest_date' => 'required|date',
             // Integer-only policy by default
             'quantity' => 'required|integer|min:0',
             'unit' => 'required|string|in:kg,ton,piece,bottle',

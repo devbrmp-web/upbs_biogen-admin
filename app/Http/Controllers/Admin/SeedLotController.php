@@ -87,6 +87,9 @@ class SeedLotController extends Controller
     {
         $validated = $request->validated();
 
+        // Ensure harvest_date is saved
+        // (Validation is handled in FormRequest, but ensure it's in $validated)
+        
         // Normalize unit and quantity for BS/FS when using 'ton' -> convert to kg
         if (!empty($validated['seed_class_id'])) {
             $seedClass = SeedClass::find($validated['seed_class_id']);

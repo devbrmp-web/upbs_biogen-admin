@@ -34,7 +34,7 @@ class PlanletSeedLotSeeder extends Seeder
                 'lot_code' => 'PL-' . date('Y') . '-' . strtoupper(substr(Str::random(8), 0, 6)),
                 'production_year' => (int) date('Y'),
                 'quantity' => rand(10, 100), // number of bottles
-                'unit' => 'botol',
+                'unit' => 'bottle',
                 'price_per_unit' => rand(50000, 150000),
                 'description' => 'Planlet seed lot (bottles) for ' . $variety->name,
                 'is_sellable' => true,
