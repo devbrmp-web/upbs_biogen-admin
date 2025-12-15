@@ -199,7 +199,7 @@ class VarietyController extends Controller
         }
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
-        $validated['planlet'] = $validated['planlet'] ?? 0;
+        // Note: planlet is now calculated dynamically from seed lots via total_planlet accessor
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
         
         // Harden price as integer

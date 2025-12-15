@@ -18,10 +18,6 @@ class Variety extends Model
         'sku',
         'description',
         'price',
-        'stock',
-        'stock_bs_kg',
-        'stock_fs_kg',
-        'planlet',
         'minimum_limit',
         'status',
         'image_path',
@@ -29,10 +25,6 @@ class Variety extends Model
 
     protected $casts = [
         'price' => 'integer',
-        'stock' => 'integer',
-        'stock_bs_kg' => 'integer',
-        'stock_fs_kg' => 'integer',
-        'planlet' => 'integer',
         'minimum_limit' => 'integer',
     ];
 
@@ -122,19 +114,24 @@ class Variety extends Model
     }
 
     /**
-     * Get the total planlet from sellable seed lots with unit 'botol' and seed class 'PL'.
+     * Get the total planlet from sellable seed lots with unit 'bottle' (or legacy 'botol') and seed class 'PL'.
      */
     public function getTotalPlanletAttribute(): int
     {
+        // Use pre-calculated value if available from selectRaw (via withStockCalculations scope)
+        if (isset($this->attributes['total_planlet_calculated'])) {
+            return (int) $this->attributes['total_planlet_calculated'];
+        }
+
         // Use cached value if available
         $cacheKey = "variety_total_planlet_{$this->id}";
         
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
-            // Calculate total planlet from seed lots that are sellable, unit 'botol', and seed class 'PL'
+            // Calculate total planlet from seed lots that are sellable, unit 'bottle' or 'botol' (legacy), and seed class 'PL'
             if ($this->relationLoaded('seedLots')) {
                 return $this->seedLots
                     ->where('is_sellable', true)
-                    ->where('unit', 'botol')
+                    ->whereIn('unit', ['bottle', 'botol'])
                     ->filter(function ($seedLot) {
                         return $seedLot->seedClass && $seedLot->seedClass->code === 'PL';
                     })
@@ -142,7 +139,7 @@ class Variety extends Model
             } else {
                 return $this->seedLots()
                     ->where('is_sellable', true)
-                    ->where('unit', 'botol')
+                    ->whereIn('unit', ['bottle', 'botol'])
                     ->whereHas('seedClass', function ($query) {
                         $query->where('code', 'PL');
                     })
@@ -277,7 +274,8 @@ class Variety extends Model
         return $query->selectRaw('varieties.*, 
             COALESCE((SELECT SUM(quantity) FROM seed_lots WHERE seed_lots.variety_id = varieties.id AND is_sellable = true AND unit = "kg"), 0) as total_stock_calculated,
             COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg" AND sc.code = "BS"), 0) as bs_stock_calculated,
-            COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg" AND sc.code = "FS"), 0) as fs_stock_calculated');
+            COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg" AND sc.code = "FS"), 0) as fs_stock_calculated,
+            COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit IN ("bottle", "botol") AND sc.code = "PL"), 0) as total_planlet_calculated');
     }
 
     /**

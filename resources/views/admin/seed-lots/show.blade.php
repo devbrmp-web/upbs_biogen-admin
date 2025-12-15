@@ -70,6 +70,10 @@
                                 <td>{{ $seedLot->production_year }}</td>
                             </tr>
                             <tr>
+                                <td class="fw-semibold">Harvest Date:</td>
+                                <td>{{ $seedLot->harvest_date ? $seedLot->harvest_date->format('d M Y') : 'N/A' }}</td>
+                            </tr>
+                            <tr>
                                 <td class="fw-semibold">Quantity:</td>
                                 <td>
                                     <span class="fs-5 fw-semibold">{{ number_format($seedLot->quantity, 0) }}</span> 
