@@ -110,6 +110,28 @@ class OrderController extends Controller
             ];
 
             $snapToken = Snap::getSnapToken($payload);
+// Ambil dat a lengkap pesanan (termasuk item)
+            $orderData = [
+                'order_code' => $order->order_code,
+                'status' => $order->status,
+                'subtotal' => (float) $order->subtotal,
+                'total_amount' => (float) $order->total_amount,
+                'customer_name' => $order->customer_name,
+                'customer_phone' => $order->customer_phone,
+                'customer_address' => $order->customer_address,
+                'courier_name' => $order->courier_name,
+                'courier_service' => $order->courier_service,
+                'items' => $order->orderItems->map(function ($it) {
+                    return [
+                        'variety_id' => $it->variety_id,
+                        'name' => $it->variety_name,
+                        'quantity' => (int) $it->quantity,
+                        'unit_price' => (float) $it->unit_price,
+                        'seed_lot_id' => $it->seed_lot_id,
+                        'seed_class_code' => $it->seed_class,
+                    ];
+                })->toArray(),
+            ];
 
             DB::commit();
 
@@ -118,6 +140,7 @@ class OrderController extends Controller
                 'data' => [
                     'snap_token' => $snapToken,
                     'order_code' => $order->order_code,
+                     'order' => $orderData,
                 ]
             ]);
 
