@@ -208,8 +208,8 @@ class OrderManagementTest extends TestCase
 
         // Check audit log was created
         $this->assertDatabaseHas('audit_logs', [
-            'model_type' => Order::class,
-            'model_id' => $this->order->id,
+            'table_name' => 'orders',
+            'record_id' => $this->order->id,
             'action' => 'UPDATE',
             'user_id' => $this->admin->id
         ]);
@@ -249,8 +249,8 @@ class OrderManagementTest extends TestCase
 
         // Check audit log was created
         $this->assertDatabaseHas('audit_logs', [
-            'model_type' => Order::class,
-            'model_id' => $this->order->id,
+            'table_name' => 'orders',
+            'record_id' => $this->order->id,
             'action' => 'UPDATE',
             'user_id' => $this->admin->id
         ]);
@@ -289,8 +289,8 @@ class OrderManagementTest extends TestCase
 
         // Check audit log was created
         $this->assertDatabaseHas('audit_logs', [
-            'model_type' => Order::class,
-            'model_id' => $this->order->id,
+            'table_name' => 'orders',
+            'record_id' => $this->order->id,
             'action' => 'DELETE',
             'user_id' => $this->admin->id
         ]);

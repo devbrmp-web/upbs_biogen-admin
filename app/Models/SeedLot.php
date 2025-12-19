@@ -81,22 +81,12 @@ class SeedLot extends Model
     }
 
     /**
-     * Boot method to handle cache clearing on model events.
+     * Boot method to handle model events.
      */
     protected static function boot()
     {
         parent::boot();
 
-        static::created(function ($seedLot) {
-            $seedLot->clearVarietyStockCache();
-        });
-
-        static::updated(function ($seedLot) {
-            $seedLot->clearVarietyStockCache();
-        });
-
-        static::deleted(function ($seedLot) {
-            $seedLot->clearVarietyStockCache();
-        });
+        // Note: Cache clearing removed as clearVarietyStockCache() method was not implemented
     }
 }
