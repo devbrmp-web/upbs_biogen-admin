@@ -139,10 +139,8 @@ class OrderController extends Controller
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
             'table_name' => 'orders',
             'record_id' => $order->id,
-            'model_type' => Order::class,
-            'model_id' => $order->id,
-            'old_values' => json_encode(['status' => $oldStatus]),
-            'new_values' => json_encode(['status' => $newStatus, 'notes' => $request->notes]),
+            'old_data' => ['status' => $oldStatus],
+            'new_data' => ['status' => $newStatus, 'notes' => $request->notes],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent()
         ]);
@@ -212,14 +210,12 @@ class OrderController extends Controller
             'action' => AuditLog::ACTION_UPDATE,
             'table_name' => 'orders',
             'record_id' => $order->id,
-            'model_type' => Order::class,
-            'model_id' => $order->id,
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
-            'old_values' => json_encode(['status' => $oldStatus]),
-            'new_values' => json_encode([
+            'old_data' => ['status' => $oldStatus],
+            'new_data' => [
                 'status' => Order::STATUS_CANCELLED,
                 'notes' => 'Cancelled: ' . $request->cancellation_reason
-            ]),
+            ],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent()
         ]);
@@ -285,10 +281,9 @@ class OrderController extends Controller
                     'action' => 'UPDATE',
                     'table_name' => 'orders',
                     'record_id' => $order->id,
-                    'model_type' => Order::class,
-                    'model_id' => $order->id,
-                    'old_values' => json_encode(['status' => $oldStatus]),
-                    'new_values' => json_encode(['status' => Order::STATUS_CANCELLED, 'notes' => 'Cancelled via bulk action']),
+                    'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
+                    'old_data' => ['status' => $oldStatus],
+                    'new_data' => ['status' => Order::STATUS_CANCELLED, 'notes' => 'Cancelled via bulk action'],
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
@@ -330,12 +325,11 @@ class OrderController extends Controller
             'action' => 'DELETE',
             'table_name' => 'orders',
             'record_id' => $order->id,
-            'model_type' => Order::class,
-            'model_id' => $order->id,
-            'old_values' => json_encode(array_merge($order->toArray(), [
+            'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
+            'old_data' => array_merge($order->toArray(), [
                 'deletion_reason' => $request->deletion_reason
-            ])),
-            'new_values' => null,
+            ]),
+            'new_data' => null,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent()
         ]);
@@ -388,13 +382,12 @@ class OrderController extends Controller
                     'action' => 'UPDATE',
                     'table_name' => 'orders',
                     'record_id' => $order->id,
-                    'model_type' => Order::class,
-                    'model_id' => $order->id,
-                    'old_values' => json_encode(['status' => $oldStatus]),
-                    'new_values' => json_encode([
+                    'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
+                    'old_data' => ['status' => $oldStatus],
+                    'new_data' => [
                         'status' => $request->status,
                         'notes' => $request->notes
-                    ]),
+                    ],
                     'ip_address' => request()->ip(),
                     'user_agent' => request()->userAgent()
                 ]);

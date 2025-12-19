@@ -114,7 +114,7 @@ class Order extends Model
 
     public function auditLogs(): HasMany
     {
-        return $this->hasMany(AuditLog::class, 'model_id')->where('model_type', self::class);
+        return $this->hasMany(AuditLog::class, 'record_id')->where('table_name', 'orders');
     }
 
     /**
