@@ -84,17 +84,17 @@ class CheckoutRequest extends FormRequest
                         $class = SeedClass::find($seedLot->seed_class_id);
 
                         if ($class) {
-                            if ($class->code === 'BS' && ($item['quantity'] % 5 !== 0)) {
+                            if ($class->code === 'FS' && ($item['quantity'] % 5 !== 0)) {
                                 $validator->errors()->add(
                                     'items',
-                                    'Pembelian benih BS harus kelipatan 5 kg.'
+                                    'Pembelian benih FS harus kelipatan 5 kg.'
                                 );
                             }
 
-                            if ($class->code === 'FS' && $item['quantity'] < 1) {
+                            if ($class->code === 'BS' && $item['quantity'] < 1) {
                                 $validator->errors()->add(
                                     'items',
-                                    'Pembelian benih FS minimal 1 kg.'
+                                    'Pembelian benih BS minimal 1 kg.'
                                 );
                             }
                         }
