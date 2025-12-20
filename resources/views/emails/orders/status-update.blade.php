@@ -44,32 +44,6 @@ Your order is ready for pickup at our office.
 </x-mail::panel>
 @endif
 
-@if($order->status === 'delivery_coordination')
-<x-mail::panel>
-**Delivery Coordination Required 🚚**
-
-Our Call Center team will contact you within 1-2 business days to coordinate the delivery.
-
-**Call Center:** +62-XXX-XXXX-XXXX  
-**Office Hours:** Monday-Friday 08:00-16:00
-</x-mail::panel>
-@endif
-
-@if($order->status === 'shipped')
-<x-mail::panel>
-**Order Shipped! 🚛**
-
-@if($order->tracking_number)
-Your order has been shipped with tracking number: **{{ $order->tracking_number }}**
-@if($order->courier_name)
-via {{ $order->courier_name }}{{ $order->courier_service ? ' (' . $order->courier_service . ')' : '' }}.
-@endif
-@else
-Your order has been shipped and is on its way to you.
-@endif
-</x-mail::panel>
-@endif
-
 @if($order->status === 'completed')
 <x-mail::panel>
 **Order Completed! ✅**
@@ -102,16 +76,10 @@ Your order has been cancelled. If this was unexpected or if you have any questio
 - You will receive another notification when it's ready
 @elseif($order->status === 'processing')
 - Your order is being prepared
-- You will be notified when it's ready for {{ $order->is_pickup ? 'pickup' : 'delivery coordination' }}
+- You will be notified when it's ready for {{ $order->is_pickup ? 'pickup' : 'delivery' }}
 @elseif($order->status === 'pickup_ready')
 - Visit our office during business hours to collect your order
 - Bring a valid ID and your order code
-@elseif($order->status === 'delivery_coordination')
-- Wait for our Call Center to contact you
-- Prepare your delivery address and preferred time
-@elseif($order->status === 'shipped')
-- Your order is on its way
-- You will be notified when it's delivered
 @elseif($order->status === 'completed')
 - Thank you for your business!
 - We hope to serve you again soon

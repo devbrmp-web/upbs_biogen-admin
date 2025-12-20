@@ -203,8 +203,8 @@ class OrderManagementUITest extends TestCase
 
         // Assert audit log was created
         $this->assertDatabaseHas('audit_logs', [
-            'model_type' => Order::class,
-            'model_id' => $this->order->id,
+            'table_name' => 'orders',
+            'record_id' => $this->order->id,
             'action' => AuditLog::ACTION_UPDATE,
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
         ]);
@@ -215,9 +215,9 @@ class OrderManagementUITest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        // Try to update from awaiting_payment directly to shipped (invalid transition)
+        // Try to update from awaiting_payment directly to completed (invalid transition)
         $response = $this->patch(route('admin.orders.update-status', $this->order), [
-            'status' => Order::STATUS_SHIPPED,
+            'status' => Order::STATUS_COMPLETED,
             'notes' => 'Invalid transition',
         ]);
 
@@ -254,8 +254,8 @@ class OrderManagementUITest extends TestCase
 
         // Assert audit log was created
         $this->assertDatabaseHas('audit_logs', [
-            'model_type' => Order::class,
-            'model_id' => $this->order->id,
+            'table_name' => 'orders',
+            'record_id' => $this->order->id,
             'action' => AuditLog::ACTION_UPDATE,
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
         ]);
@@ -287,9 +287,11 @@ class OrderManagementUITest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $response = $this->delete(route('admin.orders.destroy', $this->order));
+        $response = $this->delete(route('admin.orders.destroy', $this->order), [
+            'deletion_reason' => 'Test deletion attempt'
+        ]);
 
-        $response->assertSessionHasErrors();
+        $response->assertStatus(403);
 
         // Assert order still exists
         $this->assertDatabaseHas('orders', [
