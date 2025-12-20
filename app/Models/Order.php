@@ -57,9 +57,6 @@ class Order extends Model
     const STATUS_PAID = 'paid';
     const STATUS_PROCESSING = 'processing';
     const STATUS_PICKUP_READY = 'pickup_ready';
-    const STATUS_DELIVERY_COORDINATION = 'delivery_coordination';
-    const STATUS_PICKED_UP = 'picked_up';
-    const STATUS_SHIPPED = 'shipped';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
 
@@ -169,9 +166,6 @@ class Order extends Model
             self::STATUS_PAID => 'Paid',
             self::STATUS_PROCESSING => 'Processing',
             self::STATUS_PICKUP_READY => 'Ready for Pickup',
-            self::STATUS_DELIVERY_COORDINATION => 'Delivery Coordination',
-            self::STATUS_PICKED_UP => 'Picked Up',
-            self::STATUS_SHIPPED => 'Shipped',
             self::STATUS_COMPLETED => 'Completed',
             self::STATUS_CANCELLED => 'Cancelled',
             default => 'Unknown'
@@ -201,10 +195,7 @@ class Order extends Model
         return !is_null($this->paid_at);
     }
 
-    public function getIsShippedAttribute(): bool
-    {
-        return $this->status === self::STATUS_SHIPPED;
-    }
+
 
     public function getIsCompletedAttribute(): bool
     {
@@ -241,42 +232,6 @@ class Order extends Model
         ]);
     }
 
-    public function markAsDeliveryCoordination(): void
-    {
-        if (!$this->is_delivery) {
-            throw new \InvalidArgumentException('Order must be delivery method to mark as delivery coordination');
-        }
-        
-        $this->update([
-            'status' => self::STATUS_DELIVERY_COORDINATION,
-        ]);
-    }
-
-    public function markAsPickedUp(): void
-    {
-        $this->update([
-            'status' => self::STATUS_PICKED_UP,
-        ]);
-        
-        // Auto-complete pickup orders
-        $this->markAsCompleted();
-    }
-
-    public function markAsShipped(array $shippingData = []): void
-    {
-        $updateData = [
-            'status' => self::STATUS_SHIPPED,
-        ];
-
-        if (!empty($shippingData['courier_name'])) {
-            $updateData['courier_name'] = $shippingData['courier_name'];
-        }
-        if (!empty($shippingData['tracking_number'])) {
-            $updateData['tracking_number'] = $shippingData['tracking_number'];
-        }
-
-        $this->update($updateData);
-    }
 
     public function markAsCompleted(): void
     {
@@ -295,21 +250,19 @@ class Order extends Model
 
     /**
      * Status transition validation
+     * Simplified flow:
+     * - Delivery: Processing -> Completed
+     * - Pickup: Ready for Pickup -> Completed
      */
     public function canTransitionTo(string $newStatus): bool
     {
         $validTransitions = [
             self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-            self::STATUS_PROCESSING => [
-                self::STATUS_PICKUP_READY, 
-                self::STATUS_DELIVERY_COORDINATION, 
-                self::STATUS_CANCELLED
-            ],
-            self::STATUS_PICKUP_READY => [self::STATUS_PICKED_UP, self::STATUS_CANCELLED],
-            self::STATUS_DELIVERY_COORDINATION => [self::STATUS_SHIPPED, self::STATUS_CANCELLED],
-            self::STATUS_PICKED_UP => [self::STATUS_COMPLETED],
-            self::STATUS_SHIPPED => [self::STATUS_COMPLETED],
+            self::STATUS_PROCESSING => $this->is_pickup 
+                ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
+                : [self::STATUS_COMPLETED, self::STATUS_CANCELLED],
+            self::STATUS_PICKUP_READY => [self::STATUS_COMPLETED, self::STATUS_CANCELLED],
             self::STATUS_COMPLETED => [],
             self::STATUS_CANCELLED => [],
         ];
@@ -322,14 +275,10 @@ class Order extends Model
         $validTransitions = [
             self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-            self::STATUS_PROCESSING => [
-                $this->is_pickup ? self::STATUS_PICKUP_READY : self::STATUS_DELIVERY_COORDINATION,
-                self::STATUS_CANCELLED
-            ],
-            self::STATUS_PICKUP_READY => [self::STATUS_PICKED_UP, self::STATUS_CANCELLED],
-            self::STATUS_DELIVERY_COORDINATION => [self::STATUS_SHIPPED, self::STATUS_CANCELLED],
-            self::STATUS_PICKED_UP => [self::STATUS_COMPLETED],
-            self::STATUS_SHIPPED => [self::STATUS_COMPLETED],
+            self::STATUS_PROCESSING => $this->is_pickup 
+                ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
+                : [self::STATUS_COMPLETED, self::STATUS_CANCELLED],
+            self::STATUS_PICKUP_READY => [self::STATUS_COMPLETED, self::STATUS_CANCELLED],
             self::STATUS_COMPLETED => [],
             self::STATUS_CANCELLED => [],
         ];
@@ -368,8 +317,7 @@ class Order extends Model
     {
         return $this->is_delivery && in_array($this->status, [
             self::STATUS_PAID, 
-            self::STATUS_PROCESSING, 
-            self::STATUS_DELIVERY_COORDINATION
+            self::STATUS_PROCESSING
         ]);
     }
 

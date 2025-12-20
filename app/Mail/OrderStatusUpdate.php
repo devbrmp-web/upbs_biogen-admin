@@ -77,9 +77,6 @@ class OrderStatusUpdate extends Mailable implements ShouldQueue
             Order::STATUS_PAID => 'Paid',
             Order::STATUS_PROCESSING => 'Processing',
             Order::STATUS_PICKUP_READY => 'Ready for Pickup',
-            Order::STATUS_DELIVERY_COORDINATION => 'Delivery Coordination',
-            Order::STATUS_SHIPPED => 'Shipped',
-            Order::STATUS_PICKED_UP => 'Picked Up',
             Order::STATUS_COMPLETED => 'Completed',
             Order::STATUS_CANCELLED => 'Cancelled',
         ];

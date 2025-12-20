@@ -73,9 +73,6 @@ class OrderController extends Controller
             Order::STATUS_PAID => 'Paid',
             Order::STATUS_PROCESSING => 'Processing',
             Order::STATUS_PICKUP_READY => 'Ready for Pickup',
-            Order::STATUS_DELIVERY_COORDINATION => 'Delivery Coordination',
-            Order::STATUS_SHIPPED => 'Shipped',
-            Order::STATUS_PICKED_UP => 'Picked Up',
             Order::STATUS_COMPLETED => 'Completed',
             Order::STATUS_CANCELLED => 'Cancelled'
         ];
@@ -107,9 +104,6 @@ class OrderController extends Controller
                 Order::STATUS_PAID,
                 Order::STATUS_PROCESSING,
                 Order::STATUS_PICKUP_READY,
-                Order::STATUS_DELIVERY_COORDINATION,
-                Order::STATUS_SHIPPED,
-                Order::STATUS_PICKED_UP,
                 Order::STATUS_COMPLETED,
                 Order::STATUS_CANCELLED
             ]),
@@ -151,13 +145,6 @@ class OrderController extends Controller
                 Mail::to($order->customer_email)->send(
                     new OrderStatusUpdate($order, $oldStatus, $newStatus, $request->notes)
                 );
-                
-                // Send shipping instructions if order is shipped
-                if ($newStatus === Order::STATUS_SHIPPED) {
-                    Mail::to($order->customer_email)->send(
-                        new \App\Mail\ShippingInstructions($order)
-                    );
-                }
             } catch (\Exception $e) {
                 // Log email error but don't fail the status update
                 \Log::error('Failed to send order status update email', [
@@ -352,7 +339,7 @@ class OrderController extends Controller
                 Order::STATUS_AWAITING_PAYMENT,
                 Order::STATUS_PAID,
                 Order::STATUS_PROCESSING,
-                Order::STATUS_SHIPPED,
+                Order::STATUS_PICKUP_READY,
                 Order::STATUS_COMPLETED,
                 Order::STATUS_CANCELLED
             ]),
@@ -517,12 +504,15 @@ class OrderController extends Controller
 
     /**
      * Check if order can transition to the given status
+     * Simplified flow:
+     * - Delivery: Processing -> Completed
+     * - Pickup: Ready for Pickup -> Completed
      */
     private function canTransitionToStatus(Order $order, string $newStatus): bool
     {
         $currentStatus = $order->status;
 
-        // Define valid transitions
+        // Define valid transitions based on shipping method
         $validTransitions = [
             Order::STATUS_AWAITING_PAYMENT => [
                 Order::STATUS_PAID,
@@ -532,12 +522,12 @@ class OrderController extends Controller
                 Order::STATUS_PROCESSING,
                 Order::STATUS_CANCELLED
             ],
-            Order::STATUS_PROCESSING => [
-                Order::STATUS_SHIPPED,
+            Order::STATUS_PROCESSING => $order->is_pickup 
+                ? [Order::STATUS_PICKUP_READY, Order::STATUS_CANCELLED]
+                : [Order::STATUS_COMPLETED, Order::STATUS_CANCELLED],
+            Order::STATUS_PICKUP_READY => [
+                Order::STATUS_COMPLETED,
                 Order::STATUS_CANCELLED
-            ],
-            Order::STATUS_SHIPPED => [
-                Order::STATUS_COMPLETED
             ],
             Order::STATUS_COMPLETED => [],
             Order::STATUS_CANCELLED => []

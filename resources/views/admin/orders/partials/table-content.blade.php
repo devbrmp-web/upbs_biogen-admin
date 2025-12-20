@@ -61,9 +61,6 @@
                             'paid' => 'success',
                             'processing' => 'info',
                             'pickup_ready' => 'primary',
-                            'delivery_coordination' => 'secondary',
-                            'shipped' => 'primary',
-                            'picked_up' => 'success',
                             'completed' => 'success',
                             'cancelled' => 'danger'
                         ];

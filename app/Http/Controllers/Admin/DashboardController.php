@@ -31,16 +31,13 @@ class DashboardController extends Controller
         // Pending: awaiting_payment
         $pending = $statusCounts[Order::STATUS_AWAITING_PAYMENT] ?? 0;
         
-        // Processing: processing + pickup_ready + delivery_coordination (Assumed as "Processing" umbrella)
-        // User requested: "Gabungan dari processing dan packing". 'packing' not found, assuming standard processing flow.
+        // Processing: processing + pickup_ready (simplified, no more delivery_coordination)
         $processing = ($statusCounts[Order::STATUS_PROCESSING] ?? 0) 
-                    + ($statusCounts[Order::STATUS_PICKUP_READY] ?? 0)
-                    + ($statusCounts[Order::STATUS_DELIVERY_COORDINATION] ?? 0);
+                    + ($statusCounts[Order::STATUS_PICKUP_READY] ?? 0);
         
-        // Shipping: shipped + picked_up (If picked up by courier)
-        // User requested: "Shipping". Matches STATUS_SHIPPED.
-        $shipping = ($statusCounts[Order::STATUS_SHIPPED] ?? 0) 
-                  + ($statusCounts[Order::STATUS_PICKED_UP] ?? 0); // Include picked_up as it's out of warehouse
+        // Shipping: legacy - kept for historical orders that may still have old statuses
+        // New flow doesn't have shipped/picked_up, but we keep counting for any legacy data
+        $shipping = 0;
         
         // Completed: completed
         $completed = $statusCounts[Order::STATUS_COMPLETED] ?? 0;

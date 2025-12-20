@@ -332,8 +332,6 @@ class OrderManagementTest extends TestCase
             'paid' => 'success',
             'processing' => 'info',
             'pickup_ready' => 'primary',
-            'delivery_coordination' => 'secondary',
-            'shipped' => 'primary',
             'completed' => 'success',
             'cancelled' => 'danger'
         ];

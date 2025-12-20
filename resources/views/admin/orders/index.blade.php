@@ -158,9 +158,6 @@
                                         <option value="paid">Paid</option>
                                         <option value="processing">Processing</option>
                                         <option value="pickup_ready">Ready for Pickup</option>
-                                        <option value="delivery_coordination">Delivery Coordination</option>
-                                        <option value="shipped">Shipped</option>
-                                        <option value="picked_up">Picked Up</option>
                                         <option value="completed">Completed</option>
                                     </select>
                                 </div>

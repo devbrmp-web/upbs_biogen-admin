@@ -77,15 +77,12 @@ class DemoOrderSeeder extends Seeder
             ['status' => Order::STATUS_PROCESSING, 'method' => Order::SHIPPING_PICKUP, 'weight' => 2],
             ['status' => Order::STATUS_PROCESSING, 'method' => Order::SHIPPING_DELIVERY, 'weight' => 3],
             
-            // Ready/coordination
-            ['status' => Order::STATUS_PICKUP_READY, 'method' => Order::SHIPPING_PICKUP, 'weight' => 1],
-            ['status' => Order::STATUS_DELIVERY_COORDINATION, 'method' => Order::SHIPPING_DELIVERY, 'weight' => 2],
+            // Ready for pickup (pickup only)
+            ['status' => Order::STATUS_PICKUP_READY, 'method' => Order::SHIPPING_PICKUP, 'weight' => 2],
             
-            // Completed orders
-            ['status' => Order::STATUS_PICKED_UP, 'method' => Order::SHIPPING_PICKUP, 'weight' => 2],
-            ['status' => Order::STATUS_SHIPPED, 'method' => Order::SHIPPING_DELIVERY, 'weight' => 2],
-            ['status' => Order::STATUS_COMPLETED, 'method' => Order::SHIPPING_PICKUP, 'weight' => 1],
-            ['status' => Order::STATUS_COMPLETED, 'method' => Order::SHIPPING_DELIVERY, 'weight' => 1],
+            // Completed orders (simplified - no more shipped/picked_up intermediate states)
+            ['status' => Order::STATUS_COMPLETED, 'method' => Order::SHIPPING_PICKUP, 'weight' => 3],
+            ['status' => Order::STATUS_COMPLETED, 'method' => Order::SHIPPING_DELIVERY, 'weight' => 3],
             
             // Some cancelled orders (realistic)
             ['status' => Order::STATUS_CANCELLED, 'method' => Order::SHIPPING_PICKUP, 'weight' => 1],
@@ -239,7 +236,6 @@ class DemoOrderSeeder extends Seeder
             // Create shipment when needed with realistic timing progression
             if ($order->is_delivery) {
                 $shipmentStatus = match ($order->status) {
-                    Order::STATUS_SHIPPED => Shipment::STATUS_SHIPPED,
                     Order::STATUS_COMPLETED => Shipment::STATUS_DELIVERED,
                     default => Shipment::STATUS_PENDING,
                 };
@@ -254,14 +250,12 @@ class DemoOrderSeeder extends Seeder
                 $shippedAt = null;
                 $deliveredAt = null;
                 
-                if (in_array($order->status, [Order::STATUS_SHIPPED, Order::STATUS_COMPLETED])) {
+                if ($order->status === Order::STATUS_COMPLETED) {
                      $baseTime = $paidAt ?? $createdAt;
                      $shippedAt = (clone $baseTime)->modify("+{$processingDays} days");
                      
-                     if ($order->status === Order::STATUS_COMPLETED) {
-                         $deliveryDays = rand(1, 4); // 1-4 days delivery time
-                         $deliveredAt = (clone $shippedAt)->modify("+{$deliveryDays} days");
-                     }
+                     $deliveryDays = rand(1, 4); // 1-4 days delivery time
+                     $deliveredAt = (clone $shippedAt)->modify("+{$deliveryDays} days");
                  }
 
                 Shipment::create([
@@ -276,7 +270,7 @@ class DemoOrderSeeder extends Seeder
             } elseif ($order->is_pickup) {
                 $shipmentStatus = match ($order->status) {
                     Order::STATUS_PICKUP_READY => Shipment::STATUS_READY_FOR_PICKUP,
-                    Order::STATUS_PICKED_UP, Order::STATUS_COMPLETED => Shipment::STATUS_DELIVERED,
+                    Order::STATUS_COMPLETED => Shipment::STATUS_DELIVERED,
                     default => Shipment::STATUS_PENDING,
                 };
 
@@ -284,7 +278,7 @@ class DemoOrderSeeder extends Seeder
                 $readyAt = null;
                 $deliveredAt = null;
                 
-                if (in_array($order->status, [Order::STATUS_PICKUP_READY, Order::STATUS_PICKED_UP, Order::STATUS_COMPLETED])) {
+                if (in_array($order->status, [Order::STATUS_PICKUP_READY, Order::STATUS_COMPLETED])) {
                     $baseTime = $paidAt ?? $createdAt;
                     $processingDays = match ($customerType) {
                         'individual_farmer' => rand(1, 2),   // 1-2 days for pickup preparation
@@ -293,7 +287,7 @@ class DemoOrderSeeder extends Seeder
                     };
                     $readyAt = (clone $baseTime)->modify("+{$processingDays} days");
                      
-                     if (in_array($order->status, [Order::STATUS_PICKED_UP, Order::STATUS_COMPLETED])) {
+                     if ($order->status === Order::STATUS_COMPLETED) {
                          $pickupDelay = rand(0, 3); // 0-3 days after ready
                          $deliveredAt = (clone $readyAt)->modify("+{$pickupDelay} days");
                      }
