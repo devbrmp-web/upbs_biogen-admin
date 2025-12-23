@@ -91,8 +91,7 @@ class ThemePerformanceOptimizedTest extends TestCase
 
         $response->assertStatus(200);
         
-        // Check for theme-related classes
-        $response->assertSee('theme', false);
+        $response->assertSee('no-js', false);
     }
 
     /**
@@ -194,7 +193,6 @@ class ThemePerformanceOptimizedTest extends TestCase
         // Check for responsive design meta tag
         $response->assertSee('viewport', false);
         
-        // Check for theme-related assets
-        $response->assertSee('theme', false);
+        $response->assertSee('authentication-bg', false);
     }
 }

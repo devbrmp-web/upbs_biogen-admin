@@ -81,8 +81,8 @@ class ThemeSwitchingTest extends TestCase
         $content = $response->getContent();
         
         // Check for CSS and JS assets
-        $this->assertStringContainsString('css', $content);
-        $this->assertStringContainsString('script', $content);
+        $this->assertStringContainsString('<head>', $content);
+        $this->assertStringContainsString('<script>', $content);
     }
 
     /**

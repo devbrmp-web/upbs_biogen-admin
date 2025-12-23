@@ -56,6 +56,20 @@ class Payment extends Model
     const METHOD_BANK_TRANSFER = 'bank_transfer';
 
     /**
+     * Boot method to handle model events.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($payment) {
+            if ($payment->snap_token && $payment->order) {
+                $payment->order->updateQuietly(['snap_token' => $payment->snap_token]);
+            }
+        });
+    }
+
+    /**
      * Relationships
      */
     public function order(): BelongsTo
@@ -196,6 +210,19 @@ class Payment extends Model
         $this->fraud_status = $midtrans['fraud_status'] ?? null;
         $this->gateway_signature = $midtrans['signature_key'] ?? null;
 
+        $paymentType = $midtrans['payment_type'] ?? null;
+        if (is_string($paymentType) && $paymentType !== '') {
+            $resolvedMethod = match ($paymentType) {
+                'qris' => self::METHOD_QRIS,
+                'bank_transfer' => $this->resolveBankTransferMethod($midtrans) ?? self::METHOD_BANK_TRANSFER,
+                default => null,
+            };
+
+            if ($resolvedMethod) {
+                $this->payment_method = $resolvedMethod;
+            }
+        }
+
         // Merge gateway response snapshot
         $mergedResponse = array_merge($this->gateway_response ?? [], $midtrans);
 
@@ -225,14 +252,44 @@ class Payment extends Model
             $order->payment_type = $midtrans['payment_type'] ?? $order->payment_type;
             $order->transaction_id = $midtrans['transaction_id'] ?? $order->transaction_id;
             $order->transaction_status = $this->gateway_status;
+            $order->fraud_status = $midtrans['fraud_status'] ?? $order->fraud_status;
             $order->settlement_time = isset($midtrans['settlement_time']) ? \Carbon\Carbon::parse($midtrans['settlement_time']) : $order->settlement_time;
             $order->gross_amount = isset($midtrans['gross_amount']) ? (float) $midtrans['gross_amount'] : $order->gross_amount;
             $order->save();
         }
 
         // If paid, cascade to order
-        if ($mapped === self::STATUS_PAID) {
+        if ($mapped === self::STATUS_PAID && $order) {
             $order->markAsPaid($midtrans['pnbp_receipt_no'] ?? $this->pnbp_receipt_no);
         }
+    }
+
+    protected function resolveBankTransferMethod(array $midtrans): ?string
+    {
+        $vaNumbers = $midtrans['va_numbers'] ?? null;
+
+        if (is_array($vaNumbers) && isset($vaNumbers[0]) && is_array($vaNumbers[0])) {
+            $bank = strtolower((string) ($vaNumbers[0]['bank'] ?? ''));
+            return match ($bank) {
+                'bca' => self::METHOD_VA_BCA,
+                'bni' => self::METHOD_VA_BNI,
+                'bri' => self::METHOD_VA_BRI,
+                'mandiri' => self::METHOD_VA_MANDIRI,
+                default => null,
+            };
+        }
+
+        $bank = strtolower((string) ($midtrans['bank'] ?? ''));
+        if ($bank !== '') {
+            return match ($bank) {
+                'bca' => self::METHOD_VA_BCA,
+                'bni' => self::METHOD_VA_BNI,
+                'bri' => self::METHOD_VA_BRI,
+                'mandiri' => self::METHOD_VA_MANDIRI,
+                default => null,
+            };
+        }
+
+        return null;
     }
 }

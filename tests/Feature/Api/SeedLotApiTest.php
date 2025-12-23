@@ -5,10 +5,13 @@ namespace Tests\Feature\Api;
 use App\Models\SeedClass;
 use App\Models\SeedLot;
 use App\Models\Variety;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SeedLotApiTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_index_returns_sellable_only_by_default(): void
     {
         $variety = Variety::factory()->create(['name' => 'Var A', 'slug' => 'var-a']);

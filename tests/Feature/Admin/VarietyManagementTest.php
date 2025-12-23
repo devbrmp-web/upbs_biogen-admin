@@ -9,6 +9,7 @@ use App\Models\SeedClass;
 use App\Models\SeedLot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -107,6 +108,7 @@ class VarietyManagementTest extends TestCase
             'seed_class_id' => $this->seedClass->id,
             'lot_code' => 'LOT-2024-002',
             'production_year' => 2024,
+            'harvest_date' => '2024-01-01',
             'quantity' => 30,
             'unit' => 'kg',
             'price_per_unit' => 2500,
@@ -125,6 +127,7 @@ class VarietyManagementTest extends TestCase
             'lot_code' => 'LOT-2024-002',
             'quantity' => 30,
             'unit' => 'kg',
+            'harvest_date' => '2024-01-01 00:00:00',
         ]);
     }
 
@@ -148,6 +151,7 @@ class VarietyManagementTest extends TestCase
             'seed_class_id' => $this->seedClass->id,
             'lot_code' => 'LOT-2024-003-UPDATED',
             'production_year' => 2024,
+            'harvest_date' => '2024-01-01',
             'quantity' => 35,
             'unit' => 'kg',
             'price_per_unit' => 3000,
@@ -165,6 +169,7 @@ class VarietyManagementTest extends TestCase
             'id' => $seedLot->id,
             'lot_code' => 'LOT-2024-003-UPDATED',
             'quantity' => 35,
+            'harvest_date' => '2024-01-01 00:00:00',
         ]);
     }
 
@@ -294,12 +299,12 @@ class VarietyManagementTest extends TestCase
         ]);
 
         // Enable query logging
-        \DB::enableQueryLog();
+        DB::enableQueryLog();
 
         $this->actingAs($this->admin)
             ->get(route('admin.varieties.show', $variety));
 
-        $queries = \DB::getQueryLog();
+        $queries = DB::getQueryLog();
         
         // Should not have N+1 queries - verify reasonable query count
         $this->assertLessThan(10, count($queries), 'Too many queries executed, possible N+1 problem');

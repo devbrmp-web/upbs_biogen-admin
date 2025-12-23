@@ -101,5 +101,19 @@ Route::prefix('client')->name('client.')->group(function () {
 
 // Webhook routes (no CSRF protection needed)
 Route::post('/webhook/payment', [\App\Http\Controllers\WebhookController::class, 'handlePayment'])
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('webhook.payment');
+
+// Alias untuk client yang memanggil tanpa prefix /api
+Route::post('/orders/payment/sync', [\App\Http\Controllers\Api\OrderController::class, 'syncPaymentByOrderId'])
+    ->name('orders.payment.sync')
+    ->middleware('throttle:20,1')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+Route::get('/orders/track/{tracking_number}', [\App\Http\Controllers\Api\OrderController::class, 'track'])
+    ->name('orders.track.alias')
+    ->middleware('throttle:20,1');
+
+Route::get('/orders/track', [\App\Http\Controllers\Api\OrderController::class, 'track'])
+    ->name('orders.track.query.alias')
+    ->middleware('throttle:20,1');

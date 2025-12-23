@@ -11,8 +11,24 @@ class MidtransService
 
     public function __construct()
     {
-        $this->serverKey = (string) config('midtrans.server_key');
-        $this->baseUrl = rtrim((string) config('midtrans.base_url'), '/');
+        $this->serverKey = (string) (config('services.midtrans.serverKey')
+            ?: config('payment.midtrans.server_key')
+            ?: config('midtrans.server_key'));
+
+        $configuredBaseUrl = (string) (config('payment.midtrans.base_url')
+            ?: config('midtrans.base_url'));
+
+        if ($configuredBaseUrl !== '') {
+            $this->baseUrl = rtrim($configuredBaseUrl, '/');
+            return;
+        }
+
+        $isProduction = (bool) (config('services.midtrans.isProduction')
+            ?? config('payment.midtrans.is_production')
+            ?? config('midtrans.is_production')
+            ?? false);
+
+        $this->baseUrl = $isProduction ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
     }
 
     public function createTransaction(array $payload): array

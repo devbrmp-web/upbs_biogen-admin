@@ -42,8 +42,8 @@ class DashboardTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('admin.dashboard');
-        $response->assertSee('Executive Overview'); // New Title
-        $response->assertSee('skeleton'); // Should see skeleton loaders initially
+        $response->assertSee('Pending');
+        $response->assertSee('Pendapatan 7 Hari Terakhir');
     }
 
     /** @test */

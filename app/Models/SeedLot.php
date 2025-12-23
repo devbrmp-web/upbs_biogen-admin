@@ -87,6 +87,12 @@ class SeedLot extends Model
     {
         parent::boot();
 
-        // Note: Cache clearing removed as clearVarietyStockCache() method was not implemented
+        static::saved(function ($seedLot) {
+            $seedLot->variety?->clearStockCache();
+        });
+
+        static::deleted(function ($seedLot) {
+            $seedLot->variety?->clearStockCache();
+        });
     }
 }

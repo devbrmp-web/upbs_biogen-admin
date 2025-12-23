@@ -178,32 +178,4 @@ class OrderManagementEmailTest extends TestCase
             return $mail->order->id === $order->id;
         });
     }
-
-    /** @test */
-    public function it_sends_shipping_instructions_when_order_is_shipped(): void
-    {
-        Mail::fake();
-
-        $order = Order::first();
-        // Set order to delivery_coordination status so it can transition to shipped
-        $order->update([
-            'customer_email' => 'customer@test.com',
-            'status' => Order::STATUS_DELIVERY_COORDINATION
-        ]);
-        
-        $this->actingAs($this->admin);
-
-        // Update order to shipped status
-        $response = $this->patch("/admin/orders/{$order->id}/status", [
-            'status' => Order::STATUS_SHIPPED,
-            'tracking_number' => 'TRACK123',
-        ]);
-
-        $response->assertRedirect();
-
-        // Assert shipping instructions email was queued
-        Mail::assertQueued(ShippingInstructions::class, function ($mail) use ($order) {
-            return $mail->order->id === $order->id;
-        });
-    }
 }

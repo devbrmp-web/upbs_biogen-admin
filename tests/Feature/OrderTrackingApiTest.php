@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Shipment;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OrderTrackingApiTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_returns_200_with_valid_tracking_in_orders(): void
     {
         $order = Order::factory()->create([
@@ -26,10 +29,10 @@ class OrderTrackingApiTest extends TestCase
         $response = $this->getJson('/api/orders/track/TRACK-ORD-123');
 
         $response->assertStatus(200)
-            ->assertJsonPath('tracking_number', 'TRACK-ORD-123')
-            ->assertJsonPath('order_code', $order->order_code)
-            ->assertJsonPath('status', 'shipped')
-            ->assertJsonPath('shipment_status', 'shipped');
+            ->assertJsonPath('data.tracking_number', 'TRACK-ORD-123')
+            ->assertJsonPath('data.order_code', $order->order_code)
+            ->assertJsonPath('data.status', 'shipped')
+            ->assertJsonPath('data.shipment_status', 'shipped');
     }
 
     public function test_returns_200_with_tracking_only_in_shipments(): void
@@ -50,10 +53,10 @@ class OrderTrackingApiTest extends TestCase
         $response = $this->getJson('/api/orders/track/TRACK-SHP-456');
 
         $response->assertStatus(200)
-            ->assertJsonPath('tracking_number', 'TRACK-SHP-456')
-            ->assertJsonPath('order_code', $order->order_code)
-            ->assertJsonPath('status', 'shipped')
-            ->assertJsonPath('shipment_status', 'delivered');
+            ->assertJsonPath('data.tracking_number', 'TRACK-SHP-456')
+            ->assertJsonPath('data.order_code', $order->order_code)
+            ->assertJsonPath('data.status', 'shipped')
+            ->assertJsonPath('data.shipment_status', 'delivered');
     }
 
     public function test_returns_404_when_tracking_not_found(): void

@@ -6,6 +6,8 @@ use App\Models\Commodity;
 use App\Models\User;
 use App\Models\Variety;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class VarietyPriceFormTest extends TestCase
@@ -14,10 +16,13 @@ class VarietyPriceFormTest extends TestCase
 
     private User $adminUser;
     private Commodity $commodity;
+    private Variety $variety;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        Storage::fake('public');
 
         // Create a commodity for testing
         $this->commodity = Commodity::factory()->create();
@@ -71,6 +76,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '15',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertRedirect(route('admin.varieties.index'));
@@ -129,6 +135,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '10',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertSessionHasErrors('price');
@@ -149,6 +156,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '10',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertSessionHasErrors('price');
@@ -166,6 +174,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '15',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertSessionHasErrors(['price']);
@@ -183,6 +192,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '10',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertRedirect(route('admin.varieties.index'));
@@ -241,6 +251,7 @@ class VarietyPriceFormTest extends TestCase
                 'stock_bs_kg' => '100',
                 'stock_fs_kg' => '50',
                 'minimum_limit' => '10',
+                'image' => UploadedFile::fake()->image('variety.jpg'),
             ]);
 
         $response->assertRedirect(route('admin.varieties.index'));
