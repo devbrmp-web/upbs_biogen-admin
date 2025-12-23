@@ -101,7 +101,7 @@
                 </div>
 
                 <!-- Orders Table -->
-                <div id="ordersTableContainer" class="table-responsive" style="overflow: visible;">
+                <div id="ordersTableContainer" class="table-responsive">
                     @include('admin.orders.partials.table-content', ['orders' => $orders])
                 </div>
 
