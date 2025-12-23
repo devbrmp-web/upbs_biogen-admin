@@ -523,32 +523,114 @@
                         }
                     });
 
-                    // Fix dropdown stacking context issue in table
-                    // When a dropdown opens, we elevate the parent cell's z-index
-                    // to ensure the menu appears above subsequent rows/cells.
-                    document.addEventListener('show.bs.dropdown', function (e) {
-                        const dropdown = e.target;
-                        // Ensure we only target dropdowns inside the orders table
-                        if (!dropdown.closest('#ordersTableContainer')) return;
-
-                        const cell = dropdown.closest('td');
-                        if (cell) {
-                            cell.style.position = 'relative';
-                            cell.style.zIndex = '1000';
-                        }
+                    // Advanced Dropdown Positioning (Fix for Overflow/Z-Index)
+                    // 1. Force 'static' display to disable Popper.js interference
+                    const dropdownSelector = '#ordersTableContainer .dropdown-toggle';
+                    document.querySelectorAll(dropdownSelector).forEach(el => {
+                        el.setAttribute('data-bs-display', 'static');
                     });
+                    
+                    document.addEventListener('show.bs.dropdown', function (e) {
+                        const trigger = e.target;
+                        if (!trigger.matches(dropdownSelector) && !trigger.closest('#ordersTableContainer')) return;
+                        
+                        // Ensure static display is set
+                        if (trigger.getAttribute('data-bs-display') !== 'static') {
+                           trigger.setAttribute('data-bs-display', 'static');
+                        }
+                        
+                        const menu = trigger.nextElementSibling;
+                        if (!menu || !menu.classList.contains('dropdown-menu')) return;
+
+                        // Detach and append to body to escape overflow:hidden
+                        document.body.appendChild(menu);
+                        
+                        // Use setTimeout to override any Bootstrap/Popper inline styles that get added immediately
+                        setTimeout(() => {
+                            menu.style.setProperty('display', 'block', 'important');
+                            menu.style.setProperty('position', 'absolute', 'important');
+                            menu.style.setProperty('z-index', '9999', 'important');
+                            menu.style.setProperty('margin', '0', 'important');
+                            menu.style.setProperty('transform', 'none', 'important'); // Kill the transform!
+                            
+                            // Visual Tweaks: Compact Width
+                            menu.style.setProperty('min-width', 'auto', 'important');
+                            menu.style.setProperty('width', 'max-content', 'important');
+                            
+                            // Reduce padding on items for a tighter look
+                            menu.querySelectorAll('.dropdown-item').forEach(item => {
+                                item.style.setProperty('padding-left', '10px', 'important');
+                                item.style.setProperty('padding-right', '10px', 'important');
+                            });
+                            
+                            // Calculate position relative to document
+                            const rect = trigger.getBoundingClientRect();
+                            const menuRect = menu.getBoundingClientRect();
+                            const scrollY = window.scrollY || window.pageYOffset;
+                            const scrollX = window.scrollX || window.pageXOffset;
+                            
+                            // Default position: bottom-end (right aligned to trigger)
+                            let top = rect.bottom + scrollY + 2;
+                            let left = rect.right - menuRect.width + scrollX;
+                            
+                            // Check if it fits below (relative to viewport), otherwise flip up
+                            if (rect.bottom + menuRect.height > window.innerHeight) {
+                                top = rect.top + scrollY - menuRect.height - 2;
+                            }
+                            
+                            // Apply coordinates with priority
+                            menu.style.setProperty('top', top + 'px', 'important');
+                            menu.style.setProperty('left', left + 'px', 'important');
+                        }, 0);
+                        
+                        // Store reference for clean callback
+                        trigger._detachedMenu = menu;
+                    }, true);
 
                     document.addEventListener('hide.bs.dropdown', function (e) {
-                        const dropdown = e.target;
-                        if (!dropdown.closest('#ordersTableContainer')) return;
-
-                        const cell = dropdown.closest('td');
-                        if (cell) {
-                            // Clean up styles
-                            cell.style.position = '';
-                            cell.style.zIndex = '';
+                        const trigger = e.target;
+                        if (trigger._detachedMenu) {
+                            const menu = trigger._detachedMenu;
+                            
+                            // Put it back in place
+                            trigger.after(menu);
+                            
+                            // Remove all enforced styles
+                            menu.style.removeProperty('display');
+                            menu.style.removeProperty('position');
+                            menu.style.removeProperty('top');
+                            menu.style.removeProperty('left');
+                            menu.style.removeProperty('z-index');
+                            menu.style.removeProperty('transform');
+                            menu.style.removeProperty('margin');
+                            menu.style.removeProperty('min-width');
+                            menu.style.removeProperty('width');
+                            
+                            // Reset item padding
+                             menu.querySelectorAll('.dropdown-item').forEach(item => {
+                                item.style.removeProperty('padding-left');
+                                item.style.removeProperty('padding-right');
+                            });
+                            
+                            delete trigger._detachedMenu;
                         }
-                    });
+                    }, true);
+
+                    // Close detached menus on table scroll
+                    const tableContainer = document.getElementById('ordersTableContainer');
+                    if (tableContainer) {
+                        tableContainer.addEventListener('scroll', () => {
+                             document.querySelectorAll('.dropdown-toggle.show').forEach(el => {
+                                if(el._detachedMenu) bootstrap.Dropdown.getInstance(el).hide();
+                            });
+                        }, true);
+                    }
+                    
+                    window.addEventListener('resize', () => {
+                        document.querySelectorAll('.dropdown-toggle.show').forEach(el => {
+                            if(el._detachedMenu) bootstrap.Dropdown.getInstance(el).hide();
+                        });
+                    }, true);
 
                     // Ensure modals are moved to body to prevent stacking context issues
                     document.addEventListener('show.bs.modal', function (event) {
@@ -569,6 +651,27 @@
 
 @push('styles')
 <style>
+/* CSS Reset for Dropdown - Let JS handle positioning */
+#ordersTableContainer {
+    position: relative;
+    z-index: auto;
+}
+
+#ordersTableContainer .table {
+    /* overflow: visible; - removed to restore responsiveness */
+}
+
+/* Ensure card-footer (pagination) is standard */
+.card .card-footer.border-top {
+    position: relative;
+    z-index: 1;
+}
+
+.orders-pagination {
+    position: relative;
+    z-index: 1;
+}
+
 /* Improved pagination buttons for orders page */
 .orders-pagination .pagination .page-link {
     padding: 0.375rem 0.75rem;
