@@ -230,8 +230,9 @@
     </tbody>
 </table>
 
+{{-- Pagination for AJAX responses --}}
 @if($orders->hasPages())
-    <div class="card-footer border-top">
+    <div id="ordersPaginationContainer" class="card-footer border-top" style="position: relative; z-index: 1;">
         <div class="orders-pagination">
             {{ $orders->withQueryString()->links('custom.pagination') }}
         </div>
