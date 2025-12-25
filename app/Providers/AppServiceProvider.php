@@ -3,6 +3,12 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Order;
+use App\Models\Variety;
+use App\Observers\OrderObserver;
+use App\Observers\VarietyObserver;
+
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Order::observe(OrderObserver::class);
+        Variety::observe(VarietyObserver::class);
     }
 }

@@ -30,6 +30,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
     ->group(function () {
         // Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/export', [\App\Http\Controllers\Admin\DashboardController::class, 'export'])->name('dashboard.export');
         Route::get('/dashboard/stats', [\App\Http\Controllers\Admin\DashboardController::class, 'getStats'])->name('dashboard.stats');
         Route::get('/dashboard/charts', [\App\Http\Controllers\Admin\DashboardController::class, 'getCharts'])->name('dashboard.charts');
         Route::get('/dashboard/stock', [\App\Http\Controllers\Admin\DashboardController::class, 'getStock'])->name('dashboard.stock');
