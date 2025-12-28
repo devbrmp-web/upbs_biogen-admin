@@ -52,6 +52,12 @@ class CheckoutRequest extends FormRequest
                 'terms_accepted' => filter_var($this->terms_accepted, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
+
+        if (!$this->has('items') && session()->has('cart')) {
+            $this->merge([
+                'items' => array_values(session('cart')),
+            ]);
+        }
     }
 
     public function withValidator($validator)
