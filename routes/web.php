@@ -41,6 +41,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Varieties (formerly Products)
         Route::resource('varieties', \App\Http\Controllers\Admin\VarietyController::class);
+        Route::post('varieties/{variety}/images', [\App\Http\Controllers\Admin\VarietyController::class, 'storeImages'])->name('varieties.images.store');
+        Route::delete('varieties/{variety}/images/{image}', [\App\Http\Controllers\Admin\VarietyController::class, 'destroyImage'])->name('varieties.images.destroy');
+        Route::post('varieties/{variety}/images/reorder', [\App\Http\Controllers\Admin\VarietyController::class, 'reorderImages'])->name('varieties.images.reorder');
+        Route::post('varieties/{variety}/images/{image}/primary', [\App\Http\Controllers\Admin\VarietyController::class, 'setPrimaryImage'])->name('varieties.images.primary');
 
         // Seed Classes
         Route::resource('seed-classes', \App\Http\Controllers\Admin\SeedClassController::class);

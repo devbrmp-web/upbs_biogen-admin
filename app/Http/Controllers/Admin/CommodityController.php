@@ -25,7 +25,7 @@ class CommodityController extends Controller
         }
 
         $commodities = $query->latest('updated_at')->paginate(10)->appends($request->query());
-        
+
         // AJAX partial rendering for progressive enhancement (ignore query ?ajax=1 on normal navigation)
         if ($request->ajax()) {
             return view('admin.commodities.partials.table-content', compact('commodities'));
@@ -70,9 +70,9 @@ class CommodityController extends Controller
     public function show(Commodity $commodity)
     {
         $commodity->load(['varieties' => function ($query) {
-            $query->withCount('seedLots');
+            $query->with(['images'])->withCount('seedLots');
         }]);
-        
+
         return view('admin.commodities.show', compact('commodity'));
     }
 
@@ -106,7 +106,7 @@ class CommodityController extends Controller
             if ($commodity->image_path) {
                 Storage::disk('public')->delete($commodity->image_path);
             }
-            
+
             $validated['image_path'] = $request->file('image')->store('commodities', 'public');
         }
 
@@ -138,7 +138,7 @@ class CommodityController extends Controller
     private function sanitizeReturnUrl(Request $request, string $fallbackUrl): string
     {
         $return = $request->string('return')->trim()->toString();
-        if (!$return) {
+        if (! $return) {
             return $fallbackUrl;
         }
 
@@ -151,6 +151,7 @@ class CommodityController extends Controller
         if (Str::startsWith($return, [$appUrl, '/'])) {
             return $return;
         }
+
         return $fallbackUrl;
     }
 }

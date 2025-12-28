@@ -23,6 +23,9 @@ class Order extends Model
         'status',
         'shipping_method',
         'subtotal',
+        'shipping_cost',
+        'service_fee',
+        'app_fee',
         'total_amount',
         'gross_amount',
         'pnbp_receipt_no',
@@ -32,6 +35,7 @@ class Order extends Model
         'paid_at',
         'settlement_time',
         'courier_name',
+        'courier_service',
         'tracking_number',
         'completed_at',
         'notes',
@@ -40,6 +44,9 @@ class Order extends Model
 
     protected $casts = [
         'subtotal' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
+        'service_fee' => 'decimal:2',
+        'app_fee' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'gross_amount' => 'decimal:2',
         'paid_at' => 'datetime',
@@ -293,9 +300,16 @@ class Order extends Model
     public function calculateTotals(): void
     {
         $subtotal = $this->items->sum('total_price');
+        $serviceFee = round($subtotal * 0.01);
+        $appFee = 4000;
+        
+        $totalAmount = $subtotal + $serviceFee + $appFee;
+        
         $this->update([
             'subtotal' => $subtotal,
-            'total_amount' => $subtotal,
+            'service_fee' => $serviceFee,
+            'app_fee' => $appFee,
+            'total_amount' => $totalAmount,
         ]);
     }
 

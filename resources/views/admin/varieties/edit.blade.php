@@ -22,7 +22,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.varieties.update', $variety) }}" method="POST" enctype="multipart/form-data" id="varietyImageForm">
+                <form action="{{ route('admin.varieties.update', $variety) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="return" value="{{ request()->input('return', route('admin.varieties.index')) }}">
@@ -110,44 +110,80 @@
                             <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Planlets are not counted in total kg as they are measured per bottle.
                         </div>
 
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="mb-3">
-                                <label class="form-label">Image</label>
-                                <div class="dropzone">
-                                    <div class="fallback">
-                                        <input id="varietyImageInput" name="image" type="file" accept="image/*">
-                                    </div>
-                                    <div class="dz-message needsclick">
-                                        <i class="h1 bx bx-cloud-upload"></i>
-                                        <h3>Drop files here or click to upload.</h3>
-                                        <span class="text-muted fs-13">Select one image only (jpg, jpeg, png, webp) maximum 4MB.</span>
-                                    </div>
-                                </div>
-                                @error('image')<div class="text-danger small">{{ $message }}</div>@enderror
-                                <div id="imagePreviewContainer" class="mt-2 d-none">
-                                    <div class="border rounded p-2 d-inline-block">
-                                        <img id="imagePreview" class="img-fluid rounded d-block" src="#" alt="Image preview" style="width:120px;height:120px;object-fit:cover;" />
-                                    </div>
-                                </div>
-                                @if($variety->image_path)
-                                    <div class="mt-2">
-                                        <small class="text-muted d-block mb-1">Current Image:</small>
-                                        <div class="border rounded p-2 d-inline-block">
-                                            <img src="{{ asset('storage/' . $variety->image_path) }}" alt="{{ $variety->name }}" class="img-fluid rounded d-block" style="width:120px;height:120px;object-fit:cover;" />
-                                        </div>
-                                    </div>
-                                @endif
-                                <small class="text-muted">Only 1 image (jpg, jpeg, png, webp) maximum 4MB.</small>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.varieties.index')) }}" class="btn btn-light">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Update Variety</button>
+                        <button type="submit" class="btn btn-primary">Update Variety Details</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Image Gallery</h4>
+                <p class="text-muted mb-4">Upload multiple images for this variety. Drag and drop files or click the area below.</p>
+
+                <!-- Dropzone for Gallery -->
+                <form action="{{ route('admin.varieties.images.store', $variety) }}" method="post" enctype="multipart/form-data" class="dropzone" id="galleryDropzone">
+                    @csrf
+                    <div class="fallback">
+                        <input name="images[]" type="file" multiple />
+                    </div>
+                    <div class="dz-message needsclick">
+                        <i class="h1 bx bx-cloud-upload"></i>
+                        <h3>Drop files here or click to upload.</h3>
+                        <span class="text-muted fs-13">Maximum 6 images allowed. Max 4MB per image.</span>
+                    </div>
+                </form>
+
+                <!-- Existing Images Grid -->
+                <div class="row mt-4" id="gallery-grid">
+                    @foreach($variety->images->sortBy('order') as $image)
+                        <div class="col-md-3 col-sm-6 mb-4">
+                            <div class="card border h-100 {{ $image->is_primary ? 'border-primary' : '' }}">
+                                <div class="card-img-top-wrapper" style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                                    <img src="{{ asset('storage/' . $image->image_path) }}" class="img-fluid" style="max-height: 100%; object-fit: contain;" alt="Variety Image">
+                                </div>
+                                <div class="card-body p-2 text-center">
+                                    @if($image->is_primary)
+                                        <span class="badge bg-primary mb-2">Primary Image</span>
+                                    @else
+                                        <form action="{{ route('admin.varieties.images.primary', [$variety, $image]) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-primary mb-2">Jadikan gambar thumbnail</button>
+                                        </form>
+                                    @endif
+                                    
+                                    <form action="{{ route('admin.varieties.images.destroy', [$variety, $image]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this image?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger mb-2"><i class="bx bx-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                    
+                    @if($variety->images->isEmpty() && $variety->image_path)
+                         <!-- Legacy Image Fallback -->
+                        <div class="col-md-3 col-sm-6 mb-4">
+                            <div class="card border h-100 border-warning">
+                                <div class="card-header bg-warning text-white p-1 text-center small">Legacy Image</div>
+                                <div class="card-img-top-wrapper" style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                                    <img src="{{ asset('storage/' . $variety->image_path) }}" class="img-fluid" style="max-height: 100%; object-fit: contain;" alt="Legacy Image">
+                                </div>
+                                <div class="card-body p-2 text-center">
+                                    <p class="small text-muted">Please upload new images to migrate to the gallery system.</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -156,14 +192,15 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function(){
-        const form = document.getElementById('varietyImageForm');
-        const input = document.getElementById('varietyImageInput');
-        const preview = document.getElementById('imagePreview');
-        const container = document.getElementById('imagePreviewContainer');
-        const dzElement = document.querySelector('.dropzone');
-        const indexUrl = "{{ route('admin.varieties.index') }}";
-
-        // Integer-only guard for numeric fields (price and minimum_limit)
+        // Price input filtering - only allow digits
+        const priceEl = document.getElementById('price');
+        if (priceEl) {
+            priceEl.addEventListener('input', () => {
+                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
+            });
+        }
+        
+        // Integer-only guard for numeric fields
         const intFields = ['price', 'minimum_limit'];
         intFields.forEach(function(id){
             const el = document.getElementById(id);
@@ -175,82 +212,34 @@
                 }
             });
             el.addEventListener('input', function(e){
-                // Remove non-digit and prevent decimals
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
             });
         });
 
-        // Fallback input preview
-        if (input && preview && container) {
-            input.addEventListener('change', function(e){
-                const file = e.target.files && e.target.files[0];
-                if (file) {
-                    const url = URL.createObjectURL(file);
-                    preview.src = url;
-                    container.classList.remove('d-none');
-                } else {
-                    preview.src = '#';
-                    container.classList.add('d-none');
-                }
-            });
-        }
-
-        if (dzElement && form) {
+        // Dropzone Configuration
+        if (document.querySelector('#galleryDropzone')) {
             Dropzone.autoDiscover = false;
             const csrfToken = document.querySelector('input[name="_token"]').value;
-            const methodInput = document.querySelector('input[name="_method"]');
-            const returnInput = document.querySelector('input[name="return"]');
-
-            const dz = new Dropzone(dzElement, {
-                url: form.action,
-                method: 'post',
-                paramName: 'image',
-                maxFilesize: 4, // 4MB
-                maxFiles: 1,
-                uploadMultiple: false,
+            
+            const galleryDz = new Dropzone("#galleryDropzone", {
+                paramName: "images", // The name that will be used to transfer the file
+                maxFilesize: 4, // MB
                 acceptedFiles: 'image/jpeg,image/png,image/jpg,image/gif,image/webp',
-                autoProcessQueue: false,
                 addRemoveLinks: true,
+                uploadMultiple: true,
+                parallelUploads: 5,
+                maxFiles: 6,
                 headers: { 'X-CSRF-TOKEN': csrfToken },
-            });
-
-            dz.on('addedfile', function(file){
-                if (dz.files.length > 1) {
-                    dz.removeFile(dz.files[0]);
+                init: function() {
+                    this.on("successmultiple", function(files, response) {
+                        // Reload page to show new images
+                        window.location.reload();
+                    });
+                    this.on("error", function(file, message) {
+                        console.error(message);
+                        alert("Error uploading: " + (message.message || message));
+                    });
                 }
-            });
-
-            dz.on('sending', function(file, xhr, formData){
-                Array.from(form.elements).forEach(function(el){
-                    if (!el.name) return;
-                    if (el.type === 'file') return;
-                    formData.append(el.name, el.value);
-                });
-                if (methodInput && methodInput.value) {
-                    formData.append('_method', methodInput.value);
-                }
-            });
-
-            dz.on('success', function(){
-                const redirectUrl = returnInput && returnInput.value ? returnInput.value : indexUrl;
-                window.location.assign(redirectUrl);
-            });
-
-            dz.on('error', function(file, message){ console.error(message); });
-
-            form.addEventListener('submit', function(e){
-                if (dz.getQueuedFiles().length > 0) {
-                    e.preventDefault();
-                    dz.processQueue();
-                }
-            });
-        }
-
-        // Price input filtering - only allow digits
-        const priceEl = document.getElementById('price');
-        if (priceEl) {
-            priceEl.addEventListener('input', () => {
-                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
             });
         }
     });

@@ -225,6 +225,21 @@
                                 <span>Subtotal:</span>
                                 <strong>Rp {{ number_format($subtotal, 0, ',', '.') }}</strong>
                             </div>
+                            
+                            @if(isset($serviceFee) && $serviceFee > 0)
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Service Fee (1%):</span>
+                                <strong>Rp {{ number_format($serviceFee, 0, ',', '.') }}</strong>
+                            </div>
+                            @endif
+                            
+                            @if(isset($appFee) && $appFee > 0)
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Application Fee:</span>
+                                <strong>Rp {{ number_format($appFee, 0, ',', '.') }}</strong>
+                            </div>
+                            @endif
+
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span>Shipping:</span>
                                 <span id="shipping-cost">Free (Pickup)</span>
@@ -232,7 +247,7 @@
                             <hr>
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">Total:</h5>
-                                <h5 class="mb-0" id="total-amount">Rp {{ number_format($subtotal, 0, ',', '.') }}</h5>
+                                <h5 class="mb-0" id="total-amount">Rp {{ number_format($totalAmount ?? $subtotal, 0, ',', '.') }}</h5>
                             </div>
                         @else
                             <div class="text-center py-4">

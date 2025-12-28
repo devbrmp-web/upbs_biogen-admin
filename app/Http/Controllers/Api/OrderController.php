@@ -92,10 +92,32 @@ class OrderController extends Controller
             }
 
             // === Update order total ===
-            $order->update([
-                'subtotal' => $subtotal,
-                'total_amount' => $subtotal, // pickup → shipping_cost = 0
-            ]);
+            $order->load('orderItems');
+            $order->calculateTotals(); // Ini sudah menghitung service_fee dan app_fee
+
+            // === Shipping Logic ===
+            $totalWeight = $order->orderItems->sum('quantity');
+
+            if ($order->shipping_method === Order::SHIPPING_PICKUP) {
+                $order->update([
+                    'courier_name' => 'Ambil di Tempat',
+                    'courier_service' => 'BRMP Biogen',
+                    'shipping_cost' => 0,
+                ]);
+            } else {
+                // Delivery logic: > 10kg -> Indah Cargo, else Pos Indonesia
+                $courierName = $totalWeight > 10 ? 'Indah Cargo' : 'Pos Indonesia';
+                $order->update([
+                    'courier_name' => $courierName,
+                    'courier_service' => 'Regular', // Default service
+                ]);
+            }
+            
+            // Reload order agar total_amount terbaru terbaca (setelah calculateTotals)
+            $order->refresh();
+
+            // Create Shipment
+            Shipment::createForOrder($order);
 
             // === Midtrans ===
             Config::$serverKey = config('services.midtrans.serverKey');
@@ -106,14 +128,39 @@ class OrderController extends Controller
             $payload = [
                 'transaction_details' => [
                     'order_id' => $order->order_code,
-                    'gross_amount' => (int) $subtotal,
+                    'gross_amount' => (int) round($order->total_amount),
                 ],
                 'customer_details' => [
                     'first_name' => $order->customer_name,
                     'email' => $order->customer_email,
                     'phone' => $order->customer_phone,
                 ],
-            ];
+                'item_details' => array_merge(
+                    $order->orderItems->map(function($item) {
+                        return [
+                            'id' => $item->variety_id,
+                            'price' => (int) round($item->unit_price),
+                            'quantity' => (int) $item->quantity,
+                            'name' => substr($item->variety_name, 0, 50),
+                            'category' => optional($item->variety->commodity)->name,
+                        ];
+                    })->toArray(),
+                    [
+                    [
+                        'id' => 'SERVICE-FEE',
+                        'price' => (int) $order->service_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Layanan (1%)',
+                    ],
+                    [
+                        'id' => 'APP-FEE',
+                        'price' => (int) $order->app_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Aplikasi',
+                    ]
+                ]
+            ),
+        ];
 
             $snapToken = app()->environment('testing')
                 ? 'test-snap-token'
@@ -142,8 +189,14 @@ class OrderController extends Controller
             $orderData = [
                 'order_code' => $order->order_code,
                 'status' => $order->status,
-                'subtotal' => (float) $order->subtotal,
-                'total_amount' => (float) $order->total_amount,
+                'shipping_method' => $order->shipping_method,
+                'totals' => [
+                    'subtotal' => (float) $order->subtotal,
+                    'shipping_cost' => (float) $order->shipping_cost,
+                    'service_fee' => (float) $order->service_fee,
+                    'app_fee' => (float) $order->app_fee,
+                    'total_amount' => (float) $order->total_amount,
+                ],
                 'customer_name' => $order->customer_name,
                 'customer_phone' => $order->customer_phone,
                 'customer_address' => $order->customer_address,
@@ -224,6 +277,8 @@ class OrderController extends Controller
             'total_amount' => (float) $order->total_amount,
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
+            'shipping_method' => $order->shipping_method,
+            'shipping_method_label' => $order->shipping_method_label,
             'customer_address' => $order->customer_address,
             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
@@ -259,6 +314,8 @@ class OrderController extends Controller
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
             'customer_address' => $order->customer_address,
+            'shipping_method' => $order->shipping_method,
+            'shipping_method_label' => $order->shipping_method_label,
             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,

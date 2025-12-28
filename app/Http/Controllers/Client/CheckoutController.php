@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -55,10 +56,20 @@ class CheckoutController extends Controller
                 'seed_class' => $item['seed_class'] ?? null,
             ];
         }
+
+        // Calculate fees
+        $serviceFee = round($subtotal * 0.01);
+        $appFee = 1000;
+        $totalAmount = $subtotal + $serviceFee + $appFee;
         
         return view('client.checkout.index', [
+            'title' => 'Checkout',
+            'subTitle' => 'Order Details',
             'cartItems' => $processedItems,
             'subtotal' => $subtotal,
+            'serviceFee' => $serviceFee,
+            'appFee' => $appFee,
+            'totalAmount' => $totalAmount,
         ]);
     }
 
@@ -100,7 +111,7 @@ class CheckoutController extends Controller
                     Mail::to($order->customer_email)->send(new OrderConfirmation($order));
                 } catch (\Exception $e) {
                     // Log email error but don't fail the order creation
-                    \Log::error('Failed to send order confirmation email', [
+                    Log::error('Failed to send order confirmation email', [
                         'order_id' => $order->id,
                         'email' => $order->customer_email,
                         'error' => $e->getMessage()
@@ -119,7 +130,7 @@ class CheckoutController extends Controller
             DB::rollBack();
             
             // Log the error
-            \Log::error('Checkout process failed', [
+            Log::error('Checkout process failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request_data' => $request->except(['_token'])
