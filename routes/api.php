@@ -49,6 +49,8 @@ Route::middleware('throttle:60,1')->group(function () {
         ->name('api.orders.payment.snap-token');
     Route::post('/orders/payment/sync', [OrderController::class, 'syncPaymentByOrderId'])
         ->name('api.orders.payment.sync');
+    Route::post('/orders/{order_code}/signature', [OrderController::class, 'updateSignature'])
+        ->name('api.orders.signature.update');
     Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransNotification'])
         ->name('webhooks.midtrans');
 });

@@ -40,6 +40,7 @@ class Order extends Model
         'completed_at',
         'notes',
         'payment_deadline',
+        'signature_path',
     ];
 
     protected $casts = [

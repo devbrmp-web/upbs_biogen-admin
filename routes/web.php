@@ -55,6 +55,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Orders
         Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'show', 'destroy']);
+        Route::get('orders/{order}/document', [\App\Http\Controllers\Admin\OrderController::class, 'document'])->name('orders.document');
         Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Admin\OrderController::class, 'cancel'])->name('orders.cancel');
         Route::post('orders/bulk-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');

@@ -95,6 +95,18 @@ class OrderController extends Controller
     }
 
     /**
+     * Display the signed document.
+     */
+    public function document(Order $order)
+    {
+        if (!$order->signature_path) {
+            abort(404, 'Signature not found for this order.');
+        }
+        $order->load(['orderItems.variety', 'payment', 'shipment']);
+        return view('admin.orders.document', compact('order'));
+    }
+
+    /**
      * Update the order status.
      */
     public function updateStatus(Request $request, Order $order)

@@ -284,6 +284,7 @@ class OrderController extends Controller
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'signature_path' => $order->signature_path,
             'items' => $order->orderItems->map(function ($it) {
                 return [
                     'variety_id' => $it->variety_id,
@@ -320,6 +321,7 @@ class OrderController extends Controller
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'signature_path' => $order->signature_path,
             'items' => $order->orderItems->map(function ($it) {
                 return [
                     'variety_id' => $it->variety_id,
@@ -465,5 +467,18 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function updateSignature(Request $request, string $order_code): JsonResponse
+    {
+        $validated = $request->validate([
+            'signature_path' => 'required|string',
+        ]);
+
+        $order = Order::where('order_code', $order_code)->firstOrFail();
+        $order->signature_path = $validated['signature_path'];
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Signature updated']);
     }
 }

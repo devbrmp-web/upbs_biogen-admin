@@ -6,11 +6,12 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Variety extends Model
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'commodity_id',
