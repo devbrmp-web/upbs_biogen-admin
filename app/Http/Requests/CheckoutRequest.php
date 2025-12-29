@@ -114,16 +114,16 @@ class CheckoutRequest extends FormRequest
                 // ============================
                 // CHECK VARIETY STOCK
                 // ============================
-                else {
-                    $variety = Variety::find($item['variety_id']);
+                // else {
+                //     $variety = Variety::find($item['variety_id']);
 
-                    if ($variety && $variety->stock < $item['quantity']) {
-                        $validator->errors()->add(
-                            'items',
-                            "Stok untuk varietas {$variety->name} tidak mencukupi."
-                        );
-                    }
-                }
+                //     if ($variety && $variety->stock < $item['quantity']) {
+                //         $validator->errors()->add(
+                //             'items',
+                //             "Stok untuk varietas {$variety->name} tidak mencukupi."
+                //         );
+                //     }
+                // }
             }
         });
     }

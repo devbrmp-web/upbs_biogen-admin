@@ -55,11 +55,37 @@
     </div>
   </div>
 </div>
+
+<!-- Constraint Error Modal -->
+<div class="modal fade" id="constraintErrorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Gagal Menghapus Data</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="constraintErrorMessage" class="mb-3">{{ session('constraint_message') ?? 'Data tidak dapat dihapus karena masih memiliki data terkait.' }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+        <a href="#" id="viewStockBtn" class="btn btn-primary">Lihat Detail</a>
+      </div>
+    </div>
+  </div>
+</div>
 @endpush
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show constraint error modal if session has error
+    @if(session('constraint_error'))
+        var constraintModal = new bootstrap.Modal(document.getElementById('constraintErrorModal'));
+        document.getElementById('viewStockBtn').href = "{{ session('constraint_redirect') }}";
+        constraintModal.show();
+    @endif
+
     // Delete modal logic (delegated, survives AJAX)
     let targetFormId = null;
     const modalEl = document.getElementById('confirmDeleteModal');
@@ -193,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const onSearchChange = debounce(() => {
-        const url = buildUrl('{{ route('admin.commodities.index') }}');
+        const url = buildUrl("{{ route('admin.commodities.index') }}");
         fetchAndRender(url);
     });
 
@@ -212,10 +238,10 @@ document.addEventListener('DOMContentLoaded', function() {
         clearBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (searchInput) searchInput.value = '';
-            const url = new URL('{{ route('admin.commodities.index') }}', window.location.origin);
+            const url = new URL("{{ route('admin.commodities.index') }}", window.location.origin);
             url.searchParams.set('ajax', '1');
             fetchAndRender(url);
-            history.pushState({}, '', '{{ route('admin.commodities.index') }}');
+            history.pushState({}, '', "{{ route('admin.commodities.index') }}");
             updateClearVisibility(new URL(window.location.href));
         });
     }

@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\SeedLot;
 use App\Models\Shipment;
 use App\Models\Variety;
+use App\Models\SeedClass;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,6 +93,7 @@ class OrderController extends Controller
             }
 
             // === Update order total ===
+            // Reload items untuk kalkulasi akurat
             $order->load('orderItems');
             $order->calculateTotals(); // Ini sudah menghitung service_fee dan app_fee
 
@@ -160,7 +162,7 @@ class OrderController extends Controller
                     ]
                 ]
             ),
-        ];
+            ];
 
             $snapToken = app()->environment('testing')
                 ? 'test-snap-token'
@@ -235,6 +237,66 @@ class OrderController extends Controller
         }
     }
 
+    private function createOrderItemAndDeductStock($order, $seedLot, $quantity)
+    {
+        $variety = $seedLot->variety;
+        $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
+
+        $itemData = [
+            'order_id' => $order->id,
+            'variety_id' => $variety->id,
+            'variety_name' => $variety->name,
+            'variety_sku' => $variety->sku,
+            'unit_price' => $unitPrice,
+            'price_at_order' => $unitPrice,
+            'quantity' => $quantity,
+            'seed_lot_id' => $seedLot->id,
+            'seed_class' => $seedLot->seedClass?->code,
+        ];
+
+        OrderItem::create($itemData);
+
+        // Decrement stock
+        $seedLot->decrement('quantity', $quantity);
+        
+        // Audit log logic is handled by SeedLot model traits if configured, 
+        // or we can explicitly log here if needed. 
+        // Since we use Auditable trait on SeedLot, update events are logged.
+    }
+
+    private function prepareItemDetails($order)
+    {
+        // Merge identical items for clean display in Midtrans/Invoice if split occurred
+        // However, Midtrans requires unique IDs usually, or just a list.
+        // Let's send detailed items to be safe and accurate.
+        
+        $items = $order->orderItems->map(function($item) {
+            return [
+                'id' => $item->variety_id . '-' . $item->seed_lot_id, // Unique-ish ID
+                'price' => (int) round($item->unit_price),
+                'quantity' => (int) $item->quantity,
+                'name' => substr($item->variety_name . ' (' . $item->seed_class . ')', 0, 50),
+                'category' => optional($item->variety->commodity)->name,
+            ];
+        })->toArray();
+
+        return array_merge($items, [
+            [
+                'id' => 'SERVICE-FEE',
+                'price' => (int) $order->service_fee,
+                'quantity' => 1,
+                'name' => 'Biaya Layanan (1%)',
+            ],
+            [
+                'id' => 'APP-FEE',
+                'price' => (int) $order->app_fee,
+                'quantity' => 1,
+                'name' => 'Biaya Aplikasi',
+            ]
+        ]);
+    }
+
+    // ... existing methods ...
     public function track(TrackOrderRequest $request): JsonResponse
     {
         $validated = $request->validated();

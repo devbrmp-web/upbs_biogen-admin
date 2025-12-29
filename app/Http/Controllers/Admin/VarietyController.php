@@ -219,15 +219,25 @@ class VarietyController extends Controller
      */
     public function destroy(Request $request, Variety $variety)
     {
-        // Delete image if exists
-        if ($variety->image_path) {
-            Storage::disk('public')->delete($variety->image_path);
+        try {
+            // Delete image if exists
+            if ($variety->image_path) {
+                Storage::disk('public')->delete($variety->image_path);
+            }
+
+            $variety->delete();
+
+            return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index')))
+                ->with('success', 'Variety deleted successfully.');
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()
+                    ->with('constraint_error', true)
+                    ->with('constraint_redirect', route('admin.varieties.show', $variety));
+            }
+            throw $e;
         }
-
-        $variety->delete();
-
-        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index')))
-            ->with('success', 'Variety deleted successfully.');
     }
 
     /**
