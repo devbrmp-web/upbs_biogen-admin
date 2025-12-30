@@ -6,12 +6,13 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Shipment;
 use App\Models\Variety;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class CheckoutApiTest extends TestCase
 {
-    use WithFaker;
+    use RefreshDatabase, WithFaker;
 
     public function test_checkout_endpoint_creates_order_and_related_records(): void
     {

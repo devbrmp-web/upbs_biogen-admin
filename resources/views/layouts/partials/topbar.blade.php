@@ -65,6 +65,7 @@
 
 
                 <!-- User -->
+                @auth
                 <div class="dropdown topbar-item">
                     <a
                         type="button"
@@ -110,6 +111,13 @@
                         </a>
                     </div>
                 </div>
+                @else
+                <div class="topbar-item">
+                    <span class="d-flex align-items-center px-2">
+                        Guest
+                    </span>
+                </div>
+                @endauth
             </div>
         </div>
     </div>

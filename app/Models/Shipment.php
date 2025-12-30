@@ -175,12 +175,20 @@ class Shipment extends Model
      */
     public static function createForOrder(Order $order): self
     {
-        return static::create([
+        $data = [
             'order_id' => $order->id,
             'shipping_method' => $order->shipping_method,
             'status' => self::STATUS_PENDING,
             'courier_name' => $order->courier_name,
-        ]);
+        ];
+
+        // Validasi/Override untuk pickup
+        if ($order->shipping_method === self::SHIPPING_PICKUP) {
+            $data['courier_name'] = 'Ambil di Tempat';
+            // Status bisa langsung ready? User tidak minta, jadi keep pending.
+        }
+
+        return static::create($data);
     }
 
     /**

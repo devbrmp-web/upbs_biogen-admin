@@ -21,8 +21,12 @@ class CheckoutRequest extends FormRequest
             'customer_email'             => 'required|email',
             'customer_phone'             => 'required|string|max:20',
             'customer_address'           => 'required|string',
+            'customer_province'          => 'nullable|string',
+            'customer_city'              => 'nullable|string',
+            'customer_district'          => 'nullable|string',
+            'customer_postal_code'       => 'nullable|string',
 
-            'shipping_method'   => 'required|string',
+            'shipping_method'   => 'required|in:pickup,delivery',
             'courier_name'      => 'nullable|string',
 
             'terms_accepted'    => 'required|boolean|in:1,true',
@@ -46,6 +50,12 @@ class CheckoutRequest extends FormRequest
         if ($this->has('terms_accepted')) {
             $this->merge([
                 'terms_accepted' => filter_var($this->terms_accepted, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+
+        if (!$this->has('items') && session()->has('cart')) {
+            $this->merge([
+                'items' => array_values(session('cart')),
             ]);
         }
     }

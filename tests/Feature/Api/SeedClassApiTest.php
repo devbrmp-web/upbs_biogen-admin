@@ -3,10 +3,13 @@
 namespace Tests\Feature\Api;
 
 use App\Models\SeedClass;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SeedClassApiTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_index_returns_active_by_default(): void
     {
         SeedClass::factory()->create(['code' => 'BS', 'name' => 'Breeder Seed', 'is_active' => true]);

@@ -11,8 +11,24 @@ class MidtransService
 
     public function __construct()
     {
-        $this->serverKey = (string) config('midtrans.server_key');
-        $this->baseUrl = rtrim((string) config('midtrans.base_url'), '/');
+        $this->serverKey = (string) (config('services.midtrans.serverKey')
+            ?: config('payment.midtrans.server_key')
+            ?: config('midtrans.server_key'));
+
+        $configuredBaseUrl = (string) (config('payment.midtrans.base_url')
+            ?: config('midtrans.base_url'));
+
+        if ($configuredBaseUrl !== '') {
+            $this->baseUrl = rtrim($configuredBaseUrl, '/');
+            return;
+        }
+
+        $isProduction = (bool) (config('services.midtrans.isProduction')
+            ?? config('payment.midtrans.is_production')
+            ?? config('midtrans.is_production')
+            ?? false);
+
+        $this->baseUrl = $isProduction ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
     }
 
     public function createTransaction(array $payload): array
@@ -69,15 +85,31 @@ class MidtransService
                 'email' => $order->customer_email,
                 'phone' => $order->customer_phone,
             ],
-            'item_details' => $order->items->map(function($item) {
-                return [
-                    'id' => $item->variety_id,
-                    'price' => (int) round($item->unit_price),
-                    'quantity' => (int) $item->quantity,
-                    'name' => $item->variety_name,
-                    'category' => optional($item->variety->commodity)->name,
-                ];
-            })->toArray(),
+            'item_details' => array_merge(
+                $order->items->map(function($item) {
+                    return [
+                        'id' => $item->variety_id,
+                        'price' => (int) round($item->unit_price),
+                        'quantity' => (int) $item->quantity,
+                        'name' => substr($item->variety_name, 0, 50),
+                        'category' => optional($item->variety->commodity)->name,
+                    ];
+                })->toArray(),
+                [
+                    [
+                        'id' => 'SERVICE-FEE',
+                        'price' => (int) $order->service_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Layanan (1%)',
+                    ],
+                    [
+                        'id' => 'APP-FEE',
+                        'price' => (int) $order->app_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Aplikasi',
+                    ]
+                ]
+            ),
         ];
         return $this->createTransaction($payload);
     }

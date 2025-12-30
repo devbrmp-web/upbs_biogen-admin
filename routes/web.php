@@ -42,6 +42,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Varieties (formerly Products)
         Route::resource('varieties', \App\Http\Controllers\Admin\VarietyController::class);
+        Route::post('varieties/{variety}/images', [\App\Http\Controllers\Admin\VarietyController::class, 'storeImages'])->name('varieties.images.store');
+        Route::delete('varieties/{variety}/images/{image}', [\App\Http\Controllers\Admin\VarietyController::class, 'destroyImage'])->name('varieties.images.destroy');
+        Route::post('varieties/{variety}/images/reorder', [\App\Http\Controllers\Admin\VarietyController::class, 'reorderImages'])->name('varieties.images.reorder');
+        Route::post('varieties/{variety}/images/{image}/primary', [\App\Http\Controllers\Admin\VarietyController::class, 'setPrimaryImage'])->name('varieties.images.primary');
 
         // Seed Classes
         Route::resource('seed-classes', \App\Http\Controllers\Admin\SeedClassController::class);
@@ -51,6 +55,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Orders
         Route::resource('orders', \App\Http\Controllers\Admin\OrderController::class)->only(['index', 'show', 'destroy']);
+        Route::get('orders/{order}/document', [\App\Http\Controllers\Admin\OrderController::class, 'document'])->name('orders.document');
         Route::patch('orders/{order}/status', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Admin\OrderController::class, 'cancel'])->name('orders.cancel');
         Route::post('orders/bulk-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');
@@ -102,5 +107,19 @@ Route::prefix('client')->name('client.')->group(function () {
 
 // Webhook routes (no CSRF protection needed)
 Route::post('/webhook/payment', [\App\Http\Controllers\WebhookController::class, 'handlePayment'])
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('webhook.payment');
+
+// Alias untuk client yang memanggil tanpa prefix /api
+Route::post('/orders/payment/sync', [\App\Http\Controllers\Api\OrderController::class, 'syncPaymentByOrderId'])
+    ->name('orders.payment.sync')
+    ->middleware('throttle:20,1')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+Route::get('/orders/track/{tracking_number}', [\App\Http\Controllers\Api\OrderController::class, 'track'])
+    ->name('orders.track.alias')
+    ->middleware('throttle:20,1');
+
+Route::get('/orders/track', [\App\Http\Controllers\Api\OrderController::class, 'track'])
+    ->name('orders.track.query.alias')
+    ->middleware('throttle:20,1');

@@ -56,22 +56,7 @@ class OrderItem extends Model
         parent::boot();
         
         static::saving(function ($orderItem) {
-            $seedClassCode = null;
-            $seedLot = $orderItem->relationLoaded('seedLot') ? $orderItem->seedLot : $orderItem->seedLot()->with('seedClass')->first();
-            if ($seedLot && $seedLot->seedClass) {
-                $seedClassCode = $seedLot->seedClass->code;
-            }
-
-            if ($seedClassCode === 'BS') {
-                $groups = intdiv((int) $orderItem->quantity, 5);
-                if ($orderItem->quantity % 5 !== 0) {
-                    $groups += 1; // should not happen due to validation, but safeguard
-                }
-                $pricePerGroup = ($seedLot ? (float) $seedLot->price_per_unit : (float) $orderItem->unit_price) * 5;
-                $orderItem->total_price = $pricePerGroup * $groups;
-            } else {
-                $orderItem->total_price = (float) $orderItem->unit_price * (int) $orderItem->quantity;
-            }
+            $orderItem->total_price = (float) $orderItem->unit_price * (int) $orderItem->quantity;
         });
     }
 

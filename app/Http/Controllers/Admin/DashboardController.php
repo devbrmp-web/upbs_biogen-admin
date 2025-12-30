@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SeedLot;
 use App\Models\Variety;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -181,6 +182,178 @@ class DashboardController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate
         ]));
+    }
+
+    public function getStats(Request $request): JsonResponse
+    {
+        $period = $request->string('period')->toString() ?: 'today';
+        $cacheKey = 'dashboard.stats.' . $period;
+
+        try {
+            $data = Cache::remember($cacheKey, 60, function () use ($period) {
+                [$currentStart, $currentEnd, $previousStart, $previousEnd] = $this->resolvePeriodRanges($period);
+
+                $currentQuery = Order::query()
+                    ->where('status', '!=', Order::STATUS_CANCELLED)
+                    ->where('created_at', '>=', $currentStart)
+                    ->where('created_at', '<', $currentEnd);
+
+                $previousQuery = Order::query()
+                    ->where('status', '!=', Order::STATUS_CANCELLED)
+                    ->where('created_at', '>=', $previousStart)
+                    ->where('created_at', '<', $previousEnd);
+
+                $currentRevenue = (float) $currentQuery->sum('total_amount');
+                $currentOrders = (int) $currentQuery->count();
+                $currentAov = $currentOrders > 0 ? $currentRevenue / $currentOrders : 0.0;
+
+                $previousRevenue = (float) $previousQuery->sum('total_amount');
+                $previousOrders = (int) $previousQuery->count();
+                $previousAov = $previousOrders > 0 ? $previousRevenue / $previousOrders : 0.0;
+
+                return [
+                    'revenue' => [
+                        'value' => (int) round($currentRevenue),
+                        'growth' => $this->percentGrowth($currentRevenue, $previousRevenue),
+                    ],
+                    'orders' => [
+                        'value' => $currentOrders,
+                        'growth' => $this->percentGrowth((float) $currentOrders, (float) $previousOrders),
+                    ],
+                    'aov' => [
+                        'value' => (int) round($currentAov),
+                        'growth' => $this->percentGrowth($currentAov, $previousAov),
+                    ],
+                ];
+            });
+
+            return response()->json($data);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch dashboard stats', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to fetch stats'], 500);
+        }
+    }
+
+    public function getCharts(Request $request): JsonResponse
+    {
+        $period = $request->string('period')->toString() ?: 'last_7_days';
+        [$start, $end] = $this->resolveTrendRange($period);
+
+        $driver = DB::connection()->getDriverName();
+        $dateFormat = $driver === 'sqlite' ? "date(created_at)" : 'DATE(created_at)';
+
+        $raw = Order::query()
+            ->where('status', '!=', Order::STATUS_CANCELLED)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<', $end)
+            ->select(DB::raw("$dateFormat as date"), DB::raw('SUM(total_amount) as total'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $days = $start->copy()->daysUntil($end->copy()->subDay());
+        $trend = [];
+        foreach ($days as $day) {
+            $dateStr = $day->format('Y-m-d');
+            $found = $raw->firstWhere('date', $dateStr);
+            $trend[] = (int) round($found ? (float) $found->total : 0.0);
+        }
+
+        $last = array_slice($trend, -3);
+        $avg = count($last) > 0 ? array_sum($last) / count($last) : 0;
+        $forecast = [
+            (int) round($avg),
+            (int) round($avg),
+            (int) round($avg),
+        ];
+
+        return response()->json([
+            'trend' => $trend,
+            'forecast' => $forecast,
+        ]);
+    }
+
+    public function getStock(): JsonResponse
+    {
+        $lots = SeedLot::query()
+            ->where('is_sellable', true)
+            ->where('quantity', '<', 50)
+            ->orderBy('quantity')
+            ->limit(10)
+            ->get();
+
+        $data = $lots->map(function (SeedLot $lot) {
+            $qty = (int) $lot->quantity;
+            $status = $qty < 10 ? 'critical' : 'low';
+
+            return [
+                'id' => $lot->id,
+                'lot_code' => $lot->lot_code,
+                'quantity' => $qty,
+                'status' => $status,
+            ];
+        })->values()->all();
+
+        return response()->json($data);
+    }
+
+    public function getTopProducts(): JsonResponse
+    {
+        return response()->json([]);
+    }
+
+    public function getHeatmap(): JsonResponse
+    {
+        return response()->json([]);
+    }
+
+    private function percentGrowth(float $current, float $previous): int
+    {
+        if ($previous == 0.0) {
+            return $current == 0.0 ? 0 : 100;
+        }
+
+        return (int) round((($current - $previous) / $previous) * 100);
+    }
+
+    private function resolvePeriodRanges(string $period): array
+    {
+        $now = Carbon::now();
+
+        return match ($period) {
+            'today' => [
+                Carbon::today(),
+                Carbon::tomorrow(),
+                Carbon::yesterday(),
+                Carbon::today(),
+            ],
+            'yesterday' => [
+                Carbon::yesterday(),
+                Carbon::today(),
+                Carbon::yesterday()->subDay(),
+                Carbon::yesterday(),
+            ],
+            'last_30_days' => [
+                Carbon::today()->subDays(29),
+                Carbon::tomorrow(),
+                Carbon::today()->subDays(59),
+                Carbon::today()->subDays(29),
+            ],
+            default => [
+                Carbon::today()->subDays(6),
+                Carbon::tomorrow(),
+                Carbon::today()->subDays(13),
+                Carbon::today()->subDays(6),
+            ],
+        };
+    }
+
+    private function resolveTrendRange(string $period): array
+    {
+        return match ($period) {
+            'last_30_days' => [Carbon::today()->subDays(29), Carbon::tomorrow()],
+            default => [Carbon::today()->subDays(6), Carbon::tomorrow()],
+        };
     }
 
     /**

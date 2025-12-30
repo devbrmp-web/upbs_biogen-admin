@@ -11,19 +11,7 @@ use Tests\TestCase;
 
 class CheckoutBsFsTest extends TestCase
 {
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        \config(['database.default' => 'mysql']);
-        \Artisan::call('migrate');
-    }
-
-    protected function tearDown(): void
-    {
-        \Artisan::call('migrate:reset');
-        parent::tearDown();
-    }
+    use RefreshDatabase;
 
     private function createSeedClass(string $code, string $name): SeedClass
     {
@@ -53,16 +41,17 @@ class CheckoutBsFsTest extends TestCase
         ]);
     }
 
-    public function test_bs_requires_quantity_multiple_of_5(): void
+    public function test_fs_requires_quantity_multiple_of_5(): void
     {
-        $bs = $this->createSeedClass('BS', 'Benih Sebar');
+        $fs = $this->createSeedClass('FS', 'Benih Sebar');
         $variety = $this->createVariety(12000);
-        $lot = $this->createSeedLot($variety, $bs, 100, 12000.0);
+        $lot = $this->createSeedLot($variety, $fs, 100, 12000.0);
 
         $payload = [
             'customer_name' => 'Tester',
             'customer_address' => 'Alamat',
             'customer_phone' => '+628111111111',
+            'customer_email' => 'tester@example.com',
             'shipping_method' => Order::SHIPPING_PICKUP,
             'items' => [
                 ['variety_id' => $variety->id, 'quantity' => 7, 'seed_lot_id' => $lot->id],
@@ -74,19 +63,20 @@ class CheckoutBsFsTest extends TestCase
         $response = $this->postJson('/api/orders/checkout', $payload);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['items.0.quantity']);
+        $response->assertJsonValidationErrors(['items']);
     }
 
-    public function test_bs_total_price_and_stock_decrement(): void
+    public function test_fs_total_price_and_stock_decrement(): void
     {
-        $bs = $this->createSeedClass('BS', 'Benih Sebar');
+        $fs = $this->createSeedClass('FS', 'Benih Sebar');
         $variety = $this->createVariety(12000);
-        $lot = $this->createSeedLot($variety, $bs, 100, 12000.0);
+        $lot = $this->createSeedLot($variety, $fs, 100, 12000.0);
 
         $payload = [
             'customer_name' => 'Tester',
             'customer_address' => 'Alamat',
             'customer_phone' => '+628111111111',
+            'customer_email' => 'tester@example.com',
             'shipping_method' => Order::SHIPPING_PICKUP,
             'items' => [
                 ['variety_id' => $variety->id, 'quantity' => 10, 'seed_lot_id' => $lot->id], // 2 kelompok 5kg
@@ -109,16 +99,17 @@ class CheckoutBsFsTest extends TestCase
         $this->assertEquals(90, (int) $lot->quantity); // 100 - 10
     }
 
-    public function test_fs_total_price_and_stock_decrement(): void
+    public function test_bs_total_price_and_stock_decrement(): void
     {
-        $fs = $this->createSeedClass('FS', 'Foundation Seed');
+        $bs = $this->createSeedClass('BS', 'Breeder Seed');
         $variety = $this->createVariety(15000);
-        $lot = $this->createSeedLot($variety, $fs, 50, 15000.0);
+        $lot = $this->createSeedLot($variety, $bs, 50, 15000.0);
 
         $payload = [
             'customer_name' => 'Tester',
             'customer_address' => 'Alamat',
             'customer_phone' => '+628111111111',
+            'customer_email' => 'tester@example.com',
             'shipping_method' => Order::SHIPPING_PICKUP,
             'items' => [
                 ['variety_id' => $variety->id, 'quantity' => 3, 'seed_lot_id' => $lot->id],

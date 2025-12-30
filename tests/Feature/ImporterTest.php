@@ -10,7 +10,7 @@ use Tests\Traits\CreatesSeedClasses;
 
 class ImporterTest extends TestCase
 {
-    use RefreshDatabase, CreatesSeedClasses;
+    use CreatesSeedClasses, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -29,7 +29,7 @@ class ImporterTest extends TestCase
             'Rice,IR64,BS,100,65000,2025,kg',
             'Rice,IR64,FS,80,60000,2025,kg',
             'Soybean,Grobogan,PL,20,75000,2025,botol',
-            'Unknown,,BS,50,50000,2025,kg' // invalid row (missing variety)
+            'Unknown,,BS,50,50000,2025,kg', // invalid row (missing variety)
         ]));
 
         $exitCode = Artisan::call('wub:import:seed-stock', [
@@ -42,10 +42,9 @@ class ImporterTest extends TestCase
         $this->assertDatabaseHas('commodities', ['name' => 'Rice']);
         $this->assertDatabaseHas('varieties', ['name' => 'IR64']);
         $this->assertDatabaseHas('seed_lots', ['unit' => 'kg']);
-        $this->assertDatabaseHas('seed_lots', ['unit' => 'botol']);
+        $this->assertDatabaseHas('seed_lots', ['unit' => 'bottle']);
 
         // Clean up
         File::delete($tmp);
     }
 }
-

@@ -14,23 +14,31 @@ class CommodityController extends Controller
      */
     public function index(): JsonResponse
     {
-        $commodities = Commodity::query()
-            ->where('is_active', true)
-            ->select(['id', 'name', 'slug', 'image_path'])
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'slug' => $c->slug,
-                'image' => $c->image_path,
-            ]);
+        try {
+            $commodities = Commodity::query()
+                ->where('is_active', true)
+                ->select(['id', 'name', 'slug', 'image_path'])
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'slug' => $c->slug,
+                    'image' => $c->image_path,
+                ]);
 
-        return response()->json([
-            'data' => $commodities,
-            'meta' => [
-                'count' => $commodities->count(),
-            ],
-        ]);
+            return response()->json([
+                'data' => $commodities,
+                'meta' => [
+                    'count' => $commodities->count(),
+                ],
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Database query error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

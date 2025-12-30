@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Variety extends Model
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'commodity_id',
@@ -19,40 +21,42 @@ class Variety extends Model
         'description',
         'minimum_limit',
         'status',
+        'is_active',
         'image_path',
     ];
 
     protected $casts = [
         'minimum_limit' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     protected static function boot(): void
-   {
-       parent::boot();
+    {
+        parent::boot();
 
-       static::creating(function ($variety) {
-           if (empty($variety->slug)) {
-               $variety->slug = Str::slug($variety->name);
-           }
-           
-           // Autogenerate SKU if not provided
-           if (empty($variety->sku)) {
-               $variety->sku = static::generateUniqueSku($variety);
-           }
-       });
+        static::creating(function ($variety) {
+            if (empty($variety->slug)) {
+                $variety->slug = Str::slug($variety->name);
+            }
 
-       static::updating(function ($variety) {
-           if ($variety->isDirty('name') && empty($variety->slug)) {
-               $variety->slug = Str::slug($variety->name);
-           }
-           
-           // Only generate SKU if it's empty/null (immutable by default)
-           if (empty($variety->sku)) {
-               $variety->sku = static::generateUniqueSku($variety);
-           }
-           
-           $variety->clearStockCache();
-       });
+            // Autogenerate SKU if not provided
+            if (empty($variety->sku)) {
+                $variety->sku = static::generateUniqueSku($variety);
+            }
+        });
+
+        static::updating(function ($variety) {
+            if ($variety->isDirty('name') && empty($variety->slug)) {
+                $variety->slug = Str::slug($variety->name);
+            }
+
+            // Only generate SKU if it's empty/null (immutable by default)
+            if (empty($variety->sku)) {
+                $variety->sku = static::generateUniqueSku($variety);
+            }
+
+            $variety->clearStockCache();
+        });
 
         static::updated(function ($variety) {
             $variety->clearStockCache();
@@ -79,6 +83,38 @@ class Variety extends Model
         return $this->hasMany(SeedLot::class);
     }
 
+    public function images(): HasMany
+    {
+        return $this->hasMany(VarietyImage::class)->orderBy('order')->orderBy('id');
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! $this->image_path) {
+            return null;
+        }
+
+        $baseUrl = rtrim((string) config('filesystems.disks.public.url'), '/');
+        if ($baseUrl === '') {
+            return null;
+        }
+
+        return $baseUrl.'/'.ltrim($this->image_path, '/');
+    }
+
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        $primary = null;
+
+        if ($this->relationLoaded('images')) {
+            $primary = $this->images->firstWhere('is_primary', true);
+        } else {
+            $primary = $this->images()->where('is_primary', true)->first();
+        }
+
+        return $primary?->image_url ?: $this->image_url;
+    }
+
     /**
      * Get active seed lots for the variety.
      */
@@ -87,14 +123,14 @@ class Variety extends Model
         return $this->hasMany(SeedLot::class)->sellable();
     }
 
-   /**
+    /**
      * Get the total stock from sellable seed lots with unit kg only.
      */
     public function getTotalStockAttribute(): float
     {
         // Use cached value if available
         $cacheKey = "variety_total_stock_{$this->id}";
-        
+
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
             // Calculate total from seed lots that are sellable and unit kg only
             if ($this->relationLoaded('seedLots')) {
@@ -123,7 +159,7 @@ class Variety extends Model
 
         // Use cached value if available
         $cacheKey = "variety_total_planlet_{$this->id}";
-        
+
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
             // Calculate total planlet from seed lots that are sellable, unit 'bottle' or 'botol' (legacy), and seed class 'PL'
             if ($this->relationLoaded('seedLots')) {
@@ -153,12 +189,12 @@ class Variety extends Model
     {
         // Use cached value if available
         $cacheKey = "variety_stock_status_{$this->id}";
-        
+
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
             // Use pre-calculated total_stock_calculated if available from selectRaw
             $totalStock = $this->attributes['total_stock_calculated'] ?? $this->total_stock;
             $minimumStockLimit = $this->minimum_limit ?? 0;
-            
+
             // Out of Stock: total stock = 0
             if ($totalStock == 0) {
                 return 'Out of Stock';
@@ -312,7 +348,7 @@ class Variety extends Model
             FROM seed_lots sl
             WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg"
         ) > 0')
-        ->whereRaw('(
+            ->whereRaw('(
             SELECT COALESCE(SUM(quantity), 0)
             FROM seed_lots sl
             WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg"
@@ -361,29 +397,29 @@ class Variety extends Model
     protected static function generateUniqueSku($variety): string
     {
         // Load commodity if not already loaded
-        if (!$variety->commodity) {
+        if (! $variety->commodity) {
             $variety->load('commodity');
         }
-        
+
         $commoditySlug = $variety->commodity?->slug ?? 'unknown';
         $nameSlug = Str::slug($variety->name);
-        $baseSku = strtoupper($commoditySlug . '-' . $nameSlug);
-        
+        $baseSku = strtoupper($commoditySlug.'-'.$nameSlug);
+
         // Check if base SKU is unique
         $existingCount = static::where('sku', $baseSku)
             ->when($variety->exists, function ($query) use ($variety) {
                 return $query->where('id', '!=', $variety->id);
             })
             ->count();
-            
+
         if ($existingCount === 0) {
             return $baseSku;
         }
-        
+
         // Find next available suffix
         $suffix = 2;
         do {
-            $candidateSku = $baseSku . '-' . $suffix;
+            $candidateSku = $baseSku.'-'.$suffix;
             $existingCount = static::where('sku', $candidateSku)
                 ->when($variety->exists, function ($query) use ($variety) {
                     return $query->where('id', '!=', $variety->id);
@@ -391,7 +427,7 @@ class Variety extends Model
                 ->count();
             $suffix++;
         } while ($existingCount > 0);
-        
+
         return $candidateSku;
     }
 

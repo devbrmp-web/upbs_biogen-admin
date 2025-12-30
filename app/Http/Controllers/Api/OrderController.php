@@ -12,8 +12,8 @@ use App\Models\SeedLot;
 use App\Models\Shipment;
 use App\Models\Variety;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -27,17 +27,17 @@ class OrderController extends Controller
 
             // Buat order (order_code auto by model)
             $order = Order::create([
-                'customer_name'     => $request->customer_name,
-                'customer_address'  => $request->customer_address,
-                'customer_phone'    => $request->customer_phone,
-                'customer_email'    => $request->customer_email,
-                'shipping_method'   => $request->shipping_method,
-                'courier_name'      => $request->courier_name,
-                'courier_service'   => $request->courier_service,
-                'status'            => Order::STATUS_AWAITING_PAYMENT,
-                'subtotal'          => 0,
-                'shipping_cost'     => 0,
-                'total_amount'      => 0,
+                'customer_name' => $request->customer_name,
+                'customer_address' => $request->customer_address,
+                'customer_phone' => $request->customer_phone,
+                'customer_email' => $request->customer_email,
+                'shipping_method' => $request->shipping_method,
+                'courier_name' => $request->courier_name,
+                'courier_service' => $request->courier_service,
+                'status' => Order::STATUS_AWAITING_PAYMENT,
+                'subtotal' => 0,
+                'shipping_cost' => 0,
+                'total_amount' => 0,
             ]);
 
             $subtotal = 0;
@@ -45,7 +45,7 @@ class OrderController extends Controller
             foreach ($request->items as $item) {
 
                 // === Ambil data produk ===
-                if (!empty($item['seed_lot_id'])) {
+                if (! empty($item['seed_lot_id'])) {
 
                     $seedLot = SeedLot::with('variety', 'seedClass')->findOrFail($item['seed_lot_id']);
                     $variety = $seedLot->variety;
@@ -67,55 +67,136 @@ class OrderController extends Controller
 
                 // Snapshot variety wajib → SESUAI MIGRATION
                 $itemData = [
-                    'order_id'       => $order->id,
-                    'variety_id'     => $variety->id,
-                    'variety_name'   => $variety->name,
-                    'variety_sku'    => $variety->sku,
-                    'unit_price'     => $unitPrice,
+                    'order_id' => $order->id,
+                    'variety_id' => $variety->id,
+                    'variety_name' => $variety->name,
+                    'variety_sku' => $variety->sku,
+                    'unit_price' => $unitPrice,
                     'price_at_order' => $unitPrice,
-                    'quantity'       => $quantity,
-                    'seed_lot_id'    => $seedLot?->id,
-                    'seed_class'     => $seedClassCode,
+                    'quantity' => $quantity,
+                    'seed_lot_id' => $seedLot?->id,
+                    'seed_class' => $seedClassCode,
                 ];
 
                 // Create → total_price otomatis dihitung via boot() model
                 $orderItem = OrderItem::create($itemData);
+
+                if ($seedLot) {
+                    $seedLot->decrement('quantity', $quantity);
+                } else {
+                    $variety->decrement('stock', $quantity);
+                }
 
                 // Tambah subtotal (pakai total_price yg sudah dihitung model)
                 $subtotal += $orderItem->total_price;
             }
 
             // === Update order total ===
-            $order->update([
-                'subtotal'     => $subtotal,
-                'total_amount' => $subtotal, // pickup → shipping_cost = 0
-            ]);
+            $order->load('orderItems');
+            $order->calculateTotals(); // Ini sudah menghitung service_fee dan app_fee
+
+            // === Shipping Logic ===
+            $totalWeight = $order->orderItems->sum('quantity');
+
+            if ($order->shipping_method === Order::SHIPPING_PICKUP) {
+                $order->update([
+                    'courier_name' => 'Ambil di Tempat',
+                    'courier_service' => 'BRMP Biogen',
+                    'shipping_cost' => 0,
+                ]);
+            } else {
+                // Delivery logic: > 10kg -> Indah Cargo, else Pos Indonesia
+                $courierName = $totalWeight > 10 ? 'Indah Cargo' : 'Pos Indonesia';
+                $order->update([
+                    'courier_name' => $courierName,
+                    'courier_service' => 'Regular', // Default service
+                ]);
+            }
+            
+            // Reload order agar total_amount terbaru terbaca (setelah calculateTotals)
+            $order->refresh();
+
+            // Create Shipment
+            Shipment::createForOrder($order);
 
             // === Midtrans ===
-            Config::$serverKey     = config('services.midtrans.serverKey');
-            Config::$isProduction  = config('services.midtrans.isProduction');
-            Config::$isSanitized   = config('services.midtrans.isSanitized');
-            Config::$is3ds         = config('services.midtrans.is3ds');
+            Config::$serverKey = config('services.midtrans.serverKey');
+            Config::$isProduction = config('services.midtrans.isProduction');
+            Config::$isSanitized = config('services.midtrans.isSanitized');
+            Config::$is3ds = config('services.midtrans.is3ds');
 
             $payload = [
                 'transaction_details' => [
-                    'order_id'     => $order->order_code,
-                    'gross_amount' => (int) $subtotal,
+                    'order_id' => $order->order_code,
+                    'gross_amount' => (int) round($order->total_amount),
                 ],
                 'customer_details' => [
                     'first_name' => $order->customer_name,
-                    'email'      => $order->customer_email,
-                    'phone'      => $order->customer_phone,
+                    'email' => $order->customer_email,
+                    'phone' => $order->customer_phone,
                 ],
-            ];
+                'item_details' => array_merge(
+                    $order->orderItems->map(function($item) {
+                        return [
+                            'id' => $item->variety_id,
+                            'price' => (int) round($item->unit_price),
+                            'quantity' => (int) $item->quantity,
+                            'name' => substr($item->variety_name, 0, 50),
+                            'category' => optional($item->variety->commodity)->name,
+                        ];
+                    })->toArray(),
+                    [
+                    [
+                        'id' => 'SERVICE-FEE',
+                        'price' => (int) $order->service_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Layanan (1%)',
+                    ],
+                    [
+                        'id' => 'APP-FEE',
+                        'price' => (int) $order->app_fee,
+                        'quantity' => 1,
+                        'name' => 'Biaya Aplikasi',
+                    ]
+                ]
+            ),
+        ];
 
-            $snapToken = Snap::getSnapToken($payload);
-// Ambil dat a lengkap pesanan (termasuk item)
+            $snapToken = app()->environment('testing')
+                ? 'test-snap-token'
+                : Snap::getSnapToken($payload);
+
+            $expiresAt = now()->addHours(25);
+
+            $order->update([
+                'payment_deadline' => $expiresAt,
+            ]);
+
+            Payment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
+                    'amount' => $order->total_amount,
+                    'status' => Payment::STATUS_PENDING,
+                    'gateway_reference' => $order->order_code,
+                    'snap_token' => $snapToken,
+                    'expires_at' => $expiresAt,
+                    'payment_ip' => $request->ip(),
+                ]
+            );
+
+            // Ambil data lengkap pesanan (termasuk item)
             $orderData = [
                 'order_code' => $order->order_code,
                 'status' => $order->status,
-                'subtotal' => (float) $order->subtotal,
-                'total_amount' => (float) $order->total_amount,
+                'shipping_method' => $order->shipping_method,
+                'totals' => [
+                    'subtotal' => (float) $order->subtotal,
+                    'shipping_cost' => (float) $order->shipping_cost,
+                    'service_fee' => (float) $order->service_fee,
+                    'app_fee' => (float) $order->app_fee,
+                    'total_amount' => (float) $order->total_amount,
+                ],
                 'customer_name' => $order->customer_name,
                 'customer_phone' => $order->customer_phone,
                 'customer_address' => $order->customer_address,
@@ -140,12 +221,13 @@ class OrderController extends Controller
                 'data' => [
                     'snap_token' => $snapToken,
                     'order_code' => $order->order_code,
-                     'order' => $orderData,
-                ]
+                    'order' => $orderData,
+                ],
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -167,7 +249,7 @@ class OrderController extends Controller
         if ($trackingNumber !== '') {
             $order = $query->where('tracking_number', $trackingNumber)->first();
             $shipment = $order?->shipment;
-            if (!$order) {
+            if (! $order) {
                 $shipment = Shipment::query()
                     ->with(['order.payment', 'order.orderItems'])
                     ->where('tracking_number', $trackingNumber)
@@ -184,7 +266,7 @@ class OrderController extends Controller
 
         if (! $order) {
             return response()->json([
-                'message' => 'Order not found'
+                'message' => $trackingNumber !== '' ? 'Tracking number not found' : 'Order not found',
             ], 404);
         }
 
@@ -195,11 +277,14 @@ class OrderController extends Controller
             'total_amount' => (float) $order->total_amount,
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
+            'shipping_method' => $order->shipping_method,
+            'shipping_method_label' => $order->shipping_method_label,
             'customer_address' => $order->customer_address,
             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'signature_path' => $order->signature_path,
             'items' => $order->orderItems->map(function ($it) {
                 return [
                     'variety_id' => $it->variety_id,
@@ -212,9 +297,7 @@ class OrderController extends Controller
             })->toArray(),
         ];
 
-        return response()->json([
-            'order' => $payloadOrder,
-        ]);
+        return response()->json(['data' => $payloadOrder]);
     }
 
     public function getPublicOrder(string $order_code): JsonResponse
@@ -232,10 +315,13 @@ class OrderController extends Controller
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
             'customer_address' => $order->customer_address,
+            'shipping_method' => $order->shipping_method,
+            'shipping_method_label' => $order->shipping_method_label,
             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+            'signature_path' => $order->signature_path,
             'items' => $order->orderItems->map(function ($it) {
                 return [
                     'variety_id' => $it->variety_id,
@@ -247,6 +333,7 @@ class OrderController extends Controller
                 ];
             })->toArray(),
         ];
+
         return response()->json(['data' => $data]);
     }
 
@@ -258,7 +345,7 @@ class OrderController extends Controller
         }
         $payment = $order->payment;
         $orderId = $payment?->gateway_reference ?: $order->order_code;
-        $service = new \App\Services\MidtransService();
+        $service = new \App\Services\MidtransService;
         try {
             $status = $service->getStatus($orderId);
             if ($payment) {
@@ -282,9 +369,116 @@ class OrderController extends Controller
                     $order->save();
                 }
             }
+
             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function getSnapToken(string $order_code): JsonResponse
+    {
+        $order = Order::query()->with('payment')->where('order_code', $order_code)->first();
+        if (! $order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $payment = $order->payment;
+        if (! $payment) {
+            return response()->json(['message' => 'Payment record not found'], 404);
+        }
+
+        if ($order->status !== Order::STATUS_AWAITING_PAYMENT || $payment->status !== Payment::STATUS_PENDING) {
+            return response()->json(['message' => 'Payment is not pending'], 409);
+        }
+
+        if ($payment->expires_at && $payment->expires_at->isPast()) {
+            return response()->json(['message' => 'Payment expired'], 410);
+        }
+
+        if (! $payment->snap_token) {
+            return response()->json(['message' => 'Snap token not available'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'order_code' => $order->order_code,
+                'snap_token' => $payment->snap_token,
+                'expires_at' => $payment->expires_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
+    public function syncPaymentByOrderId(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'order_id' => ['required', 'string', 'max:191'],
+        ]);
+
+        $orderId = (string) $validated['order_id'];
+
+        $order = Order::query()->with('payment')->where('order_code', $orderId)->first();
+        if (! $order) {
+            $payment = Payment::query()->with('order.payment')->where('gateway_reference', $orderId)->first();
+            $order = $payment?->order;
+        }
+
+        if (! $order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $payment = $order->payment;
+        $orderIdForMidtrans = $payment?->gateway_reference ?: $orderId;
+
+        $service = new \App\Services\MidtransService;
+
+        try {
+            $status = $service->getStatus($orderIdForMidtrans);
+
+            if ($payment) {
+                $payment->applyMidtransStatus($status);
+            } else {
+                $mapped = match ($status['transaction_status'] ?? null) {
+                    'settlement', 'capture' => Payment::STATUS_PAID,
+                    'pending' => Payment::STATUS_PENDING,
+                    'expire' => Payment::STATUS_EXPIRED,
+                    'deny', 'cancel' => Payment::STATUS_FAILED,
+                    default => null,
+                };
+
+                $order->payment_type = $status['payment_type'] ?? $order->payment_type;
+                $order->transaction_id = $status['transaction_id'] ?? $order->transaction_id;
+                $order->transaction_status = $status['transaction_status'] ?? $order->transaction_status;
+                $order->settlement_time = isset($status['settlement_time']) ? \Carbon\Carbon::parse($status['settlement_time']) : $order->settlement_time;
+                $order->gross_amount = isset($status['gross_amount']) ? (float) $status['gross_amount'] : $order->gross_amount;
+
+                if ($mapped === Payment::STATUS_PAID) {
+                    $order->markAsPaid();
+                } else {
+                    $order->save();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'order' => $order->fresh(['payment']),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateSignature(Request $request, string $order_code): JsonResponse
+    {
+        $validated = $request->validate([
+            'signature_path' => 'required|string',
+        ]);
+
+        $order = Order::where('order_code', $order_code)->firstOrFail();
+        $order->signature_path = $validated['signature_path'];
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Signature updated']);
     }
 }
