@@ -44,24 +44,13 @@ class OrderController extends Controller
 
             foreach ($request->items as $item) {
 
-                // === Ambil data produk ===
-                if (! empty($item['seed_lot_id'])) {
+                // === Seed lot is now required ===
+                $seedLot = SeedLot::with('variety', 'seedClass')->findOrFail($item['seed_lot_id']);
+                $variety = $seedLot->variety;
 
-                    $seedLot = SeedLot::with('variety', 'seedClass')->findOrFail($item['seed_lot_id']);
-                    $variety = $seedLot->variety;
-
-                    // Jika seed lot punya price_per_unit → pakai
-                    $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
-
-                    $seedClassCode = $seedLot->seedClass?->code;
-
-                } else {
-
-                    $variety = Variety::findOrFail($item['variety_id']);
-                    $unitPrice = (float) $variety->price;
-                    $seedLot = null;
-                    $seedClassCode = null;
-                }
+                // Get price from seed lot
+                $unitPrice = (int) $seedLot->price_per_unit;
+                $seedClassCode = $seedLot->seedClass?->code;
 
                 $quantity = (int) $item['quantity'];
 
@@ -74,18 +63,15 @@ class OrderController extends Controller
                     'unit_price' => $unitPrice,
                     'price_at_order' => $unitPrice,
                     'quantity' => $quantity,
-                    'seed_lot_id' => $seedLot?->id,
+                    'seed_lot_id' => $seedLot->id,
                     'seed_class' => $seedClassCode,
                 ];
 
                 // Create → total_price otomatis dihitung via boot() model
                 $orderItem = OrderItem::create($itemData);
 
-                if ($seedLot) {
-                    $seedLot->decrement('quantity', $quantity);
-                } else {
-                    $variety->decrement('stock', $quantity);
-                }
+                // Decrement stock from SeedLot only
+                $seedLot->decrement('quantity', $quantity);
 
                 // Tambah subtotal (pakai total_price yg sudah dihitung model)
                 $subtotal += $orderItem->total_price;
