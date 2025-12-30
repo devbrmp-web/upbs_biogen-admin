@@ -51,10 +51,6 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold">Price:</td>
-                                <td><strong>Rp {{ number_format($variety->price ?? 0, 0, ',', '.') }}</strong></td>
-                            </tr>
-                            <tr>
                                 <td class="fw-semibold">Stock Status:</td>
                                 <td>
                                     <span class="badge bg-{{ $variety->stock_status_class }}">{{ $variety->stock_status_label }}</span>

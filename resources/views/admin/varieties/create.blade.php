@@ -63,17 +63,6 @@
                             <small class="text-muted d-block mb-2">SKU will be auto-generated when saved.</small>
                         </div>
                         <div class="col-lg-6">
-                            <!-- Price Field -->
-                            <div class="mb-3">
-                                <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                       id="price" name="price" value="{{ old('price') }}" step="1" min="0" inputmode="numeric" pattern="[0-9]*" required>
-                                @error('price')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
                             <!-- Minimum Limit Field -->
                             <div class="mb-3">
                                 <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
@@ -169,8 +158,8 @@
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
 
-        // Integer-only guard for numeric inputs (price and minimum_limit)
-        const integerIds = ['price', 'minimum_limit'];
+        // Integer-only guard for numeric inputs (minimum_limit only)
+        const integerIds = ['minimum_limit'];
         integerIds.forEach(function(id){
             const el = document.getElementById(id);
             if (!el) return;
@@ -260,16 +249,6 @@
                 } catch(err) {
                     console.error(err);
                 }
-            });
-        }
-    });
-
-    // Price input filtering - only allow digits
-    document.addEventListener('DOMContentLoaded', () => {
-        const priceEl = document.getElementById('price');
-        if (priceEl) {
-            priceEl.addEventListener('input', () => {
-                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
             });
         }
     });
