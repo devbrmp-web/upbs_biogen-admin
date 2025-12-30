@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Shipment;
 use App\Models\Variety;
+use App\Models\SeedLot;
 use App\Models\AuditLog;
 use App\Mail\OrderConfirmation;
 use Illuminate\Http\Request;
@@ -42,18 +43,30 @@ class CheckoutController extends Controller
                 continue;
             }
             
-            $itemTotal = $variety->price * $item['quantity'];
+            // Get price from SeedLot (required)
+            $seedLot = null;
+            $unitPrice = 0;
+            
+            if (!empty($item['seed_lot_id'])) {
+                $seedLot = SeedLot::find($item['seed_lot_id']);
+                if ($seedLot) {
+                    $unitPrice = (int) $seedLot->price_per_unit;
+                }
+            }
+            
+            $itemTotal = $unitPrice * $item['quantity'];
             $subtotal += $itemTotal;
             
             $processedItems[] = [
                 'variety_id' => $variety->id,
                 'variety_name' => $variety->name,
                 'variety_sku' => $variety->sku,
-                'unit_price' => $variety->price,
+                'unit_price' => $unitPrice,
                 'quantity' => $item['quantity'],
                 'total_price' => $itemTotal,
                 'seed_lot_id' => $item['seed_lot_id'] ?? null,
-                'seed_class' => $item['seed_class'] ?? null,
+                'seed_lot_code' => $seedLot?->lot_code,
+                'seed_class' => $seedLot?->seedClass?->code ?? ($item['seed_class'] ?? null),
             ];
         }
 
@@ -170,40 +183,45 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Create order items with price snapshots
+     * Create order items with price snapshots from SeedLot
      */
     private function createOrderItems(Order $order, array $items): void
     {
         foreach ($items as $item) {
             $variety = Variety::findOrFail($item['variety_id']);
+            $seedLot = SeedLot::findOrFail($item['seed_lot_id']);
             
-            // Validate stock availability
-            if ($variety->stock < $item['quantity']) {
-                throw new \Exception("Insufficient stock for {$variety->name}. Available: {$variety->stock}, Requested: {$item['quantity']}");
+            // Validate stock availability from SeedLot
+            if ($seedLot->quantity < $item['quantity']) {
+                throw new \Exception("Insufficient stock for {$variety->name} (Lot: {$seedLot->lot_code}). Available: {$seedLot->quantity}, Requested: {$item['quantity']}");
             }
             
-            // Create order item with price snapshot
+            // Get price from SeedLot
+            $unitPrice = (int) $seedLot->price_per_unit;
+            
+            // Create order item with price snapshot from SeedLot
             OrderItem::create([
                 'order_id' => $order->id,
                 'variety_id' => $variety->id,
                 'variety_name' => $variety->name,
                 'variety_sku' => $variety->sku,
-                'unit_price' => $variety->price,
-                'price_at_order' => $variety->price, // Price snapshot
+                'unit_price' => $unitPrice,
+                'price_at_order' => $unitPrice, // Price snapshot from SeedLot
                 'quantity' => $item['quantity'],
-                'total_price' => $variety->price * $item['quantity'],
-                'seed_lot_id' => $item['seed_lot_id'] ?? null,
-                'seed_class' => $item['seed_class'] ?? null,
+                'total_price' => $unitPrice * $item['quantity'],
+                'seed_lot_id' => $seedLot->id,
+                'seed_class' => $seedLot->seedClass?->code ?? ($item['seed_class'] ?? null),
             ]);
             
-            // Reserve stock (reduce available stock)
-            $variety->decrement('stock', $item['quantity']);
+            // Reserve stock by reducing SeedLot quantity
+            $oldQuantity = $seedLot->quantity;
+            $seedLot->decrement('quantity', $item['quantity']);
             
-            // Log stock reduction
+            // Log stock reduction on SeedLot
             AuditLog::logUpdate(
-                $variety,
-                ['stock' => $variety->stock + $item['quantity']],
-                "Stock reduced for order {$order->order_code}: -{$item['quantity']}",
+                $seedLot,
+                ['quantity' => $oldQuantity],
+                "Stock reduced for order {$order->order_code}: -{$item['quantity']} (Lot: {$seedLot->lot_code})",
                 AuditLog::CATEGORY_INVENTORY_MANAGEMENT
             );
         }
@@ -255,7 +273,7 @@ class CheckoutController extends Controller
     public function confirmation(string $orderCode)
     {
         $order = Order::where('order_code', $orderCode)
-            ->with(['items.variety', 'payment', 'shipment'])
+            ->with(['items.variety', 'items.seedLot', 'payment', 'shipment'])
             ->firstOrFail();
         
         return view('client.checkout.confirmation', compact('order'));
@@ -274,7 +292,7 @@ class CheckoutController extends Controller
             
             $order = Order::where('order_code', $request->order_code)
                 ->where('customer_phone', $request->customer_phone)
-                ->with(['items.variety', 'payment', 'shipment'])
+                ->with(['items.variety', 'items.seedLot', 'payment', 'shipment'])
                 ->first();
             
             if (!$order) {
