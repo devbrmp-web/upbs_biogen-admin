@@ -77,10 +77,15 @@ class OrderItem extends Model
 
     /**
      * Create order item from variety with snapshot data
+     * 
+     * @param Order $order The order to attach the item to
+     * @param Variety $variety The variety being ordered
+     * @param int $quantity The quantity ordered
+     * @param SeedLot $seedLot The seed lot (required - price comes from here)
      */
-    public static function createFromVariety(Order $order, Variety $variety, int $quantity, SeedLot $seedLot = null): self
+    public static function createFromVariety(Order $order, Variety $variety, int $quantity, SeedLot $seedLot): self
     {
-        $unitPrice = $seedLot ? (float) $seedLot->price_per_unit : (float) $variety->price;
+        $unitPrice = (int) $seedLot->price_per_unit;
 
         return static::create([
             'order_id' => $order->id,

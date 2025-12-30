@@ -80,7 +80,6 @@ class VarietyController extends Controller
             // SKU kini opsional; jika kosong akan digenerate otomatis oleh model
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
             'description' => 'required|string',
-            'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             // Wajib pada create; opsional pada update
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
@@ -92,9 +91,6 @@ class VarietyController extends Controller
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        
-        // Harden price as integer
-        $validated['price'] = (int) $validated['price'];
 
         Variety::create($validated);
 
@@ -184,7 +180,6 @@ class VarietyController extends Controller
                 Rule::unique('varieties', 'sku')->ignore($variety->id),
             ],
             'description' => 'required|string',
-            'price' => 'required|numeric|integer|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
         ]);
@@ -199,11 +194,7 @@ class VarietyController extends Controller
         }
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
-        // Note: planlet is now calculated dynamically from seed lots via total_planlet accessor
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        
-        // Harden price as integer
-        $validated['price'] = (int) $validated['price'];
 
         $variety->update($validated);
 

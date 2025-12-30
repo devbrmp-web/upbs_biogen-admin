@@ -25,7 +25,7 @@ class SeedLot extends Model
 
     protected $casts = [
         'quantity' => 'integer',
-        'price_per_unit' => 'float',
+        'price_per_unit' => 'integer',
         'is_sellable' => 'boolean',
         'production_year' => 'integer',
         'harvest_date' => 'date',

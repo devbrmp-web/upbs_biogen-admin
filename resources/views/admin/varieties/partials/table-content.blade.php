@@ -6,10 +6,10 @@
                     <th>Image</th>
                     <th>Name</th>
                     <th>Commodity</th>
+                    <th>Price Range</th>
                     <th>Planlet</th>
                     <th>Stock Status</th>
                     <th>Seed Lots</th>
-                    <th>Created</th>
                     <th>Updated</th>
                     <th class="text-end">Action</th>
                 </tr>
@@ -38,6 +38,13 @@
                         <span class="badge bg-primary">{{ $variety->commodity->name ?? 'N/A' }}</span>
                     </td>
                     <td>
+                        @if($variety->price_range)
+                            <span class="text-success fw-medium">{{ $variety->price_range }}</span>
+                        @else
+                            <span class="badge bg-danger">No Price</span>
+                        @endif
+                    </td>
+                    <td>
                         <span class="badge bg-secondary">{{ $variety->total_planlet ?? 0 }}</span>
                     </td>
                     <td>
@@ -46,7 +53,6 @@
                     <td>
                         <span class="badge bg-info">{{ $variety->seed_lots_count ?? 0 }}</span>
                     </td>
-                    <td>{{ $variety->created_at?->format('d M Y, H:i') }}</td>
                     <td>{{ $variety->updated_at?->format('d M Y, H:i') }}</td>
                     <td class="text-end">
                         <div class="d-inline-flex gap-1">

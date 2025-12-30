@@ -70,16 +70,6 @@
                             @enderror
                         </div>
 
-                        <!-- Price Field -->
-                        <div class="mb-3">
-                            <label for="price" class="form-label">Price (IDR) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('price') is-invalid @enderror" 
-                                   id="price" name="price" value="{{ old('price', (int) $variety->price) }}" step="1" min="0" inputmode="numeric" pattern="[0-9]*" required>
-                            @error('price')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
                         <!-- Minimum Limit Field -->
                         <div class="mb-3">
                             <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
@@ -163,8 +153,8 @@
         const dzElement = document.querySelector('.dropzone');
         const indexUrl = "{{ route('admin.varieties.index') }}";
 
-        // Integer-only guard for numeric fields (price and minimum_limit)
-        const intFields = ['price', 'minimum_limit'];
+        // Integer-only guard for numeric fields (minimum_limit only)
+        const intFields = ['minimum_limit'];
         intFields.forEach(function(id){
             const el = document.getElementById(id);
             if (!el) return;
@@ -246,13 +236,6 @@
             });
         }
 
-        // Price input filtering - only allow digits
-        const priceEl = document.getElementById('price');
-        if (priceEl) {
-            priceEl.addEventListener('input', () => {
-                priceEl.value = priceEl.value.replace(/[^0-9]/g, '');
-            });
-        }
     });
 </script>
 @vite(['node_modules/dropzone/dist/dropzone-min.js'])
