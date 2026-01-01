@@ -1,66 +1,275 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UPBS Biogen – Admin (Laravel 11 + Reback)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Admin dashboard untuk proyek **WUB** berbasis **Laravel 11** yang mengintegrasikan tema **Reback** (layout/komponen UI) dengan otentikasi dan middleware peran (role-based access) yang sederhana.
 
-## About Laravel
+> **Status**: Private repo – internal use only.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+* **Laravel** 11 (PHP ≥ 8.2)
+* **Blade** templating + Reback UI
+* **MySQL/MariaDB**
+* **Vite** (ESBuild/Rollup) + **npm** sebagai package manager (standar)
+* **Paket JS** utama: apexcharts, flatpickr, gridjs, sweetalert2, dsb.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Quick Start
 
-## Learning Laravel
+```bash
+# 1) Clone
+git clone https://github.com/FatihKawakib04/upbs_biogen-admin.git
+cd upbs_biogen-admin
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# 2) PHP deps
+composer install
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# 3) ENV & app key
+cp .env.example .env
+php artisan key:generate
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# 4) Konfigurasi DB di .env, lalu migrasi + seed
+php artisan migrate --seed
 
-## Laravel Sponsors
+# 5) JS deps (standarize: npm)
+npm ci
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 6) Build assets (production) atau jalankan dev server
+npm run build
+# atau
+npm run dev
 
-### Premium Partners
+# 7) Serve Laravel
+php artisan serve
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+> **Windows tips**: gunakan **Git Bash** atau **WSL** saat menjalankan perintah `npm run dev/build` agar environment lebih konsisten.
 
-## Contributing
+## Roles & Access
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Seeder membuat **dua** role saja (sesuai keputusan terbaru):
 
-## Code of Conduct
+* `super_admin` (id: 1) – akses penuh ke seluruh sistem
+* `admin` (id: 2) – akses admin operasional terbatas
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Middleware**: `EnsureAdmin`
 
-## Security Vulnerabilities
+* Akses rute `admin/*` dibatasi untuk `admin` dan `super_admin`.
+* `guest` akan diarahkan ke halaman login.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Admin Login
 
-## License
+### Super Admin
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Akun **Super Admin** dibuat otomatis oleh **UserSeeder** dengan kredensial default:
+
+| Field    | Value                    |
+|----------|--------------------------|
+| Email    | `superadmin@upbs.test`   |
+| Password | `password`               |
+| Role     | `super_admin` (id: 1)    |
+
+> **Catatan**: Super Admin hanya dibuat sekali jika belum ada user dengan role `super_admin`. Akun ini memiliki akses penuh ke seluruh fitur admin.
+
+### Admin
+
+Akun **Admin** dibuat oleh **AdminUserSeeder** menggunakan variabel `.env`:
+
+```env
+ADMIN_NAME="WUB Admin"
+ADMIN_EMAIL=admin@upbs.local
+ADMIN_PASSWORD=admin123
+ADMIN_ROLE_ID=2
+```
+
+> Role `admin` (id: 2) memiliki akses operasional terbatas dibandingkan `super_admin`.
+
+### Menjalankan Seeder
+
+Setelah mengubah konfigurasi, **jalankan ulang seeder**:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+**Routes penting**
+
+* Halaman login: `GET /login`
+* Proses login: `POST /login`
+* Dashboard admin: `GET /admin/dashboard`
+
+## Fitur Utama
+
+### 🏠 Dashboard Analytics
+- Statistik real-time dengan caching untuk performa optimal
+- Visualisasi peta Indonesia untuk distribusi geografis pesanan
+- Inventory Watchdog untuk monitoring stok rendah
+- Export data ke CSV
+
+### 📦 Manajemen Varietas (Varieties)
+- CRUD varietas benih dengan soft deletes
+- Galeri gambar dengan drag & drop upload
+- Pengelolaan harga melalui SeedLot (bukan di level Variety)
+- Price Range dinamis berdasarkan SeedLot
+
+### 🌱 Manajemen Seed Lot
+- Tracking lot benih per kelas (BS, FS, Planlet)
+- Kolom `harvest_date` untuk tanggal panen
+- Harga per unit (`price_per_unit`) di level lot
+- Manajemen stok dan kuantitas
+
+### 📋 Manajemen Pesanan (Orders)
+- Sistem checkout dengan validasi stok
+- Status tracking: pending → confirmed → processing → shipped → delivered/cancelled
+- Integrasi pengiriman dengan kalkulasi biaya
+- Tanda tangan digital untuk dokumen
+- Notifikasi email otomatis
+
+### 👥 Manajemen User Admin
+- CRUD user admin
+- Role-based access control (super_admin, admin)
+
+### 📊 Audit Log
+- Logging otomatis untuk semua operasi CRUD
+- Interface admin untuk melihat dan filter audit logs
+- Trait `Auditable` untuk model tracking
+
+### 🛒 API Client (Mobile/Web)
+- RESTful API untuk commodities, varieties, seed lots, orders
+- Endpoint checkout dengan validasi lengkap
+- Upload gambar varietas via API
+
+## Scripts yang Tersedia
+
+```bash
+# Development (Vite)
+npm run dev
+
+# Build production
+npm run build
+
+# Lint fix (opsional jika nanti ditambahkan)
+npm run lint
+```
+
+## Testing
+
+```bash
+# Jalankan semua test
+php artisan test
+
+# Environment testing
+php artisan test --env=testing
+```
+
+Contoh pengujian yang tersedia:
+
+* `Tests\Feature\Auth\AdminAuthTest`
+* `Tests\Feature\Auth\AdminLoginTest`
+* `Tests\Feature\Middleware\AdminMiddlewareTest`
+* `Tests\Feature\Dashboard\DashboardTest`
+* `Tests\Feature\Order\*` (checkout, management, status)
+* `Tests\Feature\ExampleTest`, `Tests\Unit\ExampleTest`
+
+## Struktur Direktori (ringkas)
+
+```
+app/
+ ├─ Http/
+ │   ├─ Controllers/
+ │   │   ├─ Admin/          # Dashboard, Order, Variety, SeedLot, Commodity, AuditLog, dll
+ │   │   ├─ Api/            # REST API untuk client (mobile/web)
+ │   │   ├─ Auth/           # Login, Logout
+ │   │   └─ Client/         # Controller untuk client-side
+ │   ├─ Middleware/
+ │   │   └─ EnsureAdmin.php
+ │   └─ Requests/           # Form Requests (CheckoutRequest, dll)
+ ├─ Models/
+ │   ├─ User.php, Role.php
+ │   ├─ Variety.php, VarietyImage.php
+ │   ├─ SeedLot.php, SeedClass.php
+ │   ├─ Order.php, OrderItem.php
+ │   ├─ Commodity.php
+ │   ├─ Payment.php, Shipment.php
+ │   └─ AuditLog.php
+ ├─ Observers/              # Order & Variety observers
+ ├─ Traits/
+ │   └─ Auditable.php       # Trait untuk audit logging
+ └─ Providers/
+resources/
+ ├─ views/
+ │   ├─ layouts/            # Layout Reback
+ │   ├─ admin/              # Views untuk dashboard admin
+ │   ├─ auth/               # Login, dll
+ │   └─ pages/
+ └─ js/, scss/
+routes/
+ ├─ web.php
+ ├─ auth.php
+ └─ api.php
+database/
+ ├─ migrations/
+ └─ seeders/
+     ├─ RoleSeeder.php
+     ├─ UserSeeder.php          # Super Admin
+     ├─ AdminUserSeeder.php     # Regular Admin
+     ├─ CommoditySeeder.php
+     ├─ VarietySeeder.php
+     ├─ SeedClassSeeder.php
+     ├─ SeedLotSeeder.php
+     ├─ PlanletSeedLotSeeder.php
+     ├─ DemoDataSeeder.php
+     └─ DemoOrderSeeder.php
+public/
+ └─ build/                  # Output Vite
+docs/
+ └─ middleware-admin.md     # Dokumentasi middleware
+```
+
+## Konvensi Commit & Branching (Ringkas)
+
+* **Conventional Commits** disarankan:
+
+  * `feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`, `test: ...`, `refactor: ...`
+* Branch:
+
+  * `main` (stabil), feature branch `feat/*`, bugfix `fix/*`
+
+## Keamanan & Dependencies
+
+* Standar **npm**: gunakan `npm ci` (bukan `yarn`/`bun`) untuk konsistensi.
+* Audit berkala:
+
+  ```bash
+  npm audit
+  npm audit fix
+  ```
+* **Hindari** `npm audit fix --force` di production kecuali paham dampak breaking change (mis. upgrade mayor Vite).
+* Sisa advisories dev-only (contoh: `esbuild` dev server) **tidak** berdampak pada runtime produksi setelah `npm run build`.
+
+## Breaking Changes (Branch fatih)
+
+⚠️ **Perubahan penting pada branch ini:**
+
+1. **Harga dipindahkan ke SeedLot**
+   - Kolom `price` dihapus dari tabel `varieties`
+   - Gunakan `SeedLot::price_per_unit` untuk harga per lot benih
+   - Variety sekarang menampilkan "Price Range" yang dihitung dari SeedLot terkait
+
+2. **Checkout wajib menyertakan `seed_lot_id`**
+   - Setiap item checkout harus menyertakan `seed_lot_id`
+   - Validasi stok menggunakan `SeedLot::quantity`
+
+3. **Soft Deletes**
+   - Ditambahkan pada tabel `varieties` dan `variety_images`
+   - Data yang dihapus dapat di-restore
+
+## Catatan Penting
+
+* `.env` **jangan** di-commit (sudah di-`.gitignore`).
+* Folder `.trae/` **disengaja** ikut di-commit sebagai referensi jejak AI agent.
+* Bahasa UI: **Inggris** (konsisten).
+* Mohon **tidak mengubah struktur topbar/tema** tanpa diskusi, agar selaras dengan Reback.
+
+## Lisensi
+
+Private / Internal Use Only.
+Hak cipta © 2025 UPBS Biogen. Semua hak dilindungi.
