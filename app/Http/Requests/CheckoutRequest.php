@@ -53,17 +53,14 @@ class CheckoutRequest extends FormRequest
                 'terms_accepted' => filter_var($this->terms_accepted, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
-
-        if (!$this->has('items') && session()->has('cart')) {
-            $this->merge([
-                'items' => array_values(session('cart')),
-            ]);
-        }
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if (!is_array($this->items) || empty($this->items)) {
+                return;
+            }
             foreach ($this->items as $index => $item) {
                 // Validate seed_lot_id is present
                 if (empty($item['seed_lot_id'])) {
@@ -119,4 +116,3 @@ class CheckoutRequest extends FormRequest
         });
     }
 }
-

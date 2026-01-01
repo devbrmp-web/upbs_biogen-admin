@@ -86,13 +86,6 @@
                                     <i class="bx bx-show me-2"></i>View Details
                                 </a>
                             </li>
-                            @if($order->signature_path && in_array($order->status, ['paid', 'processing', 'pickup_ready', 'completed', 'shipped']))
-                                <li>
-                                    <a class="dropdown-item text-secondary" href="{{ route('admin.orders.document', $order) }}" target="_blank">
-                                        <i class="bx bx-printer me-2"></i>Cetak Dokumen
-                                    </a>
-                                </li>
-                            @endif
                             @if($order->status !== 'cancelled' && $order->status !== 'completed')
                                 <li>
                                     <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#statusModal{{ $order->id }}">

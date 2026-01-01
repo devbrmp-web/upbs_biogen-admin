@@ -20,6 +20,14 @@ class MidtransIntegrationTest extends TestCase
         $this->travelTo(Carbon::parse('2025-01-01 10:00:00'));
 
         $variety = Variety::factory()->available()->create();
+        $seedClass = \App\Models\SeedClass::factory()->create(['code' => 'BS', 'name' => 'Breeder Seed']);
+        $seedLot = \App\Models\SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $seedClass->id,
+            'quantity' => 10,
+            'price_per_unit' => 10000,
+            'is_sellable' => true,
+        ]);
         $payload = [
             'customer_name' => 'Tester',
             'customer_address' => 'Jl. Test',
@@ -27,17 +35,17 @@ class MidtransIntegrationTest extends TestCase
             'customer_email' => 'tester@example.com',
             'shipping_method' => 'pickup',
             'items' => [
-                ['variety_id' => $variety->id, 'quantity' => 1],
+                ['variety_id' => $variety->id, 'seed_lot_id' => $seedLot->id, 'quantity' => 1],
             ],
             'terms_accepted' => true,
         ];
 
         $res = $this->postJson('/api/orders/checkout', $payload);
         $res->assertStatus(200);
-        $res->assertJsonStructure(['data' => ['order_code', 'payment' => ['snap_token']]]);
+        $res->assertJsonStructure(['data' => ['order_code', 'snap_token']]);
 
         $orderCode = (string) $res->json('data.order_code');
-        $this->assertEquals('test-snap-token', $res->json('data.payment.snap_token'));
+        $this->assertEquals('test-snap-token', $res->json('data.snap_token'));
 
         $order = Order::query()->where('order_code', $orderCode)->first();
         $this->assertNotNull($order);
@@ -119,8 +127,14 @@ class MidtransIntegrationTest extends TestCase
     {
         $this->travelTo(Carbon::parse('2025-01-01 10:00:00'));
 
-        $variety = Variety::factory()->create([
-            'stock' => 10,
+        $variety = Variety::factory()->create();
+        $seedClass = \App\Models\SeedClass::factory()->create(['code' => 'BS', 'name' => 'Breeder Seed']);
+        $seedLot = \App\Models\SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $seedClass->id,
+            'quantity' => 10,
+            'price_per_unit' => 1000,
+            'is_sellable' => true,
         ]);
 
         $order = Order::factory()->awaitingPayment()->create([
@@ -136,11 +150,11 @@ class MidtransIntegrationTest extends TestCase
             'unit_price' => 1000,
             'price_at_order' => 1000,
             'quantity' => 3,
-            'seed_lot_id' => null,
-            'seed_class' => null,
+            'seed_lot_id' => $seedLot->id,
+            'seed_class' => 'BS',
         ]);
 
-        $variety->decrement('stock', 3);
+        $seedLot->decrement('quantity', 3);
 
         Payment::factory()->create([
             'order_id' => $order->id,
@@ -160,7 +174,7 @@ class MidtransIntegrationTest extends TestCase
         $this->assertDatabaseMissing('orders', ['id' => $order->id]);
         $this->assertDatabaseMissing('payments', ['order_id' => $order->id]);
         $this->assertDatabaseMissing('order_items', ['order_id' => $order->id]);
-        $this->assertEquals(10, $variety->fresh()->stock);
+        $this->assertEquals(10, (int) $seedLot->fresh()->quantity);
 
         $this->travelBack();
     }

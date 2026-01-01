@@ -22,6 +22,7 @@ class OrderManagementEmailTest extends TestCase
 
     protected User $admin;
     protected Variety $variety;
+    protected \App\Models\SeedLot $seedLot;
 
     protected function setUp(): void
     {
@@ -50,11 +51,16 @@ class OrderManagementEmailTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-001',
             'description' => 'Test variety for email testing',
-            'price' => 50000,
-            'stock' => 100,
-            'stock_bs_kg' => 50,
-            'stock_fs_kg' => 50,
             'is_active' => true,
+        ]);
+        
+        $bs = \App\Models\SeedClass::factory()->create(['code' => 'BS', 'name' => 'Breeder Seed']);
+        $this->seedLot = \App\Models\SeedLot::factory()->create([
+            'variety_id' => $this->variety->id,
+            'seed_class_id' => $bs->id,
+            'quantity' => 50,
+            'price_per_unit' => 50000,
+            'is_sellable' => true,
         ]);
 
         // Create existing order for setUp
@@ -84,6 +90,8 @@ class OrderManagementEmailTest extends TestCase
             'quantity' => 1,
             'unit_price' => 50000,
             'total_price' => 50000,
+            'seed_lot_id' => $this->seedLot->id,
+            'seed_class' => 'BS',
         ]);
 
         Payment::create([
@@ -124,7 +132,7 @@ class OrderManagementEmailTest extends TestCase
                     [
                         'variety_id' => $this->variety->id,
                         'quantity' => 2,
-                        'seed_lot_id' => null,
+                        'seed_lot_id' => $this->seedLot->id,
                     ]
                 ],
             ]);

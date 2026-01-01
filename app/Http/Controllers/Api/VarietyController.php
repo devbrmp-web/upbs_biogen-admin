@@ -97,7 +97,7 @@ class VarietyController extends Controller
                         $q->orderBy('order')->orderBy('id');
                     },
                     'seedLots' => function ($q) {
-                        $q->select('id', 'variety_id', 'seed_class_id', 'quantity',
+                        $q->select('id', 'variety_id', 'seed_class_id','price_per_unit', 'quantity',
                             'unit', 'is_sellable', 'production_year');
                     },
                     'seedLots.seedClass:id,code,name'
@@ -114,6 +114,7 @@ class VarietyController extends Controller
                     'id' => $sl->id,
                     'lot_code' => $sl->lot_code,
                     'price_per_unit' => $sl->price_per_unit,
+                'price_per_unit_cents' => ((int) $sl->price_per_unit) * 100,
                     'quantity' => $sl->quantity,
                     'unit' => $sl->unit,
                     'is_sellable' => (bool) $sl->is_sellable,

@@ -324,6 +324,75 @@ document.addEventListener('DOMContentLoaded', function() {
         performAjaxSearch();
     });
 
+    // Handle Delete Form via AJAX
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = this.action;
+            const token = this.querySelector('input[name="_token"]').value;
+            
+            // Show loading state on button
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Deleting...';
+
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    const modalEl = document.getElementById('deleteModal');
+                    if (typeof bootstrap !== 'undefined') {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    } else if (typeof $ !== 'undefined') {
+                        $(modalEl).modal('hide');
+                    }
+                    
+                    // Show success message
+                    const alertHtml = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    const listRoot = document.getElementById('list-root');
+                    
+                    // Remove existing alerts
+                    const container = listRoot.parentElement;
+                    container.querySelectorAll('.alert').forEach(el => el.remove());
+                    
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = alertHtml;
+                    listRoot.before(tmp.firstElementChild);
+
+                    // Refresh list
+                    performAjaxSearch();
+                }
+            })
+            .catch(error => {
+                console.error('Delete failed:', error);
+                alert('Failed to delete seed lot. Please try again.');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        });
+    }
+
     // Clear filters (AJAX mode)
     if (clearBtn) {
         clearBtn.addEventListener('click', function(e) {

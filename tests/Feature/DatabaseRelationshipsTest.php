@@ -310,9 +310,6 @@ class DatabaseRelationshipsTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-001',
             'description' => 'Test variety description',
-            'price' => 10000,
-            'stock_bs_kg' => 100,
-            'stock_fs_kg' => 50,
             'minimum_limit' => 10,
             'is_active' => true,
         ]);
@@ -337,9 +334,6 @@ class DatabaseRelationshipsTest extends TestCase
             'name' => 'Test Variety',
             'sku' => 'TEST-VAR-002',
             'description' => 'Test variety description',
-            'price' => 10000,
-            'stock_bs_kg' => 100,
-            'stock_fs_kg' => 50,
             'minimum_limit' => 10,
             'is_active' => true,
         ]);
@@ -359,7 +353,7 @@ class DatabaseRelationshipsTest extends TestCase
 
         $this->assertDatabaseHas('seed_lots', ['id' => $seedLot->id]);
 
-        $variety->delete();
+        $variety->forceDelete();
 
         $this->assertDatabaseMissing('varieties', ['id' => $variety->id]);
         $this->assertDatabaseMissing('seed_lots', ['id' => $seedLot->id]);

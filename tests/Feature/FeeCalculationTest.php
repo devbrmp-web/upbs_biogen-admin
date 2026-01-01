@@ -15,7 +15,7 @@ class FeeCalculationTest extends TestCase
 
     private function createVarietyAndLot(int $price = 100000): array
     {
-        $variety = Variety::factory()->available()->create(['price' => $price]);
+        $variety = Variety::factory()->available()->create();
         $class = SeedClass::factory()->create(['code' => 'SS', 'name' => 'Stock Seed']);
         $lot = SeedLot::factory()->create([
             'variety_id' => $variety->id,

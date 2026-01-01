@@ -69,11 +69,37 @@
     </div>
   </div>
 </div>
+
+<!-- Constraint Error Modal -->
+<div class="modal fade" id="constraintErrorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Gagal Menghapus Data</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="constraintErrorMessage" class="mb-3">Varietas tidak dapat dihapus karena masih memiliki stok atau transaksi terkait.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+        <a href="#" id="viewStockBtn" class="btn btn-primary">Lihat Stok</a>
+      </div>
+    </div>
+  </div>
+</div>
 @endpush
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show constraint error modal if session has error
+    @if(session('constraint_error'))
+        var constraintModal = new bootstrap.Modal(document.getElementById('constraintErrorModal'));
+        document.getElementById('viewStockBtn').href = "{{ session('constraint_redirect') }}";
+        constraintModal.show();
+    @endif
+
     // Delete modal logic (delegated)
     let targetFormId = null;
     const modalEl = document.getElementById('confirmDeleteModal');

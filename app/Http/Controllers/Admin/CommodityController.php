@@ -121,15 +121,26 @@ class CommodityController extends Controller
      */
     public function destroy(Request $request, Commodity $commodity)
     {
-        // Delete image if exists
-        if ($commodity->image_path) {
-            Storage::disk('public')->delete($commodity->image_path);
+        try {
+            // Delete image if exists
+            if ($commodity->image_path) {
+                Storage::disk('public')->delete($commodity->image_path);
+            }
+
+            $commodity->delete();
+
+            return redirect()->to($this->sanitizeReturnUrl($request, route('admin.commodities.index')))
+                ->with('success', 'Commodity deleted successfully.');
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()
+                    ->with('constraint_error', true)
+                    ->with('constraint_message', 'Komoditas tidak dapat dihapus karena masih memiliki varietas terkait.')
+                    ->with('constraint_redirect', route('admin.commodities.show', $commodity));
+            }
+            throw $e;
         }
-
-        $commodity->delete();
-
-        return redirect()->to($this->sanitizeReturnUrl($request, route('admin.commodities.index')))
-            ->with('success', 'Commodity deleted successfully.');
     }
 
     /**

@@ -197,6 +197,13 @@ class SeedLotController extends Controller
         $varietyId = $seedLot->variety_id;
         $seedLot->delete();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Seed lot deleted successfully.'
+            ]);
+        }
+
         // Prefer sanitized return URL jika disediakan untuk mempertahankan filter/paginasi
         if ($return = $request->input('return')) {
             $sanitized = $this->sanitizeReturnUrl($return, route('admin.seed-lots.index'));

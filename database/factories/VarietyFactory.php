@@ -44,12 +44,6 @@ class VarietyFactory extends Factory
             'name' => $uniqueName,
             'sku' => strtoupper($this->faker->unique()->bothify('VAR-###-???')),
             'description' => $this->faker->sentence(8),
-            'price' => $this->faker->numberBetween(5000, 50000),
-            'stock' => function (array $attributes) {
-                return ($attributes['stock_bs_kg'] ?? 0) + ($attributes['stock_fs_kg'] ?? 0);
-            },
-            'stock_bs_kg' => $this->faker->numberBetween(0, 1000),
-            'stock_fs_kg' => $this->faker->numberBetween(0, 500),
             'minimum_limit' => $this->faker->numberBetween(1, 50),
             'status' => $this->faker->randomElement(['available', 'out_of_stock', 'discontinued']),
             'is_active' => true,
@@ -61,10 +55,7 @@ class VarietyFactory extends Factory
      */
     public function available(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'stock_bs_kg' => $this->faker->numberBetween(100, 1000),
-            'stock_fs_kg' => $this->faker->numberBetween(50, 500),
-        ]);
+        return $this->state(fn (array $attributes) => []);
     }
 
     /**
@@ -72,10 +63,7 @@ class VarietyFactory extends Factory
      */
     public function needsRestock(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'stock_bs_kg' => $this->faker->numberBetween(1, 49),
-            'stock_fs_kg' => $this->faker->numberBetween(1, 24),
-        ]);
+        return $this->state(fn (array $attributes) => []);
     }
 
     /**
@@ -83,10 +71,7 @@ class VarietyFactory extends Factory
      */
     public function outOfStock(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'stock_bs_kg' => 0,
-            'stock_fs_kg' => 0,
-        ]);
+        return $this->state(fn (array $attributes) => []);
     }
 
     /**
@@ -94,10 +79,7 @@ class VarietyFactory extends Factory
      */
     public function highStock(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'stock_bs_kg' => $this->faker->numberBetween(500, 1000),
-            'stock_fs_kg' => $this->faker->numberBetween(300, 500),
-        ]);
+        return $this->state(fn (array $attributes) => []);
     }
 
     /**
@@ -105,9 +87,6 @@ class VarietyFactory extends Factory
      */
     public function lowStock(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'stock_bs_kg' => $this->faker->numberBetween(0, 10),
-            'stock_fs_kg' => $this->faker->numberBetween(0, 5),
-        ]);
+        return $this->state(fn (array $attributes) => []);
     }
 }
