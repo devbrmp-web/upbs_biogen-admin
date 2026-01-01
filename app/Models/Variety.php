@@ -19,11 +19,6 @@ class Variety extends Model
         'slug',
         'sku',
         'description',
-        'price',
-        'stock',
-        'stock_bs_kg',
-        'stock_fs_kg',
-        'planlet',
         'minimum_limit',
         'status',
         'is_active',
@@ -31,10 +26,7 @@ class Variety extends Model
     ];
 
     protected $casts = [
-        'price' => 'integer',
         'minimum_limit' => 'integer',
-        'stock' => 'integer',
-        'planlet' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -248,6 +240,63 @@ class Variety extends Model
         cache()->forget("variety_stock_status_{$this->id}");
         cache()->forget("variety_total_planlet_{$this->id}");
     }
+
+    /**
+     * Get the price range from sellable seed lots.
+     * Returns formatted Rupiah string: single price or "Rp X - Rp Y" range.
+     */
+    public function getPriceRangeAttribute(): ?string
+    {
+        // Use pre-calculated values if available from selectRaw (via withPriceRange scope)
+        if (isset($this->attributes['min_price_calculated']) && isset($this->attributes['max_price_calculated'])) {
+            $minPrice = (int) $this->attributes['min_price_calculated'];
+            $maxPrice = (int) $this->attributes['max_price_calculated'];
+        } else {
+            // Calculate from seed lots
+            $priceData = $this->seedLots()
+                ->where('is_sellable', true)
+                ->where('quantity', '>', 0)
+                ->selectRaw('MIN(price_per_unit) as min_price, MAX(price_per_unit) as max_price')
+                ->first();
+
+            if (!$priceData || ($priceData->min_price === null && $priceData->max_price === null)) {
+                return null;
+            }
+
+            $minPrice = (int) $priceData->min_price;
+            $maxPrice = (int) $priceData->max_price;
+        }
+
+        // No prices available
+        if ($minPrice === 0 && $maxPrice === 0) {
+            return null;
+        }
+
+        // Single price or range
+        if ($minPrice === $maxPrice) {
+            return 'Rp ' . number_format($minPrice, 0, ',', '.');
+        }
+
+        return 'Rp ' . number_format($minPrice, 0, ',', '.') . ' - Rp ' . number_format($maxPrice, 0, ',', '.');
+    }
+
+    /**
+     * Check if variety has any sellable seed lots with prices.
+     */
+    public function getHasPriceAttribute(): bool
+    {
+        if (isset($this->attributes['min_price_calculated'])) {
+            return (int) $this->attributes['min_price_calculated'] > 0;
+        }
+
+        return $this->seedLots()
+            ->where('is_sellable', true)
+            ->where('quantity', '>', 0)
+            ->where('price_per_unit', '>', 0)
+            ->exists();
+    }
+
+
 
     /**
      * Scope a query to only include varieties with stock from sellable seed lots.

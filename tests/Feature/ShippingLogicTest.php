@@ -15,7 +15,7 @@ class ShippingLogicTest extends TestCase
 
     private function createVarietyAndLot(): array
     {
-        $variety = Variety::factory()->available()->create(['price' => 10000]);
+        $variety = Variety::factory()->available()->create();
         $class = SeedClass::factory()->create(['code' => 'SS', 'name' => 'Stock Seed']);
         $lot = SeedLot::factory()->create([
             'variety_id' => $variety->id,

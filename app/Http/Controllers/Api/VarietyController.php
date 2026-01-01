@@ -44,8 +44,6 @@ class VarietyController extends Controller
                     'name' => $v->name,
                     'slug' => $v->slug,
                     'sku' => $v->sku,
-                    'price_cents' => ((int) $v->price) * 100,
-                    'price_idr' => 'Rp '.number_format((int) $v->price, 0, ',', '.'),
                     'minimum_limit' => (int) ($v->minimum_limit ?? 0),
                     'image_path' => $v->image_path,
                     'image_url' => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
@@ -107,7 +105,7 @@ class VarietyController extends Controller
                 ->where('is_active', true)
                 ->where('slug', $slug)
                 ->select(['id', 'commodity_id', 'name', 'slug', 'sku',
-                    'price', 'minimum_limit', 'image_path', 'description'])
+                    'minimum_limit', 'image_path', 'description'])
                 ->firstOrFail();
 
             // Mapping Seed Lots untuk frontend
@@ -153,8 +151,6 @@ class VarietyController extends Controller
                 'image_path' => $v->image_path,
                 'image_url' => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
                 'images' => $images,
-                'price_cents' => ((int) $v->price) * 100,
-                'price_idr' => 'Rp '.number_format((int) $v->price, 0, ',', '.'),
                 'minimum_limit' => (int) ($v->minimum_limit ?? 0),
                 'commodity' => [
                     'name' => optional($v->commodity)->name,
@@ -208,7 +204,7 @@ class VarietyController extends Controller
                         $q->orderBy('order')->orderBy('id');
                     }
                 ])
-                ->select(['id','commodity_id','name','slug','sku','price','minimum_limit','image_path'])
+                ->select(['id','commodity_id','name','slug','sku','minimum_limit','image_path'])
                 ->orderBy('name')
                 ->get()
                 ->map(function (Variety $v) use ($seedLots, $id) {
@@ -220,8 +216,6 @@ class VarietyController extends Controller
                         'name' => $v->name,
                         'slug' => $v->slug,
                         'sku' => $v->sku,
-                        'price_cents' => ((int) $v->price) * 100,
-                        'price_idr' => 'Rp '.number_format((int) $v->price, 0, ',', '.'),
                         'minimum_limit' => (int) ($v->minimum_limit ?? 0),
                         'image_url' => $v->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->image_path) : null,
                         'images' => $v->images
