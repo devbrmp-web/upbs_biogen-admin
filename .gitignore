@@ -22,3 +22,14 @@ yarn-error.log
 
 #mac os file system
 .DS_Store
+
+# Package Manager Lock Files (Standardized to npm)
+# =============================================
+yarn.lock
+.yarn/
+bun.lockb
+
+# =============================================
+# System & IDE Generated Files
+# =============================================
+*.stackdump
