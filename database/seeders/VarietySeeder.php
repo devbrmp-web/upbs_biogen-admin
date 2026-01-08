@@ -11,6 +11,9 @@ class VarietySeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * 
+     * Note: Stock and price data are now managed via seed_lots table.
+     * This seeder only creates base variety records.
      */
     public function run(): void
     {
@@ -20,26 +23,17 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'IR64',
                     'description' => 'High-yielding rice variety with good grain quality and disease resistance.',
-                    'stock' => 1500.000,
-                    'stock_bs_kg' => 800.000,
-                    'stock_fs_kg' => 700.000,
-                    'minimum_limit' => 50.000,
+                    'minimum_limit' => 50,
                 ],
                 [
                     'name' => 'Ciherang',
                     'description' => 'Popular Indonesian rice variety with excellent taste and adaptability.',
-                    'stock' => 2000.000,
-                    'stock_bs_kg' => 1200.000,
-                    'stock_fs_kg' => 800.000,
-                    'minimum_limit' => 75.000,
+                    'minimum_limit' => 75,
                 ],
                 [
                     'name' => 'Inpari 32',
                     'description' => 'Modern rice variety with high productivity and pest resistance.',
-                    'stock' => 1200.000,
-                    'stock_bs_kg' => 600.000,
-                    'stock_fs_kg' => 600.000,
-                    'minimum_limit' => 40.000,
+                    'minimum_limit' => 40,
                 ],
             ],
             // Corn varieties
@@ -47,26 +41,17 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Pioneer P21',
                     'description' => 'High-yielding hybrid corn variety suitable for various growing conditions.',
-                    'stock' => 800.000,
-                    'stock_bs_kg' => 400.000,
-                    'stock_fs_kg' => 400.000,
-                    'minimum_limit' => 25.000,
+                    'minimum_limit' => 25,
                 ],
                 [
                     'name' => 'Bisi 18',
                     'description' => 'Premium hybrid corn with excellent grain quality and disease tolerance.',
-                    'stock' => 1000.000,
-                    'stock_bs_kg' => 500.000,
-                    'stock_fs_kg' => 500.000,
-                    'minimum_limit' => 30.000,
+                    'minimum_limit' => 30,
                 ],
                 [
                     'name' => 'NK 212',
                     'description' => 'Drought-tolerant corn variety with consistent performance.',
-                    'stock' => 600.000,
-                    'stock_bs_kg' => 300.000,
-                    'stock_fs_kg' => 300.000,
-                    'minimum_limit' => 20.000,
+                    'minimum_limit' => 20,
                 ],
             ],
             // Soybean varieties
@@ -74,18 +59,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Grobogan',
                     'description' => 'High-yielding soybean variety with large seed size and good protein content.',
-                    'stock' => 500.000,
-                    'stock_bs_kg' => 250.000,
-                    'stock_fs_kg' => 250.000,
-                    'minimum_limit' => 15.000,
+                    'minimum_limit' => 15,
                 ],
                 [
                     'name' => 'Anjasmoro',
                     'description' => 'Popular soybean variety with excellent adaptability and yield stability.',
-                    'stock' => 400.000,
-                    'stock_bs_kg' => 200.000,
-                    'stock_fs_kg' => 200.000,
-                    'minimum_limit' => 12.000,
+                    'minimum_limit' => 12,
                 ],
             ],
             // Peanut varieties
@@ -93,18 +72,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Kancil',
                     'description' => 'Early maturing peanut variety with good oil content.',
-                    'stock' => 300.000,
-                    'stock_bs_kg' => 150.000,
-                    'stock_fs_kg' => 150.000,
-                    'minimum_limit' => 10.000,
+                    'minimum_limit' => 10,
                 ],
                 [
                     'name' => 'Gajah',
                     'description' => 'Large-seeded peanut variety suitable for direct consumption.',
-                    'stock' => 250.000,
-                    'stock_bs_kg' => 125.000,
-                    'stock_fs_kg' => 125.000,
-                    'minimum_limit' => 8.000,
+                    'minimum_limit' => 8,
                 ],
             ],
             // Mung Bean varieties
@@ -112,18 +85,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Vima 1',
                     'description' => 'High-yielding mung bean variety with uniform pod maturity.',
-                    'stock' => 200.000,
-                    'stock_bs_kg' => 100.000,
-                    'stock_fs_kg' => 100.000,
-                    'minimum_limit' => 5.000,
+                    'minimum_limit' => 5,
                 ],
                 [
                     'name' => 'Sriti',
                     'description' => 'Early maturing mung bean variety with good disease resistance.',
-                    'stock' => 180.000,
-                    'stock_bs_kg' => 90.000,
-                    'stock_fs_kg' => 90.000,
-                    'minimum_limit' => 5.000,
+                    'minimum_limit' => 5,
                 ],
             ],
             // Chili varieties
@@ -131,26 +98,17 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Cabe Rawit',
                     'description' => 'Very hot small chili variety popular in Indonesian cuisine.',
-                    'stock' => 50.000,
-                    'stock_bs_kg' => 25.000,
-                    'stock_fs_kg' => 25.000,
-                    'minimum_limit' => 2.000,
+                    'minimum_limit' => 2,
                 ],
                 [
                     'name' => 'Cabe Merah Besar',
                     'description' => 'Large red chili variety with moderate heat level.',
-                    'stock' => 75.000,
-                    'stock_bs_kg' => 40.000,
-                    'stock_fs_kg' => 35.000,
-                    'minimum_limit' => 3.000,
+                    'minimum_limit' => 3,
                 ],
                 [
                     'name' => 'Cabe Keriting',
                     'description' => 'Curly chili variety with unique shape and good flavor.',
-                    'stock' => 60.000,
-                    'stock_bs_kg' => 30.000,
-                    'stock_fs_kg' => 30.000,
-                    'minimum_limit' => 2.500,
+                    'minimum_limit' => 2,
                 ],
             ],
             // Tomato varieties
@@ -158,18 +116,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Permata',
                     'description' => 'High-quality tomato variety with excellent fruit characteristics.',
-                    'stock' => 100.000,
-                    'stock_bs_kg' => 50.000,
-                    'stock_fs_kg' => 50.000,
-                    'minimum_limit' => 3.000,
+                    'minimum_limit' => 3,
                 ],
                 [
                     'name' => 'Intan',
                     'description' => 'Disease-resistant tomato variety with good shelf life.',
-                    'stock' => 120.000,
-                    'stock_bs_kg' => 60.000,
-                    'stock_fs_kg' => 60.000,
-                    'minimum_limit' => 4.000,
+                    'minimum_limit' => 4,
                 ],
             ],
             // Eggplant varieties
@@ -177,18 +129,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Terong Ungu',
                     'description' => 'Purple eggplant variety with tender flesh and mild flavor.',
-                    'stock' => 80.000,
-                    'stock_bs_kg' => 40.000,
-                    'stock_fs_kg' => 40.000,
-                    'minimum_limit' => 2.500,
+                    'minimum_limit' => 2,
                 ],
                 [
                     'name' => 'Terong Hijau',
                     'description' => 'Green eggplant variety popular in traditional Indonesian dishes.',
-                    'stock' => 70.000,
-                    'stock_bs_kg' => 35.000,
-                    'stock_fs_kg' => 35.000,
-                    'minimum_limit' => 2.000,
+                    'minimum_limit' => 2,
                 ],
             ],
             // Cucumber varieties
@@ -196,18 +142,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Timun Suri',
                     'description' => 'Sweet cucumber variety commonly used for fresh consumption.',
-                    'stock' => 90.000,
-                    'stock_bs_kg' => 45.000,
-                    'stock_fs_kg' => 45.000,
-                    'minimum_limit' => 3.000,
+                    'minimum_limit' => 3,
                 ],
                 [
                     'name' => 'Timun Hijau',
                     'description' => 'Green cucumber variety with crisp texture and refreshing taste.',
-                    'stock' => 85.000,
-                    'stock_bs_kg' => 42.500,
-                    'stock_fs_kg' => 42.500,
-                    'minimum_limit' => 2.500,
+                    'minimum_limit' => 2,
                 ],
             ],
             // Lettuce varieties
@@ -215,18 +155,12 @@ class VarietySeeder extends Seeder
                 [
                     'name' => 'Selada Hijau',
                     'description' => 'Green lettuce variety with tender leaves and mild flavor.',
-                    'stock' => 40.000,
-                    'stock_bs_kg' => 20.000,
-                    'stock_fs_kg' => 20.000,
-                    'minimum_limit' => 1.500,
+                    'minimum_limit' => 1,
                 ],
                 [
                     'name' => 'Selada Merah',
                     'description' => 'Red lettuce variety with attractive color and nutritional value.',
-                    'stock' => 35.000,
-                    'stock_bs_kg' => 17.500,
-                    'stock_fs_kg' => 17.500,
-                    'minimum_limit' => 1.000,
+                    'minimum_limit' => 1,
                 ],
             ],
         ];
@@ -236,14 +170,24 @@ class VarietySeeder extends Seeder
             
             if ($commodity) {
                 foreach ($varietyList as $varietyData) {
-                    $varietyData['commodity_id'] = $commodity->id;
-                    $varietyData['slug'] = Str::slug($varietyData['name']);
-                    $varietyData['sku'] = 'SKU-' . strtoupper(Str::random(8));
-                    $varietyData['image_path'] = null; // No image initially
-                    
-                    Variety::create($varietyData);
+                    Variety::firstOrCreate(
+                        [
+                            'name' => $varietyData['name'],
+                            'commodity_id' => $commodity->id,
+                        ],
+                        [
+                            'slug' => Str::slug($varietyData['name']),
+                            'sku' => 'SKU-' . strtoupper(Str::random(8)),
+                            'description' => $varietyData['description'],
+                            'minimum_limit' => $varietyData['minimum_limit'],
+                            'status' => 'available',
+                            'is_active' => true,
+                        ]
+                    );
                 }
             }
         }
+
+        $this->command->info('VarietySeeder: Created varieties successfully.');
     }
 }
