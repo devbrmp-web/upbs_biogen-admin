@@ -63,7 +63,7 @@ class CheckoutBsFsTest extends TestCase
         $response = $this->postJson('/api/orders/checkout', $payload);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['items']);
+        $response->assertJsonValidationErrors(['items.0.quantity']);
     }
 
     public function test_fs_total_price_and_stock_decrement(): void

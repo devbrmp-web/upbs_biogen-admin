@@ -33,17 +33,18 @@ class VarietyFactory extends Factory
             'Calrose', 'Bomba', 'Carnaroli', 'Glutinous', 'Black Rice',
             'Red Rice', 'Brown Rice', 'Wild Rice', 'Forbidden Rice',
             'Sona Masoori', 'Ponni', 'Basmati 370', 'Super Basmati',
-            'Koshihikari', 'Akitakomachi', 'Sasanishiki', 'Hitomebore'
+            'Koshihikari', 'Akitakomachi', 'Sasanishiki', 'Hitomebore',
         ];
 
         $baseName = $this->faker->unique()->randomElement($varietyNames);
-        $uniqueName = $baseName . ' ' . $this->faker->numberBetween(1, 999);
+        $uniqueName = $baseName.' '.$this->faker->numberBetween(1, 999);
 
         return [
             'commodity_id' => Commodity::factory(),
             'name' => $uniqueName,
             'sku' => strtoupper($this->faker->unique()->bothify('VAR-###-???')),
             'description' => $this->faker->sentence(8),
+            'price' => $this->faker->numberBetween(1_000, 250_000),
             'minimum_limit' => $this->faker->numberBetween(1, 50),
             'status' => $this->faker->randomElement(['available', 'out_of_stock', 'discontinued']),
             'is_active' => true,

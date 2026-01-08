@@ -9,8 +9,8 @@ use App\Models\VarietyImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class VarietyController extends Controller
@@ -20,11 +20,12 @@ class VarietyController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Variety::with(['commodity', 'images', 'seedLots' => function($query) {
+        $query = Variety::with(['commodity', 'images', 'seedLots' => function ($query) {
             $query->where('is_sellable', true)->where('unit', 'kg');
         }])
-        ->withCount(['seedLots as seed_lots_count'])
-        ->withStockCalculations();
+            ->withCount(['seedLots as seed_lots_count'])
+            ->withStockCalculations()
+            ->withPriceRange();
 
         // Filters: q (name/sku or commodity name), commodity (commodity_id), stock_status
         // Support both 'q' and 'search' parameters for flexibility
@@ -83,6 +84,10 @@ class VarietyController extends Controller
             // SKU kini opsional; jika kosong akan digenerate otomatis oleh model
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
             'description' => 'required|string',
+            'price' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
+            'stock_bs_kg' => 'nullable|numeric|min:0',
+            'stock_fs_kg' => 'nullable|numeric|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             // Wajib pada create; opsional pada update
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
@@ -94,6 +99,9 @@ class VarietyController extends Controller
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
+        $validated['stock'] = $validated['stock'] ?? 0;
+        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
+        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
 
         Variety::create($validated);
 
@@ -183,6 +191,10 @@ class VarietyController extends Controller
                 Rule::unique('varieties', 'sku')->ignore($variety->id),
             ],
             'description' => 'required|string',
+            'price' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
+            'stock_bs_kg' => 'nullable|numeric|min:0',
+            'stock_fs_kg' => 'nullable|numeric|min:0',
             'minimum_limit' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
         ]);
@@ -198,6 +210,9 @@ class VarietyController extends Controller
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
+        $validated['stock'] = $validated['stock'] ?? 0;
+        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
+        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
 
         $variety->update($validated);
 
@@ -210,22 +225,42 @@ class VarietyController extends Controller
      */
     public function destroy(Request $request, Variety $variety)
     {
+        if ($variety->orderItems()->exists()) {
+            return back()->with('error', 'Cannot delete. This variety already has order transaction history.');
+        }
+
+        if ($variety->seedLots()->exists()) {
+            return back()->with('error', 'Cannot delete. This variety still has registered seed lots.');
+        }
+
         try {
-            // Delete image if exists
-            if ($variety->image_path) {
-                Storage::disk('public')->delete($variety->image_path);
+            $mainImagePath = $variety->image_path;
+            $imagePaths = VarietyImage::query()
+                ->where('variety_id', $variety->id)
+                ->pluck('image_path')
+                ->filter()
+                ->values()
+                ->all();
+
+            DB::transaction(function () use ($variety) {
+                VarietyImage::query()->where('variety_id', $variety->id)->forceDelete();
+                $variety->delete();
+            });
+
+            $pathsToDelete = array_values(array_unique(array_filter(array_merge(
+                $imagePaths,
+                [$mainImagePath],
+            ))));
+            foreach ($pathsToDelete as $path) {
+                Storage::disk('public')->delete($path);
             }
 
-            $variety->delete();
-
             return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index')))
-                ->with('success', 'Variety deleted successfully.');
+                ->with('success', 'Variety deleted permanently.');
 
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
-                return redirect()->back()
-                    ->with('constraint_error', true)
-                    ->with('constraint_redirect', route('admin.varieties.show', $variety));
+                return back()->with('error', 'Cannot delete. This record is referenced by other data.');
             }
             throw $e;
         }
@@ -237,10 +272,10 @@ class VarietyController extends Controller
     public function storeImages(Request $request, Variety $variety)
     {
         $files = $request->file('images');
-        if (!is_array($files) || count($files) === 0) {
+        if (! is_array($files) || count($files) === 0) {
             $files = array_values($request->allFiles());
         }
-        if (!is_array($files) || count($files) === 0) {
+        if (! is_array($files) || count($files) === 0) {
             return back()->withErrors(['images' => 'No images provided.'])->withInput();
         }
         foreach ($files as $f) {
@@ -267,6 +302,7 @@ class VarietyController extends Controller
                 'is_primary' => false,
             ]);
         }
+
         return back()->with('success', 'Images uploaded successfully.');
     }
 

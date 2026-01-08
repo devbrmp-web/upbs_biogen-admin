@@ -6,12 +6,11 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Variety extends Model
 {
-    use Auditable, HasFactory, SoftDeletes;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'commodity_id',
@@ -19,6 +18,10 @@ class Variety extends Model
         'slug',
         'sku',
         'description',
+        'price',
+        'stock',
+        'stock_bs_kg',
+        'stock_fs_kg',
         'minimum_limit',
         'status',
         'is_active',
@@ -26,7 +29,11 @@ class Variety extends Model
     ];
 
     protected $casts = [
+        'price' => 'integer',
         'minimum_limit' => 'integer',
+        'stock' => 'integer',
+        'stock_bs_kg' => 'float',
+        'stock_fs_kg' => 'float',
         'is_active' => 'boolean',
     ];
 
@@ -81,6 +88,11 @@ class Variety extends Model
     public function seedLots()
     {
         return $this->hasMany(SeedLot::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     public function images(): HasMany
@@ -259,7 +271,7 @@ class Variety extends Model
                 ->selectRaw('MIN(price_per_unit) as min_price, MAX(price_per_unit) as max_price')
                 ->first();
 
-            if (!$priceData || ($priceData->min_price === null && $priceData->max_price === null)) {
+            if (! $priceData || ($priceData->min_price === null && $priceData->max_price === null)) {
                 return null;
             }
 
@@ -274,10 +286,10 @@ class Variety extends Model
 
         // Single price or range
         if ($minPrice === $maxPrice) {
-            return 'Rp ' . number_format($minPrice, 0, ',', '.');
+            return 'Rp '.number_format($minPrice, 0, ',', '.');
         }
 
-        return 'Rp ' . number_format($minPrice, 0, ',', '.') . ' - Rp ' . number_format($maxPrice, 0, ',', '.');
+        return 'Rp '.number_format($minPrice, 0, ',', '.').' - Rp '.number_format($maxPrice, 0, ',', '.');
     }
 
     /**
@@ -295,8 +307,6 @@ class Variety extends Model
             ->where('price_per_unit', '>', 0)
             ->exists();
     }
-
-
 
     /**
      * Scope a query to only include varieties with stock from sellable seed lots.
@@ -365,6 +375,22 @@ class Variety extends Model
             COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg" AND sc.code = "BS"), 0) as bs_stock_calculated,
             COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit = "kg" AND sc.code = "FS"), 0) as fs_stock_calculated,
             COALESCE((SELECT SUM(quantity) FROM seed_lots sl JOIN seed_classes sc ON sl.seed_class_id = sc.id WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.unit IN ("bottle", "botol") AND sc.code = "PL"), 0) as total_planlet_calculated');
+    }
+
+    public function scopeWithPriceRange($query)
+    {
+        return $query->selectRaw('
+            COALESCE((
+                SELECT MIN(sl.price_per_unit)
+                FROM seed_lots sl
+                WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.quantity > 0
+            ), 0) as min_price_calculated,
+            COALESCE((
+                SELECT MAX(sl.price_per_unit)
+                FROM seed_lots sl
+                WHERE sl.variety_id = varieties.id AND sl.is_sellable = true AND sl.quantity > 0
+            ), 0) as max_price_calculated
+        ');
     }
 
     /**

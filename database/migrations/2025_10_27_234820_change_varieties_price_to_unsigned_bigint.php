@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,10 +14,10 @@ return new class extends Migration
     {
         // First, normalize existing decimal values to integers (round to nearest rupiah)
         DB::statement('UPDATE varieties SET price = ROUND(price)');
-        
+
         // Change column type to unsignedBigInteger
         Schema::table('varieties', function (Blueprint $table) {
-            $table->unsignedBigInteger('price')->change();
+            $table->unsignedBigInteger('price')->default(0)->change();
         });
     }
 

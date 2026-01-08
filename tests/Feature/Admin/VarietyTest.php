@@ -3,11 +3,11 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Commodity;
-use App\Models\Variety;
-use App\Models\User;
 use App\Models\Role;
 use App\Models\SeedClass;
 use App\Models\SeedLot;
+use App\Models\User;
+use App\Models\Variety;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -18,23 +18,26 @@ class VarietyTest extends TestCase
     use RefreshDatabase;
 
     protected User $adminUser;
+
     protected Commodity $commodity;
+
     protected SeedClass $bsSeedClass;
+
     protected SeedClass $fsSeedClass;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Use existing admin role or create if not exists
         $adminRole = Role::firstOrCreate(
             ['id' => 2],
             [
                 'name' => 'admin',
-                'description' => 'Administrator dengan akses terbatas'
+                'description' => 'Administrator dengan akses terbatas',
             ]
         );
-        
+
         $this->adminUser = User::create([
             'name' => 'Admin User',
             'email' => 'admin@test.com',
@@ -52,7 +55,7 @@ class VarietyTest extends TestCase
             ['code' => 'BS'],
             ['name' => 'Breeder Seed', 'description' => 'Breeder Seed']
         );
-        
+
         $this->fsSeedClass = SeedClass::firstOrCreate(
             ['code' => 'FS'],
             ['name' => 'Foundation Seed', 'description' => 'Foundation Seed']
@@ -226,7 +229,7 @@ class VarietyTest extends TestCase
             ->delete(route('admin.varieties.destroy', $variety));
 
         $response->assertRedirect(route('admin.varieties.index'));
-        $response->assertSessionHas('success', 'Variety deleted successfully.');
+        $response->assertSessionHas('success', 'Variety deleted permanently.');
 
         $this->assertDatabaseMissing('varieties', [
             'id' => $variety->id,
