@@ -43,7 +43,7 @@ class DashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('admin.dashboard');
         $response->assertSee('Pending');
-        $response->assertSee('Pendapatan 7 Hari Terakhir');
+        $response->assertSee('Tren Pendapatan');
     }
 
     /** @test */

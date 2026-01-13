@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Models\SeedClass;
 use App\Models\SeedLot;
 use App\Models\Variety;
-use App\Models\SeedClass;
+use Illuminate\Foundation\Http\FormRequest;
 
 class CheckoutRequest extends FormRequest
 {
@@ -17,24 +17,24 @@ class CheckoutRequest extends FormRequest
     public function rules()
     {
         return [
-            'customer_name'     => 'required|string|max:255',
-            'customer_email'             => 'required|email',
-            'customer_phone'             => 'required|string|max:20',
-            'customer_address'           => 'required|string',
-            'customer_province'          => 'nullable|string',
-            'customer_city'              => 'nullable|string',
-            'customer_district'          => 'nullable|string',
-            'customer_postal_code'       => 'nullable|string',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email',
+            'customer_phone' => 'required|string|max:20',
+            'customer_address' => 'required|string',
+            'customer_province' => 'nullable|string',
+            'customer_city' => 'nullable|string',
+            'customer_district' => 'nullable|string',
+            'customer_postal_code' => 'nullable|string',
 
-            'shipping_method'   => 'required|in:pickup,delivery',
-            'courier_name'      => 'nullable|string',
+            'shipping_method' => 'required|in:pickup,delivery',
+            'courier_name' => 'nullable|string',
 
-            'terms_accepted'    => 'required|boolean|in:1,true',
+            'terms_accepted' => 'required|boolean|in:1,true',
 
-            'items'             => 'required|array|min:1',
+            'items' => 'required|array|min:1',
             'items.*.variety_id' => 'required|integer|exists:varieties,id',
             'items.*.seed_lot_id' => 'required|integer|exists:seed_lots,id', // Now required
-            'items.*.quantity'  => 'required|numeric|min:1',
+            'items.*.quantity' => 'required|numeric|min:1',
         ];
     }
 
@@ -53,35 +53,47 @@ class CheckoutRequest extends FormRequest
                 'terms_accepted' => filter_var($this->terms_accepted, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
+
+        if (! $this->has('items')) {
+            $cart = $this->session()->get('cart');
+            if (is_array($cart) && ! empty($cart)) {
+                $this->merge([
+                    'items' => array_values($cart),
+                ]);
+            }
+        }
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            if (!is_array($this->items) || empty($this->items)) {
+            if (! is_array($this->items) || empty($this->items)) {
                 return;
             }
             foreach ($this->items as $index => $item) {
                 // Validate seed_lot_id is present
                 if (empty($item['seed_lot_id'])) {
                     $validator->errors()->add("items.{$index}.seed_lot_id", 'Seed Lot harus dipilih.');
+
                     continue;
                 }
 
                 $seedLot = SeedLot::find($item['seed_lot_id']);
 
-                if (!$seedLot) {
+                if (! $seedLot) {
                     $validator->errors()->add("items.{$index}.seed_lot_id", 'Seed Lot tidak ditemukan.');
+
                     continue;
                 }
 
                 // Validate seed lot belongs to the selected variety
                 if ($seedLot->variety_id !== (int) $item['variety_id']) {
                     $validator->errors()->add("items.{$index}.seed_lot_id", 'Seed Lot tidak sesuai dengan varietas yang dipilih.');
+
                     continue;
                 }
 
-                if (!$seedLot->is_sellable) {
+                if (! $seedLot->is_sellable) {
                     $validator->errors()->add("items.{$index}.seed_lot_id", 'Seed Lot tidak dapat dijual.');
                 }
 

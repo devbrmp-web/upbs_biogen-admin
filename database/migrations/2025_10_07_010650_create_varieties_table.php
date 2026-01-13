@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('slug')->unique(); // URL-friendly name
             $table->string('sku')->unique(); // Stock Keeping Unit
             $table->text('description')->nullable(); // Deskripsi varietas
-            $table->decimal('price', 12, 2); // Harga dasar per unit
+            $table->decimal('price', 12, 2)->default(0); // Harga dasar per unit
             $table->integer('stock')->default(0); // Stok total
             $table->decimal('stock_bs_kg', 12, 3)->default(0); // Stok BS dalam kg
             $table->decimal('stock_fs_kg', 12, 3)->default(0); // Stok FS dalam kg
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true); // Status aktif
             $table->string('image_path')->nullable(); // Path gambar varietas
             $table->timestamps();
-            
+
             // Index untuk performa query
             $table->index(['commodity_id', 'is_active']);
             $table->index(['status', 'is_active']);

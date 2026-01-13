@@ -3,18 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\Commodity;
-use App\Models\Variety;
+use App\Models\Role;
 use App\Models\SeedClass;
 use App\Models\SeedLot;
 use App\Models\User;
-use App\Models\Role;
+use App\Models\Variety;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\CreatesSeedClasses;
 
 class DatabaseRelationshipsTest extends TestCase
 {
-    use RefreshDatabase, CreatesSeedClasses;
+    use CreatesSeedClasses, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -253,10 +254,10 @@ class DatabaseRelationshipsTest extends TestCase
             ['id' => 2],
             [
                 'name' => 'Admin',
-                'description' => 'Administrator dengan akses terbatas'
+                'description' => 'Administrator dengan akses terbatas',
             ]
         );
-        
+
         $user = User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -277,10 +278,10 @@ class DatabaseRelationshipsTest extends TestCase
             ['id' => 2],
             [
                 'name' => 'admin',
-                'description' => 'Administrator dengan akses terbatas'
+                'description' => 'Administrator dengan akses terbatas',
             ]
         );
-        
+
         $user1 = User::create([
             'name' => 'User 1',
             'email' => 'user1@example.com',
@@ -302,7 +303,7 @@ class DatabaseRelationshipsTest extends TestCase
     {
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            
+
         ]);
 
         $variety = Variety::create([
@@ -322,11 +323,11 @@ class DatabaseRelationshipsTest extends TestCase
         $this->assertDatabaseMissing('varieties', ['id' => $variety->id]);
     }
 
-    public function test_cascade_delete_variety_seed_lots(): void
+    public function test_restrict_delete_variety_seed_lots(): void
     {
         $commodity = Commodity::create([
             'name' => 'Test Commodity',
-            
+
         ]);
 
         $variety = Variety::create([
@@ -353,9 +354,14 @@ class DatabaseRelationshipsTest extends TestCase
 
         $this->assertDatabaseHas('seed_lots', ['id' => $seedLot->id]);
 
-        $variety->forceDelete();
+        try {
+            $variety->delete();
+            $this->fail('Expected QueryException due to RESTRICT foreign key constraint.');
+        } catch (QueryException $e) {
+            $this->assertSame('23000', $e->getCode());
+        }
 
-        $this->assertDatabaseMissing('varieties', ['id' => $variety->id]);
-        $this->assertDatabaseMissing('seed_lots', ['id' => $seedLot->id]);
+        $this->assertDatabaseHas('varieties', ['id' => $variety->id]);
+        $this->assertDatabaseHas('seed_lots', ['id' => $seedLot->id]);
     }
 }
