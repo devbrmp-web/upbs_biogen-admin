@@ -58,6 +58,7 @@
                     @php
                         $statusColors = [
                             'awaiting_payment' => 'warning',
+                            'pending_verification' => 'warning', // Use warning as base, styled differently
                             'paid' => 'success',
                             'processing' => 'info',
                             'pickup_ready' => 'primary',
@@ -66,9 +67,16 @@
                         ];
                         $color = $statusColors[$order->status] ?? 'secondary';
                     @endphp
-                    <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
-                        {{ $order->getStatusLabel() }}
-                    </span>
+
+                    @if($order->status === 'pending_verification')
+                        <span class="badge" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
+                            {{ $order->getStatusLabel() }}
+                        </span>
+                    @else
+                        <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
+                            {{ $order->getStatusLabel() }}
+                        </span>
+                    @endif
                 </td>
                 <td class="fw-semibold">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
                 <td>

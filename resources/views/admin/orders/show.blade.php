@@ -15,6 +15,7 @@
                             @php
                                 $statusColors = [
                                     'awaiting_payment' => 'warning',
+                                    'pending_verification' => 'warning', // Use warning as base, styled inline
                                     'paid' => 'success',
                                     'processing' => 'info',
                                     'pickup_ready' => 'primary',
@@ -23,9 +24,15 @@
                                 ];
                                 $color = $statusColors[$order->status] ?? 'secondary';
                             @endphp
-                            <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
-                                {{ $order->getStatusLabel() }}
-                            </span>
+                            @if($order->status === 'pending_verification')
+                                <span class="badge fs-6" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
+                                    {{ $order->getStatusLabel() }}
+                                </span>
+                            @else
+                                <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
+                                    {{ $order->getStatusLabel() }}
+                                </span>
+                            @endif
                             @if($order->shipping_method === 'pickup')
                                 <span class="badge bg-info-subtle text-info">
                                     <i class="bx bx-store me-1"></i>Pickup at BRMP
@@ -123,6 +130,47 @@
                                 <div class="mb-0">
                                     <label class="form-label text-muted">Paid At</label>
                                     <div>{{ $order->payment->paid_at->format('F d, Y \a\t H:i') }}</div>
+                                </div>
+                            @endif
+                            {{-- Payment Proof Section --}}
+                            @if($order->payment->payment_proof_path)
+                                <div class="mt-3 pt-3 border-top">
+                                    <label class="form-label text-muted">Bukti Transfer</label>
+                                    <div>
+                                        @if(Str::endsWith($order->payment->payment_proof_path, ['.jpg', '.jpeg', '.png']))
+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" target="_blank">
+                                                <img src="{{ asset($order->payment->payment_proof_path) }}" 
+                                                     alt="Bukti Transfer" 
+                                                     class="img-thumbnail" 
+                                                     style="max-height: 200px; cursor: pointer;">
+                                            </a>
+                                        @else
+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bx bx-file me-1"></i>Lihat Dokumen
+                                            </a>
+                                        @endif
+                                        @if($order->payment->proof_uploaded_at)
+                                            <small class="d-block text-muted mt-1">
+                                                Diunggah: {{ $order->payment->proof_uploaded_at->format('d M Y, H:i') }}
+                                            </small>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+                            {{-- Quick Verify Button for pending_verification --}}
+                            @if($order->status === 'pending_verification')
+                                <div class="mt-3 pt-3 border-top">
+                                    <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="paid">
+                                        <input type="hidden" name="notes" value="Pembayaran diverifikasi via bukti transfer">
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bx bx-check-circle me-1"></i>Verifikasi Pembayaran
+                                        </button>
+                                    </form>
                                 </div>
                             @endif
                             @if($order->payment_type)

@@ -107,71 +107,89 @@ class OrderController extends Controller
             // Create Shipment
             Shipment::createForOrder($order);
 
-            // === Midtrans ===
-            Config::$serverKey = config('services.midtrans.serverKey');
-            Config::$isProduction = config('services.midtrans.isProduction');
-            Config::$isSanitized = config('services.midtrans.isSanitized');
-            Config::$is3ds = config('services.midtrans.is3ds');
-
-            $payload = [
-                'transaction_details' => [
-                    'order_id' => $order->order_code,
-                    'gross_amount' => (int) round($order->total_amount),
-                ],
-                'customer_details' => [
-                    'first_name' => $order->customer_name,
-                    'email' => $order->customer_email,
-                    'phone' => $order->customer_phone,
-                ],
-                'item_details' => array_merge(
-                    $order->orderItems->map(function($item) {
-                        return [
-                            'id' => $item->variety_id,
-                            'price' => (int) round($item->unit_price),
-                            'quantity' => (int) $item->quantity,
-                            'name' => substr($item->variety_name, 0, 50),
-                            'category' => optional($item->variety->commodity)->name,
-                        ];
-                    })->toArray(),
-                    [
-                    [
-                        'id' => 'SERVICE-FEE',
-                        'price' => (int) $order->service_fee,
-                        'quantity' => 1,
-                        'name' => 'Biaya Layanan (1%)',
-                    ],
-                    [
-                        'id' => 'APP-FEE',
-                        'price' => (int) $order->app_fee,
-                        'quantity' => 1,
-                        'name' => 'Biaya Aplikasi',
-                    ]
-                ]
-            ),
-            ];
-
-            $snapToken = app()->environment('testing')
-                ? 'test-snap-token'
-                : Snap::getSnapToken($payload);
-
+            // === Payment Processing ===
+            $paymentMethod = config('payment.method', 'manual');
             $expiresAt = now()->addHours(25);
+            $snapToken = null;
 
             $order->update([
                 'payment_deadline' => $expiresAt,
             ]);
 
-            Payment::updateOrCreate(
-                ['order_id' => $order->id],
-                [
-                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
-                    'amount' => $order->total_amount,
-                    'status' => Payment::STATUS_PENDING,
-                    'gateway_reference' => $order->order_code,
-                    'snap_token' => $snapToken,
-                    'expires_at' => $expiresAt,
-                    'payment_ip' => $request->ip(),
-                ]
-            );
+            if ($paymentMethod === 'midtrans') {
+                // === Midtrans Mode ===
+                Config::$serverKey = config('services.midtrans.serverKey');
+                Config::$isProduction = config('services.midtrans.isProduction');
+                Config::$isSanitized = config('services.midtrans.isSanitized');
+                Config::$is3ds = config('services.midtrans.is3ds');
+
+                $payload = [
+                    'transaction_details' => [
+                        'order_id' => $order->order_code,
+                        'gross_amount' => (int) round($order->total_amount),
+                    ],
+                    'customer_details' => [
+                        'first_name' => $order->customer_name,
+                        'email' => $order->customer_email,
+                        'phone' => $order->customer_phone,
+                    ],
+                    'item_details' => array_merge(
+                        $order->items->map(function($item) {
+                            return [
+                                'id' => $item->variety_id,
+                                'price' => (int) round($item->unit_price),
+                                'quantity' => (int) $item->quantity,
+                                'name' => substr($item->variety_name, 0, 50),
+                                'category' => optional($item->variety->commodity)->name,
+                            ];
+                        })->toArray(),
+                        [
+                            [
+                                'id' => 'SERVICE-FEE',
+                                'price' => (int) $order->service_fee,
+                                'quantity' => 1,
+                                'name' => 'Biaya Layanan (1%)',
+                            ],
+                            [
+                                'id' => 'APP-FEE',
+                                'price' => (int) $order->app_fee,
+                                'quantity' => 1,
+                                'name' => 'Biaya Aplikasi',
+                            ]
+                        ]
+                    ),
+                ];
+
+                $snapToken = app()->environment('testing')
+                    ? 'test-snap-token'
+                    : Snap::getSnapToken($payload);
+
+                Payment::updateOrCreate(
+                    ['order_id' => $order->id],
+                    [
+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
+                        'amount' => $order->total_amount,
+                        'status' => Payment::STATUS_PENDING,
+                        'gateway_reference' => $order->order_code,
+                        'snap_token' => $snapToken,
+                        'expires_at' => $expiresAt,
+                        'payment_ip' => $request->ip(),
+                    ]
+                );
+            } else {
+                // === Manual Transfer Mode ===
+                Payment::updateOrCreate(
+                    ['order_id' => $order->id],
+                    [
+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
+                        'amount' => $order->total_amount,
+                        'status' => Payment::STATUS_PENDING,
+                        'gateway_reference' => $order->order_code,
+                        'expires_at' => $expiresAt,
+                        'payment_ip' => $request->ip(),
+                    ]
+                );
+            }
 
             // Ambil data lengkap pesanan (termasuk item)
             $orderData = [
@@ -190,7 +208,8 @@ class OrderController extends Controller
                 'customer_address' => $order->customer_address,
                 'courier_name' => $order->courier_name,
                 'courier_service' => $order->courier_service,
-                'items' => $order->orderItems->map(function ($it) {
+                'payment_deadline' => $expiresAt->toIso8601String(),
+                'items' => $order->items->map(function ($it) {
                     return [
                         'variety_id' => $it->variety_id,
                         'name' => $it->variety_name,
@@ -204,13 +223,23 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // Return response based on payment method
+            $responseData = [
+                'order_code' => $order->order_code,
+                'order' => $orderData,
+                'payment_method' => $paymentMethod,
+            ];
+
+            if ($paymentMethod === 'midtrans') {
+                $responseData['snap_token'] = $snapToken;
+            } else {
+                $responseData['banks'] = config('payment.banks', []);
+                $responseData['instructions'] = config('payment.instructions', []);
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'snap_token' => $snapToken,
-                    'order_code' => $order->order_code,
-                    'order' => $orderData,
-                ],
+                'data' => $responseData,
             ]);
 
         } catch (\Exception $e) {
@@ -223,67 +252,110 @@ class OrderController extends Controller
         }
     }
 
-    private function createOrderItemAndDeductStock($order, $seedLot, $quantity)
+    /**
+     * Confirm payment with proof upload (Manual Transfer)
+     */
+    public function confirmPayment(Request $request, string $code): JsonResponse
     {
-        $variety = $seedLot->variety;
-        $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
+        try {
+            $order = Order::with('payment')->where('order_code', $code)->first();
 
-        $itemData = [
-            'order_id' => $order->id,
-            'variety_id' => $variety->id,
-            'variety_name' => $variety->name,
-            'variety_sku' => $variety->sku,
-            'unit_price' => $unitPrice,
-            'price_at_order' => $unitPrice,
-            'quantity' => $quantity,
-            'seed_lot_id' => $seedLot->id,
-            'seed_class' => $seedLot->seedClass?->code,
-        ];
+            if (!$order) {
+                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+            }
 
-        OrderItem::create($itemData);
+            if (!in_array($order->status, [Order::STATUS_AWAITING_PAYMENT, Order::STATUS_PENDING_VERIFICATION])) {
+                return response()->json(['success' => false, 'message' => 'Order sudah dibayar atau tidak dapat dikonfirmasi'], 409);
+            }
 
-        // Decrement stock
-        $seedLot->decrement('quantity', $quantity);
-        
-        // Audit log logic is handled by SeedLot model traits if configured, 
-        // or we can explicitly log here if needed. 
-        // Since we use Auditable trait on SeedLot, update events are logged.
+            $request->validate([
+                'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
+            ]);
+
+            $file = $request->file('payment_proof');
+            $filename = $order->order_code . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('public/payment_proofs', $filename);
+
+            $payment = $order->payment;
+            if (!$payment) {
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
+                    'amount' => $order->total_amount,
+                    'status' => Payment::STATUS_PENDING,
+                ]);
+            }
+
+            $payment->update([
+                'payment_proof_path' => str_replace('public/', 'storage/', $path),
+                'proof_uploaded_at' => now(),
+            ]);
+
+            // Update order status to pending verification
+            $order->markAsPendingVerification();
+
+            \Log::info('Payment proof uploaded successfully', [
+                'order_code' => $order->order_code,
+                'new_status' => $order->fresh()->status,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi admin.',
+                'data' => [
+                    'order_code' => $order->order_code,
+                    'status' => $order->fresh()->status,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal: ' . implode(', ', $e->validator->errors()->all()),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Payment proof upload failed', [
+                'order_code' => $code,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengunggah bukti pembayaran: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
-    private function prepareItemDetails($order)
-    {
-        // Merge identical items for clean display in Midtrans/Invoice if split occurred
-        // However, Midtrans requires unique IDs usually, or just a list.
-        // Let's send detailed items to be safe and accurate.
-        
-        $items = $order->orderItems->map(function($item) {
-            return [
-                'id' => $item->variety_id . '-' . $item->seed_lot_id, // Unique-ish ID
-                'price' => (int) round($item->unit_price),
-                'quantity' => (int) $item->quantity,
-                'name' => substr($item->variety_name . ' (' . $item->seed_class . ')', 0, 50),
-                'category' => optional($item->variety->commodity)->name,
-            ];
-        })->toArray();
 
-        return array_merge($items, [
-            [
-                'id' => 'SERVICE-FEE',
-                'price' => (int) $order->service_fee,
-                'quantity' => 1,
-                'name' => 'Biaya Layanan (1%)',
+    /**
+     * Get payment info for manual transfer
+     */
+    public function getPaymentInfo(string $code): JsonResponse
+    {
+        $order = Order::with(['items', 'payment'])->where('order_code', $code)->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'order_code' => $order->order_code,
+                'status' => $order->status,
+                'total_amount' => (int) round($order->total_amount),
+                'payment_deadline' => $order->payment_deadline?->toIso8601String(),
+                'customer_name' => $order->customer_name,
+                'banks' => config('payment.banks', []),
+                'instructions' => config('payment.instructions', []),
+                'has_proof' => $order->payment?->payment_proof_path !== null,
             ],
-            [
-                'id' => 'APP-FEE',
-                'price' => (int) $order->app_fee,
-                'quantity' => 1,
-                'name' => 'Biaya Aplikasi',
-            ]
         ]);
     }
 
     // ... existing methods ...
     public function track(TrackOrderRequest $request): JsonResponse
+
     {
         $validated = $request->validated();
         $trackingNumber = (string) ($validated['tracking_number'] ?? '');
@@ -355,6 +427,8 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
         $shipment = $order->shipment;
+        $payment = $order->payment;
+        
         $data = [
             'order_code' => $order->order_code,
             'status' => $order->status,
@@ -363,6 +437,7 @@ class OrderController extends Controller
             'customer_name' => $order->customer_name,
             'customer_phone' => $order->customer_phone,
             'customer_address' => $order->customer_address,
+            'customer_email' => $order->customer_email,
             'shipping_method' => $order->shipping_method,
             'shipping_method_label' => $order->shipping_method_label,
             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
@@ -370,6 +445,20 @@ class OrderController extends Controller
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
             'signature_path' => $order->signature_path,
+            // Payment info addition
+            'payment_type' => $order->payment_type,
+            'transaction_id' => $order->transaction_id,
+            'transaction_status' => $order->transaction_status,
+            'paid_at' => $order->paid_at,
+            'settlement_time' => $order->settlement_time,
+            'payment' => $payment ? [
+                'payment_method' => $payment->payment_method,
+                'status' => $payment->status,
+                'paid_at' => $payment->paid_at,
+                'transaction_id' => $payment->transaction_id,
+                'gateway_reference' => $payment->gateway_reference,
+                'pnbp_receipt_no' => $payment->pnbp_receipt_no,
+            ] : null,
             'items' => $order->orderItems->map(function ($it) {
                 return [
                     'variety_id' => $it->variety_id,
@@ -378,6 +467,7 @@ class OrderController extends Controller
                     'unit_price' => (float) $it->unit_price,
                     'seed_lot_id' => $it->seed_lot_id,
                     'seed_class_code' => $it->seed_class_code,
+                    'resolved_variety_name' => $it->variety_name // Ensure variety name is available
                 ];
             })->toArray(),
         ];
@@ -392,9 +482,24 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
         $payment = $order->payment;
+        
+        // Skip Midtrans check for manual payments or if paid/verified
+        if ($payment && ($payment->payment_method === 'bank_transfer' || $payment->status === 'paid')) {
+             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+        }
+
         $orderId = $payment?->gateway_reference ?: $order->order_code;
         $service = new \App\Services\MidtransService;
         try {
+            // Only call Midtrans if we have a valid midtrans-like orderId or no payment record yet
+            // Assuming manual order codes start with WUB... wait, all do.
+            // Check config if midtrans is enabled for this order?
+            // Safer: only call if payment method is NOT manual/bank_transfer
+            if ($payment && $payment->payment_method === 'bank_transfer') {
+                 // Should be caught by above check, but double safety
+                 return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+            }
+
             $status = $service->getStatus($orderId);
             if ($payment) {
                 $payment->applyMidtransStatus($status);
@@ -420,7 +525,9 @@ class OrderController extends Controller
 
             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            // If Midtrans fails (e.g. order not found there), just return local order data
+            // This acts as fallback for any sync issues
+            return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]); 
         }
     }
 

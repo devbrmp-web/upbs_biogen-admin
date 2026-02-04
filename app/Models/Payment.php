@@ -30,6 +30,8 @@ class Payment extends Model
         'gateway_signature',
         'payment_ip',
         'notes',
+        'payment_proof_path',
+        'proof_uploaded_at',
     ];
 
     protected $casts = [
@@ -37,8 +39,10 @@ class Payment extends Model
         'paid_at' => 'datetime',
         'expires_at' => 'datetime',
         'settlement_time' => 'datetime',
+        'proof_uploaded_at' => 'datetime',
         'gateway_response' => 'array',
     ];
+
 
     // Payment status constants
     const STATUS_PENDING = 'pending';

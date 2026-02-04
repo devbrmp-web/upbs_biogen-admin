@@ -70,6 +70,7 @@ class OrderController extends Controller
 
         $statusOptions = [
             Order::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
+            Order::STATUS_PENDING_VERIFICATION => 'Pending Verification',
             Order::STATUS_PAID => 'Paid',
             Order::STATUS_PROCESSING => 'Processing',
             Order::STATUS_PICKUP_READY => 'Ready for Pickup',
@@ -125,6 +126,32 @@ class OrderController extends Controller
             'status' => $newStatus,
             'notes' => $request->notes
         ]);
+
+        // ============================================
+        // SYNC PAYMENT RECORD FOR MANUAL VERIFICATION
+        // When transitioning from pending_verification to paid,
+        // ensure payment record reflects the verified state
+        // ============================================
+        if ($newStatus === Order::STATUS_PAID && 
+            in_array($oldStatus, [Order::STATUS_PENDING_VERIFICATION, Order::STATUS_AWAITING_PAYMENT])) {
+            
+            $payment = $order->payment;
+            if ($payment) {
+                $payment->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'payment_method' => $payment->payment_method ?: 'bank_transfer',
+                    // Use order_code as transaction reference for manual payments
+                    'gateway_reference' => $payment->gateway_reference ?: $order->order_code,
+                    'transaction_id' => $payment->transaction_id ?: $order->order_code,
+                ]);
+            }
+
+            // Also update order paid_at if not set
+            if (!$order->paid_at) {
+                $order->update(['paid_at' => now()]);
+            }
+        }
 
         // Create audit log
         AuditLog::create([

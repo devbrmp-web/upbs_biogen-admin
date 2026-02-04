@@ -62,6 +62,7 @@ class Order extends Model
 
     // Order status constants
     const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+    const STATUS_PENDING_VERIFICATION = 'pending_verification';
     const STATUS_PAID = 'paid';
     const STATUS_PROCESSING = 'processing';
     const STATUS_PICKUP_READY = 'pickup_ready';
@@ -102,9 +103,12 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /**
+     * Alias for items() - backward compatibility
+     */
     public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->items();
     }
 
     public function payment(): HasOne
@@ -171,6 +175,7 @@ class Order extends Model
     {
         return match($this->status) {
             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
+            self::STATUS_PENDING_VERIFICATION => 'Pending Verification',
             self::STATUS_PAID => 'Paid',
             self::STATUS_PROCESSING => 'Processing',
             self::STATUS_PICKUP_READY => 'Ready for Pickup',
@@ -213,7 +218,7 @@ class Order extends Model
     /**
      * Business Logic Methods
      */
-    public function markAsPaid(string $pnbpReceiptNo = null): void
+    public function markAsPaid(?string $pnbpReceiptNo = null): void
     {
         $this->update([
             'status' => self::STATUS_PAID,
@@ -221,6 +226,17 @@ class Order extends Model
             'pnbp_receipt_no' => $pnbpReceiptNo,
         ]);
     }
+
+    /**
+     * Mark order as pending verification (payment proof uploaded, awaiting admin review)
+     */
+    public function markAsPendingVerification(): void
+    {
+        $this->update([
+            'status' => self::STATUS_PENDING_VERIFICATION,
+        ]);
+    }
+
 
     public function markAsProcessing(): void
     {
@@ -265,7 +281,8 @@ class Order extends Model
     public function canTransitionTo(string $newStatus): bool
     {
         $validTransitions = [
-            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
             self::STATUS_PROCESSING => $this->is_pickup 
                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
@@ -281,7 +298,8 @@ class Order extends Model
     public function getNextValidStatuses(): array
     {
         $validTransitions = [
-            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
             self::STATUS_PROCESSING => $this->is_pickup 
                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
@@ -293,6 +311,8 @@ class Order extends Model
 
         return $validTransitions[$this->status] ?? [];
     }
+
+
 
     /**
      * Calculate totals

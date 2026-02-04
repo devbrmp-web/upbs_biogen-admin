@@ -51,7 +51,14 @@ Route::middleware('throttle:60,1')->group(function () {
         ->name('api.orders.payment.sync');
     Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransNotification'])
         ->name('webhooks.midtrans');
+    
+    // Manual Transfer Payment Routes
+    Route::post('/orders/{code}/confirm-payment', [OrderController::class, 'confirmPayment'])
+        ->name('api.orders.confirm-payment');
+    Route::get('/orders/{code}/payment-info', [OrderController::class, 'getPaymentInfo'])
+        ->name('api.orders.payment-info');
 });
+
 
 // Fallback for API routes
 Route::fallback(function(){
