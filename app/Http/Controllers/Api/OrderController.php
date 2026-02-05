@@ -109,7 +109,7 @@ class OrderController extends Controller
 
             // === Payment Processing ===
             $paymentMethod = config('payment.method', 'manual');
-            $expiresAt = now()->addHours(25);
+            $expiresAt = now()->addHours(24);
             $snapToken = null;
 
             $order->update([

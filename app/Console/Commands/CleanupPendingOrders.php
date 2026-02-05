@@ -9,17 +9,28 @@ use Illuminate\Support\Facades\DB;
 class CleanupPendingOrders extends Command
 {
     protected $signature = 'orders:cleanup-pending';
-    protected $description = 'Cleanup pending orders older than 25 hours';
+    protected $description = 'Cleanup expired unpaid orders based on payment_deadline';
 
     public function handle()
     {
-        $threshold = now()->subHours(25);
-        $this->info('Running schedule cleanup. Threshold: ' . $threshold);
+        $now = now();
+        $this->info('Running schedule cleanup. Current time: ' . $now);
 
+        // Query orders that are expired based on payment_deadline
+        // Only cleanup orders with status awaiting_payment (NOT pending_verification)
+        // Orders with pending_verification have uploaded proof and await admin review
         Order::query()
             ->with(['orderItems.seedLot', 'orderItems.variety'])
             ->where('status', Order::STATUS_AWAITING_PAYMENT)
-            ->where('created_at', '<=', $threshold)
+            ->where(function ($query) use ($now) {
+                // Primary: use payment_deadline if set
+                $query->where('payment_deadline', '<=', $now)
+                    // Fallback: if no payment_deadline, use created_at + 24 hours
+                    ->orWhere(function ($q) use ($now) {
+                        $q->whereNull('payment_deadline')
+                          ->where('created_at', '<=', $now->copy()->subHours(24));
+                    });
+            })
             ->chunkById(100, function ($orders) {
                 foreach ($orders as $order) {
                     $this->info('Deleting order: ' . $order->id);

@@ -1,725 +1,800 @@
-﻿diff --git a/app/Http/Controllers/Admin/OrderController.php b/app/Http/Controllers/Admin/OrderController.php
-index fd300b0..5cc179c 100644
---- a/app/Http/Controllers/Admin/OrderController.php
-+++ b/app/Http/Controllers/Admin/OrderController.php
-@@ -70,6 +70,7 @@ public function index(Request $request)
+﻿diff --git a/admin_diff.txt b/admin_diff.txt
+index 6c4717f..e69de29 100644
+--- a/admin_diff.txt
++++ b/admin_diff.txt
+@@ -1,725 +0,0 @@
+-∩╗┐diff --git a/app/Http/Controllers/Admin/OrderController.php b/app/Http/Controllers/Admin/OrderController.php
+-index fd300b0..5cc179c 100644
+---- a/app/Http/Controllers/Admin/OrderController.php
+-+++ b/app/Http/Controllers/Admin/OrderController.php
+-@@ -70,6 +70,7 @@ public function index(Request $request)
+- 
+-         $statusOptions = [
+-             Order::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
+-+            Order::STATUS_PENDING_VERIFICATION => 'Pending Verification',
+-             Order::STATUS_PAID => 'Paid',
+-             Order::STATUS_PROCESSING => 'Processing',
+-             Order::STATUS_PICKUP_READY => 'Ready for Pickup',
+-@@ -126,6 +127,32 @@ public function updateStatus(Request $request, Order $order)
+-             'notes' => $request->notes
+-         ]);
+- 
+-+        // ============================================
+-+        // SYNC PAYMENT RECORD FOR MANUAL VERIFICATION
+-+        // When transitioning from pending_verification to paid,
+-+        // ensure payment record reflects the verified state
+-+        // ============================================
+-+        if ($newStatus === Order::STATUS_PAID && 
+-+            in_array($oldStatus, [Order::STATUS_PENDING_VERIFICATION, Order::STATUS_AWAITING_PAYMENT])) {
+-+            
+-+            $payment = $order->payment;
+-+            if ($payment) {
+-+                $payment->update([
+-+                    'status' => 'paid',
+-+                    'paid_at' => now(),
+-+                    'payment_method' => $payment->payment_method ?: 'bank_transfer',
+-+                    // Use order_code as transaction reference for manual payments
+-+                    'gateway_reference' => $payment->gateway_reference ?: $order->order_code,
+-+                    'transaction_id' => $payment->transaction_id ?: $order->order_code,
+-+                ]);
+-+            }
+-+
+-+            // Also update order paid_at if not set
+-+            if (!$order->paid_at) {
+-+                $order->update(['paid_at' => now()]);
+-+            }
+-+        }
+-+
+-         // Create audit log
+-         AuditLog::create([
+-             'user_id' => Auth::id(),
+-diff --git a/app/Http/Controllers/Api/OrderController.php b/app/Http/Controllers/Api/OrderController.php
+-index 3e57c25..dfd2df1 100644
+---- a/app/Http/Controllers/Api/OrderController.php
+-+++ b/app/Http/Controllers/Api/OrderController.php
+-@@ -107,71 +107,89 @@ public function store(CheckoutRequest $request)
+-             // Create Shipment
+-             Shipment::createForOrder($order);
+- 
+--            // === Midtrans ===
+--            Config::$serverKey = config('services.midtrans.serverKey');
+--            Config::$isProduction = config('services.midtrans.isProduction');
+--            Config::$isSanitized = config('services.midtrans.isSanitized');
+--            Config::$is3ds = config('services.midtrans.is3ds');
+--
+--            $payload = [
+--                'transaction_details' => [
+--                    'order_id' => $order->order_code,
+--                    'gross_amount' => (int) round($order->total_amount),
+--                ],
+--                'customer_details' => [
+--                    'first_name' => $order->customer_name,
+--                    'email' => $order->customer_email,
+--                    'phone' => $order->customer_phone,
+--                ],
+--                'item_details' => array_merge(
+--                    $order->orderItems->map(function($item) {
+--                        return [
+--                            'id' => $item->variety_id,
+--                            'price' => (int) round($item->unit_price),
+--                            'quantity' => (int) $item->quantity,
+--                            'name' => substr($item->variety_name, 0, 50),
+--                            'category' => optional($item->variety->commodity)->name,
+--                        ];
+--                    })->toArray(),
+--                    [
+--                    [
+--                        'id' => 'SERVICE-FEE',
+--                        'price' => (int) $order->service_fee,
+--                        'quantity' => 1,
+--                        'name' => 'Biaya Layanan (1%)',
+--                    ],
+--                    [
+--                        'id' => 'APP-FEE',
+--                        'price' => (int) $order->app_fee,
+--                        'quantity' => 1,
+--                        'name' => 'Biaya Aplikasi',
+--                    ]
+--                ]
+--            ),
+--            ];
+--
+--            $snapToken = app()->environment('testing')
+--                ? 'test-snap-token'
+--                : Snap::getSnapToken($payload);
+--
+-+            // === Payment Processing ===
+-+            $paymentMethod = config('payment.method', 'manual');
+-             $expiresAt = now()->addHours(25);
+-+            $snapToken = null;
+- 
+-             $order->update([
+-                 'payment_deadline' => $expiresAt,
+-             ]);
+- 
+--            Payment::updateOrCreate(
+--                ['order_id' => $order->id],
+--                [
+--                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
+--                    'amount' => $order->total_amount,
+--                    'status' => Payment::STATUS_PENDING,
+--                    'gateway_reference' => $order->order_code,
+--                    'snap_token' => $snapToken,
+--                    'expires_at' => $expiresAt,
+--                    'payment_ip' => $request->ip(),
+--                ]
+--            );
+-+            if ($paymentMethod === 'midtrans') {
+-+                // === Midtrans Mode ===
+-+                Config::$serverKey = config('services.midtrans.serverKey');
+-+                Config::$isProduction = config('services.midtrans.isProduction');
+-+                Config::$isSanitized = config('services.midtrans.isSanitized');
+-+                Config::$is3ds = config('services.midtrans.is3ds');
+-+
+-+                $payload = [
+-+                    'transaction_details' => [
+-+                        'order_id' => $order->order_code,
+-+                        'gross_amount' => (int) round($order->total_amount),
+-+                    ],
+-+                    'customer_details' => [
+-+                        'first_name' => $order->customer_name,
+-+                        'email' => $order->customer_email,
+-+                        'phone' => $order->customer_phone,
+-+                    ],
+-+                    'item_details' => array_merge(
+-+                        $order->items->map(function($item) {
+-+                            return [
+-+                                'id' => $item->variety_id,
+-+                                'price' => (int) round($item->unit_price),
+-+                                'quantity' => (int) $item->quantity,
+-+                                'name' => substr($item->variety_name, 0, 50),
+-+                                'category' => optional($item->variety->commodity)->name,
+-+                            ];
+-+                        })->toArray(),
+-+                        [
+-+                            [
+-+                                'id' => 'SERVICE-FEE',
+-+                                'price' => (int) $order->service_fee,
+-+                                'quantity' => 1,
+-+                                'name' => 'Biaya Layanan (1%)',
+-+                            ],
+-+                            [
+-+                                'id' => 'APP-FEE',
+-+                                'price' => (int) $order->app_fee,
+-+                                'quantity' => 1,
+-+                                'name' => 'Biaya Aplikasi',
+-+                            ]
+-+                        ]
+-+                    ),
+-+                ];
+-+
+-+                $snapToken = app()->environment('testing')
+-+                    ? 'test-snap-token'
+-+                    : Snap::getSnapToken($payload);
+-+
+-+                Payment::updateOrCreate(
+-+                    ['order_id' => $order->id],
+-+                    [
+-+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
+-+                        'amount' => $order->total_amount,
+-+                        'status' => Payment::STATUS_PENDING,
+-+                        'gateway_reference' => $order->order_code,
+-+                        'snap_token' => $snapToken,
+-+                        'expires_at' => $expiresAt,
+-+                        'payment_ip' => $request->ip(),
+-+                    ]
+-+                );
+-+            } else {
+-+                // === Manual Transfer Mode ===
+-+                Payment::updateOrCreate(
+-+                    ['order_id' => $order->id],
+-+                    [
+-+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
+-+                        'amount' => $order->total_amount,
+-+                        'status' => Payment::STATUS_PENDING,
+-+                        'gateway_reference' => $order->order_code,
+-+                        'expires_at' => $expiresAt,
+-+                        'payment_ip' => $request->ip(),
+-+                    ]
+-+                );
+-+            }
+- 
+-             // Ambil data lengkap pesanan (termasuk item)
+-             $orderData = [
+-@@ -190,7 +208,8 @@ public function store(CheckoutRequest $request)
+-                 'customer_address' => $order->customer_address,
+-                 'courier_name' => $order->courier_name,
+-                 'courier_service' => $order->courier_service,
+--                'items' => $order->orderItems->map(function ($it) {
+-+                'payment_deadline' => $expiresAt->toIso8601String(),
+-+                'items' => $order->items->map(function ($it) {
+-                     return [
+-                         'variety_id' => $it->variety_id,
+-                         'name' => $it->variety_name,
+-@@ -204,13 +223,23 @@ public function store(CheckoutRequest $request)
+- 
+-             DB::commit();
+- 
+-+            // Return response based on payment method
+-+            $responseData = [
+-+                'order_code' => $order->order_code,
+-+                'order' => $orderData,
+-+                'payment_method' => $paymentMethod,
+-+            ];
+-+
+-+            if ($paymentMethod === 'midtrans') {
+-+                $responseData['snap_token'] = $snapToken;
+-+            } else {
+-+                $responseData['banks'] = config('payment.banks', []);
+-+                $responseData['instructions'] = config('payment.instructions', []);
+-+            }
+-+
+-             return response()->json([
+-                 'success' => true,
+--                'data' => [
+--                    'snap_token' => $snapToken,
+--                    'order_code' => $order->order_code,
+--                    'order' => $orderData,
+--                ],
+-+                'data' => $responseData,
+-             ]);
+- 
+-         } catch (\Exception $e) {
+-@@ -223,67 +252,110 @@ public function store(CheckoutRequest $request)
+-         }
+-     }
+- 
+--    private function createOrderItemAndDeductStock($order, $seedLot, $quantity)
+-+    /**
+-+     * Confirm payment with proof upload (Manual Transfer)
+-+     */
+-+    public function confirmPayment(Request $request, string $code): JsonResponse
+-     {
+--        $variety = $seedLot->variety;
+--        $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
+--
+--        $itemData = [
+--            'order_id' => $order->id,
+--            'variety_id' => $variety->id,
+--            'variety_name' => $variety->name,
+--            'variety_sku' => $variety->sku,
+--            'unit_price' => $unitPrice,
+--            'price_at_order' => $unitPrice,
+--            'quantity' => $quantity,
+--            'seed_lot_id' => $seedLot->id,
+--            'seed_class' => $seedLot->seedClass?->code,
+--        ];
+-+        try {
+-+            $order = Order::with('payment')->where('order_code', $code)->first();
+- 
+--        OrderItem::create($itemData);
+-+            if (!$order) {
+-+                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+-+            }
+- 
+--        // Decrement stock
+--        $seedLot->decrement('quantity', $quantity);
+--        
+--        // Audit log logic is handled by SeedLot model traits if configured, 
+--        // or we can explicitly log here if needed. 
+--        // Since we use Auditable trait on SeedLot, update events are logged.
+-+            if (!in_array($order->status, [Order::STATUS_AWAITING_PAYMENT, Order::STATUS_PENDING_VERIFICATION])) {
+-+                return response()->json(['success' => false, 'message' => 'Order sudah dibayar atau tidak dapat dikonfirmasi'], 409);
+-+            }
+-+
+-+            $request->validate([
+-+                'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
+-+            ]);
+-+
+-+            $file = $request->file('payment_proof');
+-+            $filename = $order->order_code . '_' . time() . '.' . $file->getClientOriginalExtension();
+-+            $path = $file->storeAs('public/payment_proofs', $filename);
+-+
+-+            $payment = $order->payment;
+-+            if (!$payment) {
+-+                $payment = Payment::create([
+-+                    'order_id' => $order->id,
+-+                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
+-+                    'amount' => $order->total_amount,
+-+                    'status' => Payment::STATUS_PENDING,
+-+                ]);
+-+            }
+-+
+-+            $payment->update([
+-+                'payment_proof_path' => str_replace('public/', 'storage/', $path),
+-+                'proof_uploaded_at' => now(),
+-+            ]);
+-+
+-+            // Update order status to pending verification
+-+            $order->markAsPendingVerification();
+-+
+-+            \Log::info('Payment proof uploaded successfully', [
+-+                'order_code' => $order->order_code,
+-+                'new_status' => $order->fresh()->status,
+-+            ]);
+-+
+-+            return response()->json([
+-+                'success' => true,
+-+                'message' => 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi admin.',
+-+                'data' => [
+-+                    'order_code' => $order->order_code,
+-+                    'status' => $order->fresh()->status,
+-+                ],
+-+            ]);
+-+        } catch (\Illuminate\Validation\ValidationException $e) {
+-+            return response()->json([
+-+                'success' => false,
+-+                'message' => 'Validasi gagal: ' . implode(', ', $e->validator->errors()->all()),
+-+            ], 422);
+-+        } catch (\Exception $e) {
+-+            \Log::error('Payment proof upload failed', [
+-+                'order_code' => $code,
+-+                'error' => $e->getMessage(),
+-+                'trace' => $e->getTraceAsString(),
+-+            ]);
+-+
+-+            return response()->json([
+-+                'success' => false,
+-+                'message' => 'Terjadi kesalahan saat mengunggah bukti pembayaran: ' . $e->getMessage(),
+-+            ], 500);
+-+        }
+-     }
+- 
+--    private function prepareItemDetails($order)
+-+
+-+    /**
+-+     * Get payment info for manual transfer
+-+     */
+-+    public function getPaymentInfo(string $code): JsonResponse
+-     {
+--        // Merge identical items for clean display in Midtrans/Invoice if split occurred
+--        // However, Midtrans requires unique IDs usually, or just a list.
+--        // Let's send detailed items to be safe and accurate.
+--        
+--        $items = $order->orderItems->map(function($item) {
+--            return [
+--                'id' => $item->variety_id . '-' . $item->seed_lot_id, // Unique-ish ID
+--                'price' => (int) round($item->unit_price),
+--                'quantity' => (int) $item->quantity,
+--                'name' => substr($item->variety_name . ' (' . $item->seed_class . ')', 0, 50),
+--                'category' => optional($item->variety->commodity)->name,
+--            ];
+--        })->toArray();
+--
+--        return array_merge($items, [
+--            [
+--                'id' => 'SERVICE-FEE',
+--                'price' => (int) $order->service_fee,
+--                'quantity' => 1,
+--                'name' => 'Biaya Layanan (1%)',
+-+        $order = Order::with(['items', 'payment'])->where('order_code', $code)->first();
+-+
+-+        if (!$order) {
+-+            return response()->json(['message' => 'Order not found'], 404);
+-+        }
+-+
+-+        return response()->json([
+-+            'success' => true,
+-+            'data' => [
+-+                'order_code' => $order->order_code,
+-+                'status' => $order->status,
+-+                'total_amount' => (int) round($order->total_amount),
+-+                'payment_deadline' => $order->payment_deadline?->toIso8601String(),
+-+                'customer_name' => $order->customer_name,
+-+                'banks' => config('payment.banks', []),
+-+                'instructions' => config('payment.instructions', []),
+-+                'has_proof' => $order->payment?->payment_proof_path !== null,
+-             ],
+--            [
+--                'id' => 'APP-FEE',
+--                'price' => (int) $order->app_fee,
+--                'quantity' => 1,
+--                'name' => 'Biaya Aplikasi',
+--            ]
+-         ]);
+-     }
+- 
+-     // ... existing methods ...
+-     public function track(TrackOrderRequest $request): JsonResponse
+-+
+-     {
+-         $validated = $request->validated();
+-         $trackingNumber = (string) ($validated['tracking_number'] ?? '');
+-@@ -355,6 +427,8 @@ public function getPublicOrder(string $order_code): JsonResponse
+-             return response()->json(['message' => 'Order not found'], 404);
+-         }
+-         $shipment = $order->shipment;
+-+        $payment = $order->payment;
+-+        
+-         $data = [
+-             'order_code' => $order->order_code,
+-             'status' => $order->status,
+-@@ -363,6 +437,7 @@ public function getPublicOrder(string $order_code): JsonResponse
+-             'customer_name' => $order->customer_name,
+-             'customer_phone' => $order->customer_phone,
+-             'customer_address' => $order->customer_address,
+-+            'customer_email' => $order->customer_email,
+-             'shipping_method' => $order->shipping_method,
+-             'shipping_method_label' => $order->shipping_method_label,
+-             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
+-@@ -370,6 +445,20 @@ public function getPublicOrder(string $order_code): JsonResponse
+-             'shipment_status' => $shipment?->status,
+-             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
+-             'signature_path' => $order->signature_path,
+-+            // Payment info addition
+-+            'payment_type' => $order->payment_type,
+-+            'transaction_id' => $order->transaction_id,
+-+            'transaction_status' => $order->transaction_status,
+-+            'paid_at' => $order->paid_at,
+-+            'settlement_time' => $order->settlement_time,
+-+            'payment' => $payment ? [
+-+                'payment_method' => $payment->payment_method,
+-+                'status' => $payment->status,
+-+                'paid_at' => $payment->paid_at,
+-+                'transaction_id' => $payment->transaction_id,
+-+                'gateway_reference' => $payment->gateway_reference,
+-+                'pnbp_receipt_no' => $payment->pnbp_receipt_no,
+-+            ] : null,
+-             'items' => $order->orderItems->map(function ($it) {
+-                 return [
+-                     'variety_id' => $it->variety_id,
+-@@ -378,6 +467,7 @@ public function getPublicOrder(string $order_code): JsonResponse
+-                     'unit_price' => (float) $it->unit_price,
+-                     'seed_lot_id' => $it->seed_lot_id,
+-                     'seed_class_code' => $it->seed_class_code,
+-+                    'resolved_variety_name' => $it->variety_name // Ensure variety name is available
+-                 ];
+-             })->toArray(),
+-         ];
+-@@ -392,9 +482,24 @@ public function verifyPaymentStatus(string $order_code): JsonResponse
+-             return response()->json(['message' => 'Order not found'], 404);
+-         }
+-         $payment = $order->payment;
+-+        
+-+        // Skip Midtrans check for manual payments or if paid/verified
+-+        if ($payment && ($payment->payment_method === 'bank_transfer' || $payment->status === 'paid')) {
+-+             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+-+        }
+-+
+-         $orderId = $payment?->gateway_reference ?: $order->order_code;
+-         $service = new \App\Services\MidtransService;
+-         try {
+-+            // Only call Midtrans if we have a valid midtrans-like orderId or no payment record yet
+-+            // Assuming manual order codes start with WUB... wait, all do.
+-+            // Check config if midtrans is enabled for this order?
+-+            // Safer: only call if payment method is NOT manual/bank_transfer
+-+            if ($payment && $payment->payment_method === 'bank_transfer') {
+-+                 // Should be caught by above check, but double safety
+-+                 return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+-+            }
+-+
+-             $status = $service->getStatus($orderId);
+-             if ($payment) {
+-                 $payment->applyMidtransStatus($status);
+-@@ -420,7 +525,9 @@ public function verifyPaymentStatus(string $order_code): JsonResponse
+- 
+-             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
+-         } catch (\Throwable $e) {
+--            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+-+            // If Midtrans fails (e.g. order not found there), just return local order data
+-+            // This acts as fallback for any sync issues
+-+            return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]); 
+-         }
+-     }
+- 
+-diff --git a/app/Models/Order.php b/app/Models/Order.php
+-index 6be1ff2..73ec731 100644
+---- a/app/Models/Order.php
+-+++ b/app/Models/Order.php
+-@@ -62,6 +62,7 @@ class Order extends Model
+- 
+-     // Order status constants
+-     const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+-+    const STATUS_PENDING_VERIFICATION = 'pending_verification';
+-     const STATUS_PAID = 'paid';
+-     const STATUS_PROCESSING = 'processing';
+-     const STATUS_PICKUP_READY = 'pickup_ready';
+-@@ -102,9 +103,12 @@ public function items(): HasMany
+-         return $this->hasMany(OrderItem::class);
+-     }
+- 
+-+    /**
+-+     * Alias for items() - backward compatibility
+-+     */
+-     public function orderItems(): HasMany
+-     {
+--        return $this->hasMany(OrderItem::class);
+-+        return $this->items();
+-     }
+- 
+-     public function payment(): HasOne
+-@@ -171,6 +175,7 @@ public function getStatusLabelAttribute(): string
+-     {
+-         return match($this->status) {
+-             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
+-+            self::STATUS_PENDING_VERIFICATION => 'Pending Verification',
+-             self::STATUS_PAID => 'Paid',
+-             self::STATUS_PROCESSING => 'Processing',
+-             self::STATUS_PICKUP_READY => 'Ready for Pickup',
+-@@ -213,7 +218,7 @@ public function getIsCompletedAttribute(): bool
+-     /**
+-      * Business Logic Methods
+-      */
+--    public function markAsPaid(string $pnbpReceiptNo = null): void
+-+    public function markAsPaid(?string $pnbpReceiptNo = null): void
+-     {
+-         $this->update([
+-             'status' => self::STATUS_PAID,
+-@@ -222,6 +227,17 @@ public function markAsPaid(string $pnbpReceiptNo = null): void
+-         ]);
+-     }
+- 
+-+    /**
+-+     * Mark order as pending verification (payment proof uploaded, awaiting admin review)
+-+     */
+-+    public function markAsPendingVerification(): void
+-+    {
+-+        $this->update([
+-+            'status' => self::STATUS_PENDING_VERIFICATION,
+-+        ]);
+-+    }
+-+
+-+
+-     public function markAsProcessing(): void
+-     {
+-         $this->update([
+-@@ -265,7 +281,8 @@ public function cancel(): void
+-     public function canTransitionTo(string $newStatus): bool
+-     {
+-         $validTransitions = [
+--            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
+-+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
+-+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
+-             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
+-             self::STATUS_PROCESSING => $this->is_pickup 
+-                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
+-@@ -281,7 +298,8 @@ public function canTransitionTo(string $newStatus): bool
+-     public function getNextValidStatuses(): array
+-     {
+-         $validTransitions = [
+--            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
+-+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
+-+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
+-             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
+-             self::STATUS_PROCESSING => $this->is_pickup 
+-                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
+-@@ -294,6 +312,8 @@ public function getNextValidStatuses(): array
+-         return $validTransitions[$this->status] ?? [];
+-     }
+- 
+-+
+-+
+-     /**
+-      * Calculate totals
+-      */
+-diff --git a/app/Models/Payment.php b/app/Models/Payment.php
+-index 10768a7..8077bb3 100644
+---- a/app/Models/Payment.php
+-+++ b/app/Models/Payment.php
+-@@ -30,6 +30,8 @@ class Payment extends Model
+-         'gateway_signature',
+-         'payment_ip',
+-         'notes',
+-+        'payment_proof_path',
+-+        'proof_uploaded_at',
+-     ];
+- 
+-     protected $casts = [
+-@@ -37,9 +39,11 @@ class Payment extends Model
+-         'paid_at' => 'datetime',
+-         'expires_at' => 'datetime',
+-         'settlement_time' => 'datetime',
+-+        'proof_uploaded_at' => 'datetime',
+-         'gateway_response' => 'array',
+-     ];
+- 
+-+
+-     // Payment status constants
+-     const STATUS_PENDING = 'pending';
+-     const STATUS_PAID = 'paid';
+-diff --git a/resources/views/admin/orders/partials/table-content.blade.php b/resources/views/admin/orders/partials/table-content.blade.php
+-index 5d29cd9..2a7af3d 100644
+---- a/resources/views/admin/orders/partials/table-content.blade.php
+-+++ b/resources/views/admin/orders/partials/table-content.blade.php
+-@@ -58,6 +58,7 @@
+-                     @php
+-                         $statusColors = [
+-                             'awaiting_payment' => 'warning',
+-+                            'pending_verification' => 'warning', // Use warning as base, styled differently
+-                             'paid' => 'success',
+-                             'processing' => 'info',
+-                             'pickup_ready' => 'primary',
+-@@ -66,9 +67,16 @@
+-                         ];
+-                         $color = $statusColors[$order->status] ?? 'secondary';
+-                     @endphp
+--                    <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
+--                        {{ $order->getStatusLabel() }}
+--                    </span>
+-+
+-+                    @if($order->status === 'pending_verification')
+-+                        <span class="badge" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
+-+                            {{ $order->getStatusLabel() }}
+-+                        </span>
+-+                    @else
+-+                        <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
+-+                            {{ $order->getStatusLabel() }}
+-+                        </span>
+-+                    @endif
+-                 </td>
+-                 <td class="fw-semibold">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
+-                 <td>
+-diff --git a/resources/views/admin/orders/show.blade.php b/resources/views/admin/orders/show.blade.php
+-index 8832da3..36e8d8b 100644
+---- a/resources/views/admin/orders/show.blade.php
+-+++ b/resources/views/admin/orders/show.blade.php
+-@@ -15,6 +15,7 @@
+-                             @php
+-                                 $statusColors = [
+-                                     'awaiting_payment' => 'warning',
+-+                                    'pending_verification' => 'warning', // Use warning as base, styled inline
+-                                     'paid' => 'success',
+-                                     'processing' => 'info',
+-                                     'pickup_ready' => 'primary',
+-@@ -23,9 +24,15 @@
+-                                 ];
+-                                 $color = $statusColors[$order->status] ?? 'secondary';
+-                             @endphp
+--                            <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
+--                                {{ $order->getStatusLabel() }}
+--                            </span>
+-+                            @if($order->status === 'pending_verification')
+-+                                <span class="badge fs-6" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
+-+                                    {{ $order->getStatusLabel() }}
+-+                                </span>
+-+                            @else
+-+                                <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
+-+                                    {{ $order->getStatusLabel() }}
+-+                                </span>
+-+                            @endif
+-                             @if($order->shipping_method === 'pickup')
+-                                 <span class="badge bg-info-subtle text-info">
+-                                     <i class="bx bx-store me-1"></i>Pickup at BRMP
+-@@ -125,6 +132,47 @@
+-                                     <div>{{ $order->payment->paid_at->format('F d, Y \a\t H:i') }}</div>
+-                                 </div>
+-                             @endif
+-+                            {{-- Payment Proof Section --}}
+-+                            @if($order->payment->payment_proof_path)
+-+                                <div class="mt-3 pt-3 border-top">
+-+                                    <label class="form-label text-muted">Bukti Transfer</label>
+-+                                    <div>
+-+                                        @if(Str::endsWith($order->payment->payment_proof_path, ['.jpg', '.jpeg', '.png']))
+-+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" target="_blank">
+-+                                                <img src="{{ asset($order->payment->payment_proof_path) }}" 
+-+                                                     alt="Bukti Transfer" 
+-+                                                     class="img-thumbnail" 
+-+                                                     style="max-height: 200px; cursor: pointer;">
+-+                                            </a>
+-+                                        @else
+-+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" 
+-+                                               target="_blank" 
+-+                                               class="btn btn-outline-primary btn-sm">
+-+                                                <i class="bx bx-file me-1"></i>Lihat Dokumen
+-+                                            </a>
+-+                                        @endif
+-+                                        @if($order->payment->proof_uploaded_at)
+-+                                            <small class="d-block text-muted mt-1">
+-+                                                Diunggah: {{ $order->payment->proof_uploaded_at->format('d M Y, H:i') }}
+-+                                            </small>
+-+                                        @endif
+-+                                    </div>
+-+                                </div>
+-+                            @endif
+-+                            {{-- Quick Verify Button for pending_verification --}}
+-+                            @if($order->status === 'pending_verification')
+-+                                <div class="mt-3 pt-3 border-top">
+-+                                    <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="d-inline">
+-+                                        @csrf
+-+                                        @method('PATCH')
+-+                                        <input type="hidden" name="status" value="paid">
+-+                                        <input type="hidden" name="notes" value="Pembayaran diverifikasi via bukti transfer">
+-+                                        <button type="submit" class="btn btn-success w-100">
+-+                                            <i class="bx bx-check-circle me-1"></i>Verifikasi Pembayaran
+-+                                        </button>
+-+                                    </form>
+-+                                </div>
+-+                            @endif
+-                             @if($order->payment_type)
+-                                 <div class="mb-3">
+-                                     <label class="form-label text-muted">Payment Type</label>
+-diff --git a/routes/api.php b/routes/api.php
+-index cf2466e..6cab661 100644
+---- a/routes/api.php
+-+++ b/routes/api.php
+-@@ -51,8 +51,15 @@
+-         ->name('api.orders.payment.sync');
+-     Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransNotification'])
+-         ->name('webhooks.midtrans');
+-+    
+-+    // Manual Transfer Payment Routes
+-+    Route::post('/orders/{code}/confirm-payment', [OrderController::class, 'confirmPayment'])
+-+        ->name('api.orders.confirm-payment');
+-+    Route::get('/orders/{code}/payment-info', [OrderController::class, 'getPaymentInfo'])
+-+        ->name('api.orders.payment-info');
+- });
+- 
+-+
+- // Fallback for API routes
+- Route::fallback(function(){
+-     return response()->json(['message' => 'API Endpoint Not Found.'], 404);
+diff --git a/app/Console/Commands/CleanupPendingOrders.php b/app/Console/Commands/CleanupPendingOrders.php
+index 64f30a9..7f131b8 100644
+--- a/app/Console/Commands/CleanupPendingOrders.php
++++ b/app/Console/Commands/CleanupPendingOrders.php
+@@ -9,17 +9,28 @@
+ class CleanupPendingOrders extends Command
+ {
+     protected $signature = 'orders:cleanup-pending';
+-    protected $description = 'Cleanup pending orders older than 25 hours';
++    protected $description = 'Cleanup expired unpaid orders based on payment_deadline';
  
-         $statusOptions = [
-             Order::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
-+            Order::STATUS_PENDING_VERIFICATION => 'Pending Verification',
-             Order::STATUS_PAID => 'Paid',
-             Order::STATUS_PROCESSING => 'Processing',
-             Order::STATUS_PICKUP_READY => 'Ready for Pickup',
-@@ -126,6 +127,32 @@ public function updateStatus(Request $request, Order $order)
-             'notes' => $request->notes
-         ]);
+     public function handle()
+     {
+-        $threshold = now()->subHours(25);
+-        $this->info('Running schedule cleanup. Threshold: ' . $threshold);
++        $now = now();
++        $this->info('Running schedule cleanup. Current time: ' . $now);
  
-+        // ============================================
-+        // SYNC PAYMENT RECORD FOR MANUAL VERIFICATION
-+        // When transitioning from pending_verification to paid,
-+        // ensure payment record reflects the verified state
-+        // ============================================
-+        if ($newStatus === Order::STATUS_PAID && 
-+            in_array($oldStatus, [Order::STATUS_PENDING_VERIFICATION, Order::STATUS_AWAITING_PAYMENT])) {
-+            
-+            $payment = $order->payment;
-+            if ($payment) {
-+                $payment->update([
-+                    'status' => 'paid',
-+                    'paid_at' => now(),
-+                    'payment_method' => $payment->payment_method ?: 'bank_transfer',
-+                    // Use order_code as transaction reference for manual payments
-+                    'gateway_reference' => $payment->gateway_reference ?: $order->order_code,
-+                    'transaction_id' => $payment->transaction_id ?: $order->order_code,
-+                ]);
-+            }
-+
-+            // Also update order paid_at if not set
-+            if (!$order->paid_at) {
-+                $order->update(['paid_at' => now()]);
-+            }
-+        }
-+
-         // Create audit log
-         AuditLog::create([
-             'user_id' => Auth::id(),
++        // Query orders that are expired based on payment_deadline
++        // Only cleanup orders with status awaiting_payment (NOT pending_verification)
++        // Orders with pending_verification have uploaded proof and await admin review
+         Order::query()
+             ->with(['orderItems.seedLot', 'orderItems.variety'])
+             ->where('status', Order::STATUS_AWAITING_PAYMENT)
+-            ->where('created_at', '<=', $threshold)
++            ->where(function ($query) use ($now) {
++                // Primary: use payment_deadline if set
++                $query->where('payment_deadline', '<=', $now)
++                    // Fallback: if no payment_deadline, use created_at + 24 hours
++                    ->orWhere(function ($q) use ($now) {
++                        $q->whereNull('payment_deadline')
++                          ->where('created_at', '<=', $now->copy()->subHours(24));
++                    });
++            })
+             ->chunkById(100, function ($orders) {
+                 foreach ($orders as $order) {
+                     $this->info('Deleting order: ' . $order->id);
 diff --git a/app/Http/Controllers/Api/OrderController.php b/app/Http/Controllers/Api/OrderController.php
-index 3e57c25..dfd2df1 100644
+index dfd2df1..cab6f06 100644
 --- a/app/Http/Controllers/Api/OrderController.php
 +++ b/app/Http/Controllers/Api/OrderController.php
-@@ -107,71 +107,89 @@ public function store(CheckoutRequest $request)
-             // Create Shipment
-             Shipment::createForOrder($order);
+@@ -109,7 +109,7 @@ public function store(CheckoutRequest $request)
  
--            // === Midtrans ===
--            Config::$serverKey = config('services.midtrans.serverKey');
--            Config::$isProduction = config('services.midtrans.isProduction');
--            Config::$isSanitized = config('services.midtrans.isSanitized');
--            Config::$is3ds = config('services.midtrans.is3ds');
--
--            $payload = [
--                'transaction_details' => [
--                    'order_id' => $order->order_code,
--                    'gross_amount' => (int) round($order->total_amount),
--                ],
--                'customer_details' => [
--                    'first_name' => $order->customer_name,
--                    'email' => $order->customer_email,
--                    'phone' => $order->customer_phone,
--                ],
--                'item_details' => array_merge(
--                    $order->orderItems->map(function($item) {
--                        return [
--                            'id' => $item->variety_id,
--                            'price' => (int) round($item->unit_price),
--                            'quantity' => (int) $item->quantity,
--                            'name' => substr($item->variety_name, 0, 50),
--                            'category' => optional($item->variety->commodity)->name,
--                        ];
--                    })->toArray(),
--                    [
--                    [
--                        'id' => 'SERVICE-FEE',
--                        'price' => (int) $order->service_fee,
--                        'quantity' => 1,
--                        'name' => 'Biaya Layanan (1%)',
--                    ],
--                    [
--                        'id' => 'APP-FEE',
--                        'price' => (int) $order->app_fee,
--                        'quantity' => 1,
--                        'name' => 'Biaya Aplikasi',
--                    ]
--                ]
--            ),
--            ];
--
--            $snapToken = app()->environment('testing')
--                ? 'test-snap-token'
--                : Snap::getSnapToken($payload);
--
-+            // === Payment Processing ===
-+            $paymentMethod = config('payment.method', 'manual');
-             $expiresAt = now()->addHours(25);
-+            $snapToken = null;
+             // === Payment Processing ===
+             $paymentMethod = config('payment.method', 'manual');
+-            $expiresAt = now()->addHours(25);
++            $expiresAt = now()->addHours(24);
+             $snapToken = null;
  
              $order->update([
-                 'payment_deadline' => $expiresAt,
-             ]);
+diff --git a/routes/console.php b/routes/console.php
+index eff2ed2..e56bb9a 100644
+--- a/routes/console.php
++++ b/routes/console.php
+@@ -2,7 +2,15 @@
  
--            Payment::updateOrCreate(
--                ['order_id' => $order->id],
--                [
--                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
--                    'amount' => $order->total_amount,
--                    'status' => Payment::STATUS_PENDING,
--                    'gateway_reference' => $order->order_code,
--                    'snap_token' => $snapToken,
--                    'expires_at' => $expiresAt,
--                    'payment_ip' => $request->ip(),
--                ]
--            );
-+            if ($paymentMethod === 'midtrans') {
-+                // === Midtrans Mode ===
-+                Config::$serverKey = config('services.midtrans.serverKey');
-+                Config::$isProduction = config('services.midtrans.isProduction');
-+                Config::$isSanitized = config('services.midtrans.isSanitized');
-+                Config::$is3ds = config('services.midtrans.is3ds');
-+
-+                $payload = [
-+                    'transaction_details' => [
-+                        'order_id' => $order->order_code,
-+                        'gross_amount' => (int) round($order->total_amount),
-+                    ],
-+                    'customer_details' => [
-+                        'first_name' => $order->customer_name,
-+                        'email' => $order->customer_email,
-+                        'phone' => $order->customer_phone,
-+                    ],
-+                    'item_details' => array_merge(
-+                        $order->items->map(function($item) {
-+                            return [
-+                                'id' => $item->variety_id,
-+                                'price' => (int) round($item->unit_price),
-+                                'quantity' => (int) $item->quantity,
-+                                'name' => substr($item->variety_name, 0, 50),
-+                                'category' => optional($item->variety->commodity)->name,
-+                            ];
-+                        })->toArray(),
-+                        [
-+                            [
-+                                'id' => 'SERVICE-FEE',
-+                                'price' => (int) $order->service_fee,
-+                                'quantity' => 1,
-+                                'name' => 'Biaya Layanan (1%)',
-+                            ],
-+                            [
-+                                'id' => 'APP-FEE',
-+                                'price' => (int) $order->app_fee,
-+                                'quantity' => 1,
-+                                'name' => 'Biaya Aplikasi',
-+                            ]
-+                        ]
-+                    ),
-+                ];
-+
-+                $snapToken = app()->environment('testing')
-+                    ? 'test-snap-token'
-+                    : Snap::getSnapToken($payload);
-+
-+                Payment::updateOrCreate(
-+                    ['order_id' => $order->id],
-+                    [
-+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
-+                        'amount' => $order->total_amount,
-+                        'status' => Payment::STATUS_PENDING,
-+                        'gateway_reference' => $order->order_code,
-+                        'snap_token' => $snapToken,
-+                        'expires_at' => $expiresAt,
-+                        'payment_ip' => $request->ip(),
-+                    ]
-+                );
-+            } else {
-+                // === Manual Transfer Mode ===
-+                Payment::updateOrCreate(
-+                    ['order_id' => $order->id],
-+                    [
-+                        'payment_method' => Payment::METHOD_BANK_TRANSFER,
-+                        'amount' => $order->total_amount,
-+                        'status' => Payment::STATUS_PENDING,
-+                        'gateway_reference' => $order->order_code,
-+                        'expires_at' => $expiresAt,
-+                        'payment_ip' => $request->ip(),
-+                    ]
-+                );
-+            }
+ use Illuminate\Foundation\Inspiring;
+ use Illuminate\Support\Facades\Artisan;
++use Illuminate\Support\Facades\Schedule;
  
-             // Ambil data lengkap pesanan (termasuk item)
-             $orderData = [
-@@ -190,7 +208,8 @@ public function store(CheckoutRequest $request)
-                 'customer_address' => $order->customer_address,
-                 'courier_name' => $order->courier_name,
-                 'courier_service' => $order->courier_service,
--                'items' => $order->orderItems->map(function ($it) {
-+                'payment_deadline' => $expiresAt->toIso8601String(),
-+                'items' => $order->items->map(function ($it) {
-                     return [
-                         'variety_id' => $it->variety_id,
-                         'name' => $it->variety_name,
-@@ -204,13 +223,23 @@ public function store(CheckoutRequest $request)
- 
-             DB::commit();
- 
-+            // Return response based on payment method
-+            $responseData = [
-+                'order_code' => $order->order_code,
-+                'order' => $orderData,
-+                'payment_method' => $paymentMethod,
-+            ];
+ Artisan::command('inspire', function () {
+     $this->comment(Inspiring::quote());
+ })->purpose('Display an inspiring quote')->hourly();
 +
-+            if ($paymentMethod === 'midtrans') {
-+                $responseData['snap_token'] = $snapToken;
-+            } else {
-+                $responseData['banks'] = config('payment.banks', []);
-+                $responseData['instructions'] = config('payment.instructions', []);
-+            }
++// =====================================================
++// SCHEDULED TASKS
++// =====================================================
 +
-             return response()->json([
-                 'success' => true,
--                'data' => [
--                    'snap_token' => $snapToken,
--                    'order_code' => $order->order_code,
--                    'order' => $orderData,
--                ],
-+                'data' => $responseData,
-             ]);
- 
-         } catch (\Exception $e) {
-@@ -223,67 +252,110 @@ public function store(CheckoutRequest $request)
-         }
-     }
- 
--    private function createOrderItemAndDeductStock($order, $seedLot, $quantity)
-+    /**
-+     * Confirm payment with proof upload (Manual Transfer)
-+     */
-+    public function confirmPayment(Request $request, string $code): JsonResponse
-     {
--        $variety = $seedLot->variety;
--        $unitPrice = (float) ($seedLot->price_per_unit ?? $seedLot->price ?? $variety->price);
--
--        $itemData = [
--            'order_id' => $order->id,
--            'variety_id' => $variety->id,
--            'variety_name' => $variety->name,
--            'variety_sku' => $variety->sku,
--            'unit_price' => $unitPrice,
--            'price_at_order' => $unitPrice,
--            'quantity' => $quantity,
--            'seed_lot_id' => $seedLot->id,
--            'seed_class' => $seedLot->seedClass?->code,
--        ];
-+        try {
-+            $order = Order::with('payment')->where('order_code', $code)->first();
- 
--        OrderItem::create($itemData);
-+            if (!$order) {
-+                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
-+            }
- 
--        // Decrement stock
--        $seedLot->decrement('quantity', $quantity);
--        
--        // Audit log logic is handled by SeedLot model traits if configured, 
--        // or we can explicitly log here if needed. 
--        // Since we use Auditable trait on SeedLot, update events are logged.
-+            if (!in_array($order->status, [Order::STATUS_AWAITING_PAYMENT, Order::STATUS_PENDING_VERIFICATION])) {
-+                return response()->json(['success' => false, 'message' => 'Order sudah dibayar atau tidak dapat dikonfirmasi'], 409);
-+            }
-+
-+            $request->validate([
-+                'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
-+            ]);
-+
-+            $file = $request->file('payment_proof');
-+            $filename = $order->order_code . '_' . time() . '.' . $file->getClientOriginalExtension();
-+            $path = $file->storeAs('public/payment_proofs', $filename);
-+
-+            $payment = $order->payment;
-+            if (!$payment) {
-+                $payment = Payment::create([
-+                    'order_id' => $order->id,
-+                    'payment_method' => Payment::METHOD_BANK_TRANSFER,
-+                    'amount' => $order->total_amount,
-+                    'status' => Payment::STATUS_PENDING,
-+                ]);
-+            }
-+
-+            $payment->update([
-+                'payment_proof_path' => str_replace('public/', 'storage/', $path),
-+                'proof_uploaded_at' => now(),
-+            ]);
-+
-+            // Update order status to pending verification
-+            $order->markAsPendingVerification();
-+
-+            \Log::info('Payment proof uploaded successfully', [
-+                'order_code' => $order->order_code,
-+                'new_status' => $order->fresh()->status,
-+            ]);
-+
-+            return response()->json([
-+                'success' => true,
-+                'message' => 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi admin.',
-+                'data' => [
-+                    'order_code' => $order->order_code,
-+                    'status' => $order->fresh()->status,
-+                ],
-+            ]);
-+        } catch (\Illuminate\Validation\ValidationException $e) {
-+            return response()->json([
-+                'success' => false,
-+                'message' => 'Validasi gagal: ' . implode(', ', $e->validator->errors()->all()),
-+            ], 422);
-+        } catch (\Exception $e) {
-+            \Log::error('Payment proof upload failed', [
-+                'order_code' => $code,
-+                'error' => $e->getMessage(),
-+                'trace' => $e->getTraceAsString(),
-+            ]);
-+
-+            return response()->json([
-+                'success' => false,
-+                'message' => 'Terjadi kesalahan saat mengunggah bukti pembayaran: ' . $e->getMessage(),
-+            ], 500);
-+        }
-     }
- 
--    private function prepareItemDetails($order)
-+
-+    /**
-+     * Get payment info for manual transfer
-+     */
-+    public function getPaymentInfo(string $code): JsonResponse
-     {
--        // Merge identical items for clean display in Midtrans/Invoice if split occurred
--        // However, Midtrans requires unique IDs usually, or just a list.
--        // Let's send detailed items to be safe and accurate.
--        
--        $items = $order->orderItems->map(function($item) {
--            return [
--                'id' => $item->variety_id . '-' . $item->seed_lot_id, // Unique-ish ID
--                'price' => (int) round($item->unit_price),
--                'quantity' => (int) $item->quantity,
--                'name' => substr($item->variety_name . ' (' . $item->seed_class . ')', 0, 50),
--                'category' => optional($item->variety->commodity)->name,
--            ];
--        })->toArray();
--
--        return array_merge($items, [
--            [
--                'id' => 'SERVICE-FEE',
--                'price' => (int) $order->service_fee,
--                'quantity' => 1,
--                'name' => 'Biaya Layanan (1%)',
-+        $order = Order::with(['items', 'payment'])->where('order_code', $code)->first();
-+
-+        if (!$order) {
-+            return response()->json(['message' => 'Order not found'], 404);
-+        }
-+
-+        return response()->json([
-+            'success' => true,
-+            'data' => [
-+                'order_code' => $order->order_code,
-+                'status' => $order->status,
-+                'total_amount' => (int) round($order->total_amount),
-+                'payment_deadline' => $order->payment_deadline?->toIso8601String(),
-+                'customer_name' => $order->customer_name,
-+                'banks' => config('payment.banks', []),
-+                'instructions' => config('payment.instructions', []),
-+                'has_proof' => $order->payment?->payment_proof_path !== null,
-             ],
--            [
--                'id' => 'APP-FEE',
--                'price' => (int) $order->app_fee,
--                'quantity' => 1,
--                'name' => 'Biaya Aplikasi',
--            ]
-         ]);
-     }
- 
-     // ... existing methods ...
-     public function track(TrackOrderRequest $request): JsonResponse
-+
-     {
-         $validated = $request->validated();
-         $trackingNumber = (string) ($validated['tracking_number'] ?? '');
-@@ -355,6 +427,8 @@ public function getPublicOrder(string $order_code): JsonResponse
-             return response()->json(['message' => 'Order not found'], 404);
-         }
-         $shipment = $order->shipment;
-+        $payment = $order->payment;
-+        
-         $data = [
-             'order_code' => $order->order_code,
-             'status' => $order->status,
-@@ -363,6 +437,7 @@ public function getPublicOrder(string $order_code): JsonResponse
-             'customer_name' => $order->customer_name,
-             'customer_phone' => $order->customer_phone,
-             'customer_address' => $order->customer_address,
-+            'customer_email' => $order->customer_email,
-             'shipping_method' => $order->shipping_method,
-             'shipping_method_label' => $order->shipping_method_label,
-             'courier_name' => $shipment?->courier_name ?: $order->courier_name,
-@@ -370,6 +445,20 @@ public function getPublicOrder(string $order_code): JsonResponse
-             'shipment_status' => $shipment?->status,
-             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
-             'signature_path' => $order->signature_path,
-+            // Payment info addition
-+            'payment_type' => $order->payment_type,
-+            'transaction_id' => $order->transaction_id,
-+            'transaction_status' => $order->transaction_status,
-+            'paid_at' => $order->paid_at,
-+            'settlement_time' => $order->settlement_time,
-+            'payment' => $payment ? [
-+                'payment_method' => $payment->payment_method,
-+                'status' => $payment->status,
-+                'paid_at' => $payment->paid_at,
-+                'transaction_id' => $payment->transaction_id,
-+                'gateway_reference' => $payment->gateway_reference,
-+                'pnbp_receipt_no' => $payment->pnbp_receipt_no,
-+            ] : null,
-             'items' => $order->orderItems->map(function ($it) {
-                 return [
-                     'variety_id' => $it->variety_id,
-@@ -378,6 +467,7 @@ public function getPublicOrder(string $order_code): JsonResponse
-                     'unit_price' => (float) $it->unit_price,
-                     'seed_lot_id' => $it->seed_lot_id,
-                     'seed_class_code' => $it->seed_class_code,
-+                    'resolved_variety_name' => $it->variety_name // Ensure variety name is available
-                 ];
-             })->toArray(),
-         ];
-@@ -392,9 +482,24 @@ public function verifyPaymentStatus(string $order_code): JsonResponse
-             return response()->json(['message' => 'Order not found'], 404);
-         }
-         $payment = $order->payment;
-+        
-+        // Skip Midtrans check for manual payments or if paid/verified
-+        if ($payment && ($payment->payment_method === 'bank_transfer' || $payment->status === 'paid')) {
-+             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
-+        }
-+
-         $orderId = $payment?->gateway_reference ?: $order->order_code;
-         $service = new \App\Services\MidtransService;
-         try {
-+            // Only call Midtrans if we have a valid midtrans-like orderId or no payment record yet
-+            // Assuming manual order codes start with WUB... wait, all do.
-+            // Check config if midtrans is enabled for this order?
-+            // Safer: only call if payment method is NOT manual/bank_transfer
-+            if ($payment && $payment->payment_method === 'bank_transfer') {
-+                 // Should be caught by above check, but double safety
-+                 return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
-+            }
-+
-             $status = $service->getStatus($orderId);
-             if ($payment) {
-                 $payment->applyMidtransStatus($status);
-@@ -420,7 +525,9 @@ public function verifyPaymentStatus(string $order_code): JsonResponse
- 
-             return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]);
-         } catch (\Throwable $e) {
--            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-+            // If Midtrans fails (e.g. order not found there), just return local order data
-+            // This acts as fallback for any sync issues
-+            return response()->json(['success' => true, 'order' => $order->fresh(['payment'])]); 
-         }
-     }
- 
-diff --git a/app/Models/Order.php b/app/Models/Order.php
-index 6be1ff2..73ec731 100644
---- a/app/Models/Order.php
-+++ b/app/Models/Order.php
-@@ -62,6 +62,7 @@ class Order extends Model
- 
-     // Order status constants
-     const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
-+    const STATUS_PENDING_VERIFICATION = 'pending_verification';
-     const STATUS_PAID = 'paid';
-     const STATUS_PROCESSING = 'processing';
-     const STATUS_PICKUP_READY = 'pickup_ready';
-@@ -102,9 +103,12 @@ public function items(): HasMany
-         return $this->hasMany(OrderItem::class);
-     }
- 
-+    /**
-+     * Alias for items() - backward compatibility
-+     */
-     public function orderItems(): HasMany
-     {
--        return $this->hasMany(OrderItem::class);
-+        return $this->items();
-     }
- 
-     public function payment(): HasOne
-@@ -171,6 +175,7 @@ public function getStatusLabelAttribute(): string
-     {
-         return match($this->status) {
-             self::STATUS_AWAITING_PAYMENT => 'Awaiting Payment',
-+            self::STATUS_PENDING_VERIFICATION => 'Pending Verification',
-             self::STATUS_PAID => 'Paid',
-             self::STATUS_PROCESSING => 'Processing',
-             self::STATUS_PICKUP_READY => 'Ready for Pickup',
-@@ -213,7 +218,7 @@ public function getIsCompletedAttribute(): bool
-     /**
-      * Business Logic Methods
-      */
--    public function markAsPaid(string $pnbpReceiptNo = null): void
-+    public function markAsPaid(?string $pnbpReceiptNo = null): void
-     {
-         $this->update([
-             'status' => self::STATUS_PAID,
-@@ -222,6 +227,17 @@ public function markAsPaid(string $pnbpReceiptNo = null): void
-         ]);
-     }
- 
-+    /**
-+     * Mark order as pending verification (payment proof uploaded, awaiting admin review)
-+     */
-+    public function markAsPendingVerification(): void
-+    {
-+        $this->update([
-+            'status' => self::STATUS_PENDING_VERIFICATION,
-+        ]);
-+    }
-+
-+
-     public function markAsProcessing(): void
-     {
-         $this->update([
-@@ -265,7 +281,8 @@ public function cancel(): void
-     public function canTransitionTo(string $newStatus): bool
-     {
-         $validTransitions = [
--            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
-+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
-+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
-             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-             self::STATUS_PROCESSING => $this->is_pickup 
-                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
-@@ -281,7 +298,8 @@ public function canTransitionTo(string $newStatus): bool
-     public function getNextValidStatuses(): array
-     {
-         $validTransitions = [
--            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PAID, self::STATUS_CANCELLED],
-+            self::STATUS_AWAITING_PAYMENT => [self::STATUS_PENDING_VERIFICATION, self::STATUS_PAID, self::STATUS_CANCELLED],
-+            self::STATUS_PENDING_VERIFICATION => [self::STATUS_PAID, self::STATUS_CANCELLED],
-             self::STATUS_PAID => [self::STATUS_PROCESSING, self::STATUS_CANCELLED],
-             self::STATUS_PROCESSING => $this->is_pickup 
-                 ? [self::STATUS_PICKUP_READY, self::STATUS_CANCELLED]
-@@ -294,6 +312,8 @@ public function getNextValidStatuses(): array
-         return $validTransitions[$this->status] ?? [];
-     }
- 
-+
-+
-     /**
-      * Calculate totals
-      */
-diff --git a/app/Models/Payment.php b/app/Models/Payment.php
-index 10768a7..8077bb3 100644
---- a/app/Models/Payment.php
-+++ b/app/Models/Payment.php
-@@ -30,6 +30,8 @@ class Payment extends Model
-         'gateway_signature',
-         'payment_ip',
-         'notes',
-+        'payment_proof_path',
-+        'proof_uploaded_at',
-     ];
- 
-     protected $casts = [
-@@ -37,9 +39,11 @@ class Payment extends Model
-         'paid_at' => 'datetime',
-         'expires_at' => 'datetime',
-         'settlement_time' => 'datetime',
-+        'proof_uploaded_at' => 'datetime',
-         'gateway_response' => 'array',
-     ];
- 
-+
-     // Payment status constants
-     const STATUS_PENDING = 'pending';
-     const STATUS_PAID = 'paid';
-diff --git a/resources/views/admin/orders/partials/table-content.blade.php b/resources/views/admin/orders/partials/table-content.blade.php
-index 5d29cd9..2a7af3d 100644
---- a/resources/views/admin/orders/partials/table-content.blade.php
-+++ b/resources/views/admin/orders/partials/table-content.blade.php
-@@ -58,6 +58,7 @@
-                     @php
-                         $statusColors = [
-                             'awaiting_payment' => 'warning',
-+                            'pending_verification' => 'warning', // Use warning as base, styled differently
-                             'paid' => 'success',
-                             'processing' => 'info',
-                             'pickup_ready' => 'primary',
-@@ -66,9 +67,16 @@
-                         ];
-                         $color = $statusColors[$order->status] ?? 'secondary';
-                     @endphp
--                    <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
--                        {{ $order->getStatusLabel() }}
--                    </span>
-+
-+                    @if($order->status === 'pending_verification')
-+                        <span class="badge" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
-+                            {{ $order->getStatusLabel() }}
-+                        </span>
-+                    @else
-+                        <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
-+                            {{ $order->getStatusLabel() }}
-+                        </span>
-+                    @endif
-                 </td>
-                 <td class="fw-semibold">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
-                 <td>
-diff --git a/resources/views/admin/orders/show.blade.php b/resources/views/admin/orders/show.blade.php
-index 8832da3..36e8d8b 100644
---- a/resources/views/admin/orders/show.blade.php
-+++ b/resources/views/admin/orders/show.blade.php
-@@ -15,6 +15,7 @@
-                             @php
-                                 $statusColors = [
-                                     'awaiting_payment' => 'warning',
-+                                    'pending_verification' => 'warning', // Use warning as base, styled inline
-                                     'paid' => 'success',
-                                     'processing' => 'info',
-                                     'pickup_ready' => 'primary',
-@@ -23,9 +24,15 @@
-                                 ];
-                                 $color = $statusColors[$order->status] ?? 'secondary';
-                             @endphp
--                            <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
--                                {{ $order->getStatusLabel() }}
--                            </span>
-+                            @if($order->status === 'pending_verification')
-+                                <span class="badge fs-6" style="background-color: rgba(249, 115, 22, 0.15); color: #ea580c;">
-+                                    {{ $order->getStatusLabel() }}
-+                                </span>
-+                            @else
-+                                <span class="badge bg-{{ $color }}-subtle text-{{ $color }} fs-6">
-+                                    {{ $order->getStatusLabel() }}
-+                                </span>
-+                            @endif
-                             @if($order->shipping_method === 'pickup')
-                                 <span class="badge bg-info-subtle text-info">
-                                     <i class="bx bx-store me-1"></i>Pickup at BRMP
-@@ -125,6 +132,47 @@
-                                     <div>{{ $order->payment->paid_at->format('F d, Y \a\t H:i') }}</div>
-                                 </div>
-                             @endif
-+                            {{-- Payment Proof Section --}}
-+                            @if($order->payment->payment_proof_path)
-+                                <div class="mt-3 pt-3 border-top">
-+                                    <label class="form-label text-muted">Bukti Transfer</label>
-+                                    <div>
-+                                        @if(Str::endsWith($order->payment->payment_proof_path, ['.jpg', '.jpeg', '.png']))
-+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" target="_blank">
-+                                                <img src="{{ asset($order->payment->payment_proof_path) }}" 
-+                                                     alt="Bukti Transfer" 
-+                                                     class="img-thumbnail" 
-+                                                     style="max-height: 200px; cursor: pointer;">
-+                                            </a>
-+                                        @else
-+                                            <a href="{{ asset($order->payment->payment_proof_path) }}" 
-+                                               target="_blank" 
-+                                               class="btn btn-outline-primary btn-sm">
-+                                                <i class="bx bx-file me-1"></i>Lihat Dokumen
-+                                            </a>
-+                                        @endif
-+                                        @if($order->payment->proof_uploaded_at)
-+                                            <small class="d-block text-muted mt-1">
-+                                                Diunggah: {{ $order->payment->proof_uploaded_at->format('d M Y, H:i') }}
-+                                            </small>
-+                                        @endif
-+                                    </div>
-+                                </div>
-+                            @endif
-+                            {{-- Quick Verify Button for pending_verification --}}
-+                            @if($order->status === 'pending_verification')
-+                                <div class="mt-3 pt-3 border-top">
-+                                    <form action="{{ route('admin.orders.update-status', $order) }}" method="POST" class="d-inline">
-+                                        @csrf
-+                                        @method('PATCH')
-+                                        <input type="hidden" name="status" value="paid">
-+                                        <input type="hidden" name="notes" value="Pembayaran diverifikasi via bukti transfer">
-+                                        <button type="submit" class="btn btn-success w-100">
-+                                            <i class="bx bx-check-circle me-1"></i>Verifikasi Pembayaran
-+                                        </button>
-+                                    </form>
-+                                </div>
-+                            @endif
-                             @if($order->payment_type)
-                                 <div class="mb-3">
-                                     <label class="form-label text-muted">Payment Type</label>
-diff --git a/routes/api.php b/routes/api.php
-index cf2466e..6cab661 100644
---- a/routes/api.php
-+++ b/routes/api.php
-@@ -51,8 +51,15 @@
-         ->name('api.orders.payment.sync');
-     Route::post('/webhooks/midtrans', [WebhookController::class, 'handleMidtransNotification'])
-         ->name('webhooks.midtrans');
-+    
-+    // Manual Transfer Payment Routes
-+    Route::post('/orders/{code}/confirm-payment', [OrderController::class, 'confirmPayment'])
-+        ->name('api.orders.confirm-payment');
-+    Route::get('/orders/{code}/payment-info', [OrderController::class, 'getPaymentInfo'])
-+        ->name('api.orders.payment-info');
- });
- 
-+
- // Fallback for API routes
- Route::fallback(function(){
-     return response()->json(['message' => 'API Endpoint Not Found.'], 404);
++// Cleanup expired unpaid orders every minute
++Schedule::command('orders:cleanup-pending')->everyMinute();
