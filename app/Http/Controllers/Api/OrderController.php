@@ -269,7 +269,7 @@ class OrderController extends Controller
             }
 
             $request->validate([
-                'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
+                'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240', // 10MB max
             ]);
 
             $file = $request->file('payment_proof');

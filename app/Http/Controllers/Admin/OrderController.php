@@ -153,6 +153,19 @@ class OrderController extends Controller
             }
         }
 
+        // ============================================
+        // STOCK RESTORATION FOR CANCELLED ORDERS
+        // Restore seed lot quantities when order is cancelled
+        // ============================================
+        if ($newStatus === Order::STATUS_CANCELLED && $oldStatus !== Order::STATUS_CANCELLED) {
+            $order->load('orderItems.seedLot');
+            foreach ($order->orderItems as $item) {
+                if ($item->seedLot) {
+                    $item->seedLot->increment('quantity', $item->quantity);
+                }
+            }
+        }
+
         // Create audit log
         AuditLog::create([
             'user_id' => Auth::id(),
@@ -389,6 +402,18 @@ class OrderController extends Controller
                 }
 
                 $order->update(['status' => $request->status]);
+
+                // ============================================
+                // STOCK RESTORATION FOR CANCELLED ORDERS  
+                // ============================================
+                if ($request->status === Order::STATUS_CANCELLED && $oldStatus !== Order::STATUS_CANCELLED) {
+                    $order->load('orderItems.seedLot');
+                    foreach ($order->orderItems as $item) {
+                        if ($item->seedLot) {
+                            $item->seedLot->increment('quantity', $item->quantity);
+                        }
+                    }
+                }
 
                 // Create audit log
                 AuditLog::create([
