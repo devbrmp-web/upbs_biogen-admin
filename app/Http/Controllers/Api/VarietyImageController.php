@@ -27,7 +27,9 @@ class VarietyImageController extends Controller
 
         $validated = $request->validate([
             'images' => ['required', 'array', 'min:1', 'max:5'],
-            'images.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png', 'max:5120'],
+            'images.*' => ['required', 'file', 'mimetypes:image/jpeg,image/png', 'max:10240'],
+        ], [
+            'images.*.max' => 'File terlalu besar (Maks 10MB).',
         ]);
 
         $files = $request->file('images', []);
