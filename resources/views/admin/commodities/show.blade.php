@@ -64,10 +64,10 @@
             <div class="card-body">
                 <h5 class="card-title">Quick Actions</h5>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('admin.varieties.create', ['commodity_id' => $commodity->id]) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-success">
+                    <a href="{{ route('admin.varieties.create', ['commodity_id' => $commodity->id]) }}&return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-success">
                         <i class="bx bx-plus"></i> Add New Variety
                     </a>
-                    <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}?return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('admin.varieties.index', ['commodity' => $commodity->id]) }}&return={{ urlencode(request()->input('return', request()->fullUrl())) }}" class="btn btn-outline-primary">
                         <i class="bx bx-list-ul"></i> View All Varieties
                     </a>
                 </div>

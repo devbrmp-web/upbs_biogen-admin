@@ -88,7 +88,7 @@
                                         id="seed_class_id" name="seed_class_id" required>
                                     <option value="">Select Seed Class</option>
                                     @foreach($seedClasses as $seedClass)
-                                        <option value="{{ $seedClass->id }}" data-code="{{ $seedClass->code }}" {{ old('seed_class_id') == $seedClass->id ? 'selected' : '' }}>
+                                        <option value="{{ $seedClass->id }}" data-code="{{ $seedClass->code }}" @selected(old('seed_class_id', $selectedSeedClassId) == $seedClass->id)>
                                             {{ $seedClass->name }} ({{ $seedClass->code }})
                                         </option>
                                     @endforeach
