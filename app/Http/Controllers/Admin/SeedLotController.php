@@ -77,6 +77,7 @@ class SeedLotController extends Controller
             'varieties' => Variety::orderBy('name')->get(),
             'seedClasses' => SeedClass::orderBy('name')->get(),
             'selectedVarietyId' => $request->integer('variety_id'),
+            'selectedSeedClassId' => $request->integer('seed_class_id'),
         ]);
     }
 

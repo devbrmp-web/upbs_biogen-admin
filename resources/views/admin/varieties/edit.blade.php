@@ -127,7 +127,7 @@
                     <div class="dz-message needsclick">
                         <i class="h1 bx bx-cloud-upload"></i>
                         <h3>Drop files here or click to upload.</h3>
-                        <span class="text-muted fs-13">Maximum 6 images allowed. Max 4MB per image.</span>
+                        <span class="text-muted fs-13">Maximum 6 images. Maximum 10MB per image.</span>
                     </div>
                 </form>
 
@@ -212,7 +212,7 @@
             
             const galleryDz = new Dropzone("#galleryDropzone", {
                 paramName: "images", // The name that will be used to transfer the file
-                maxFilesize: 4, // MB
+                maxFilesize: 10, // MB
                 acceptedFiles: 'image/jpeg,image/png,image/jpg,image/gif,image/webp',
                 addRemoveLinks: true,
                 uploadMultiple: true,

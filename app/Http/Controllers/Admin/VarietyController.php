@@ -68,8 +68,9 @@ class VarietyController extends Controller
     public function create()
     {
         $commodities = Commodity::orderBy('name')->get();
+        $selectedCommodityId = request()->input('commodity_id');
 
-        return view('admin.varieties.create', compact('commodities'));
+        return view('admin.varieties.create', compact('commodities', 'selectedCommodityId'));
     }
 
     /**
@@ -77,36 +78,106 @@ class VarietyController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'commodity_id' => 'required|exists:commodities,id',
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:varieties,slug',
-            // SKU kini opsional; jika kosong akan digenerate otomatis oleh model
             'sku' => 'nullable|string|max:100|unique:varieties,sku',
-            'description' => 'required|string',
-            'price' => 'required|integer|min:0',
-            'stock' => 'nullable|integer|min:0',
-            'stock_bs_kg' => 'nullable|numeric|min:0',
-            'stock_fs_kg' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
             'minimum_limit' => 'nullable|integer|min:0',
-            // Wajib pada create; opsional pada update
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'status' => 'nullable|in:available,out_of_stock,discontinued',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'temp_image_path' => 'nullable|string',
+        ], [
+            'image.max' => 'File terlalu besar (Maks 10MB).',
+            'image.required' => 'Gambar wajib diunggah.',
         ]);
+
+        $validator->after(function ($v) use ($request) {
+            $tempPath = $request->string('temp_image_path')->toString();
+            if (! $request->hasFile('image') && $tempPath === '') {
+                $v->errors()->add('image', 'Gambar wajib diunggah.');
+                return;
+            }
+            if ($tempPath !== '' && ! Storage::disk('public')->exists($tempPath)) {
+                $v->errors()->add('image', 'Gambar tidak ditemukan, silakan upload ulang.');
+            }
+        });
+
+        $validated = $validator->validate();
+
+        $tempPath = $validated['temp_image_path'] ?? '';
+        unset($validated['temp_image_path']);
 
         if ($request->hasFile('image')) {
             $validated['image_path'] = Storage::disk('public')->putFile('varieties', $request->file('image'));
+        } else {
+            if ($tempPath !== '') {
+                $ext = pathinfo($tempPath, PATHINFO_EXTENSION) ?: 'jpg';
+                $finalPath = 'varieties/' . Str::uuid()->toString() . '.' . $ext;
+                if (! Storage::disk('public')->move($tempPath, $finalPath)) {
+                    return back()->withErrors(['image' => 'Gagal memindahkan gambar. Silakan upload ulang.'])->withInput();
+                }
+                $validated['image_path'] = $finalPath;
+            }
         }
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        $validated['stock'] = $validated['stock'] ?? 0;
-        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
-        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
 
         Variety::create($validated);
 
         return redirect()->to($this->sanitizeReturnUrl($request, route('admin.varieties.index')))
             ->with('success', 'Variety created successfully.');
+    }
+
+    public function tempImageUpload(Request $request)
+    {
+        $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+        $postMax = $this->bytesFromIni((string) ini_get('post_max_size'));
+        if ($contentLength > 0 && $postMax > 0 && $contentLength > $postMax && ! $request->hasFile('image')) {
+            return response()->json(['message' => 'File terlalu besar (Maks 10MB).'], 413);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+        ], [
+            'image.max' => 'File terlalu besar (Maks 10MB).',
+            'image.required' => 'Gambar wajib diunggah.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $path = Storage::disk('public')->putFile('tmp/varieties', $request->file('image'));
+
+        return response()->json([
+            'path' => $path,
+        ]);
+    }
+
+    private function bytesFromIni(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+        $unit = strtolower(substr($value, -1));
+        $number = (int) $value;
+        if ($unit === 'g') {
+            return $number * 1024 * 1024 * 1024;
+        }
+        if ($unit === 'm') {
+            return $number * 1024 * 1024;
+        }
+        if ($unit === 'k') {
+            return $number * 1024;
+        }
+        return (int) $value;
     }
 
     /**
@@ -190,13 +261,10 @@ class VarietyController extends Controller
                 'max:100',
                 Rule::unique('varieties', 'sku')->ignore($variety->id),
             ],
-            'description' => 'required|string',
-            'price' => 'required|integer|min:0',
-            'stock' => 'nullable|integer|min:0',
-            'stock_bs_kg' => 'nullable|numeric|min:0',
-            'stock_fs_kg' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
             'minimum_limit' => 'nullable|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'status' => 'nullable|in:available,out_of_stock,discontinued',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
         if ($request->hasFile('image')) {
@@ -210,9 +278,6 @@ class VarietyController extends Controller
 
         // Normalize nullable inputs to 0 (DB columns are non-nullable dengan default 0)
         $validated['minimum_limit'] = $validated['minimum_limit'] ?? 0;
-        $validated['stock'] = $validated['stock'] ?? 0;
-        $validated['stock_bs_kg'] = $validated['stock_bs_kg'] ?? 0;
-        $validated['stock_fs_kg'] = $validated['stock_fs_kg'] ?? 0;
 
         $variety->update($validated);
 
@@ -280,7 +345,7 @@ class VarietyController extends Controller
         }
         foreach ($files as $f) {
             $validator = Validator::make(['image' => $f], [
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
             if ($validator->fails()) {
                 return back()->withErrors($validator)->withInput();
