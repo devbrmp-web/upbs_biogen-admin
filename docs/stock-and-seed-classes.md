@@ -7,6 +7,7 @@ Zona waktu: Asia/Jakarta | Bahasa: Indonesia | Mata uang: IDR
 - Perhitungan stok varietas kini hanya menjumlahkan lot benih dengan `unit = 'kg'` dan `is_sellable = true`.
 - Kelas benih `NS` dihapus dari seeder dan dibersihkan via migrasi cleanup; hanya `BS`, `FS`, dan `PL (Planlet)` yang aktif.
 - Planlet (`PL`) tetap dicatat via `seed_lots` dengan unit non-berat (`bottle`, `piece`) dan tidak masuk agregasi stok kg.
+- Navigasi dari detail Seed Class ke form tambah Seed Lot membawa `seed_class_id` dan otomatis terpilih di form.
 
 ## Alur Perhitungan Stok
 - Sumber data: tabel `seed_lots` (snapshot harga & unit per lot).
