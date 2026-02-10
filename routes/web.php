@@ -42,6 +42,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
 
         // Varieties (formerly Products)
         Route::resource('varieties', \App\Http\Controllers\Admin\VarietyController::class);
+        Route::post('varieties/temp-image', [\App\Http\Controllers\Admin\VarietyController::class, 'tempImageUpload'])->name('varieties.temp-image');
         Route::post('varieties/{variety}/images', [\App\Http\Controllers\Admin\VarietyController::class, 'storeImages'])->name('varieties.images.store');
         Route::delete('varieties/{variety}/images/{image}', [\App\Http\Controllers\Admin\VarietyController::class, 'destroyImage'])->name('varieties.images.destroy');
         Route::post('varieties/{variety}/images/reorder', [\App\Http\Controllers\Admin\VarietyController::class, 'reorderImages'])->name('varieties.images.reorder');
