@@ -101,7 +101,7 @@
 
 <!-- Baris 2: Order Status Trackers -->
 <div class="row">
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-4">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -117,7 +117,7 @@
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-4">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -133,23 +133,7 @@
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="avatar-sm bg-info bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center me-3">
-                        <iconify-icon icon="lucide:truck" class="fs-20 text-info"></iconify-icon>
-                    </div>
-                    <div class="flex-grow-1">
-                        <p class="text-muted mb-1 fs-12 fw-medium">Shipping</p>
-                        <h4 class="mb-0 fw-bold">{{ $countShipping }}</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-xl-4">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">

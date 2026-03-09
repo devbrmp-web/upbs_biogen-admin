@@ -564,9 +564,14 @@ class OrderController extends Controller
     {
         $currentStatus = $order->status;
 
-        // Define valid transitions based on shipping method
+        // Define valid transitions — synced with Order model's canTransitionTo()
         $validTransitions = [
             Order::STATUS_AWAITING_PAYMENT => [
+                Order::STATUS_PENDING_VERIFICATION,
+                Order::STATUS_PAID,
+                Order::STATUS_CANCELLED
+            ],
+            Order::STATUS_PENDING_VERIFICATION => [
                 Order::STATUS_PAID,
                 Order::STATUS_CANCELLED
             ],

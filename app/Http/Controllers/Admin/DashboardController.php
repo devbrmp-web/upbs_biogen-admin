@@ -56,14 +56,20 @@ class DashboardController extends Controller
             $statusCounts = $statusCountsQuery->groupBy('status')->pluck('total', 'status')->toArray();
 
             // Mapping Logic
-            $pending = $statusCounts[Order::STATUS_AWAITING_PAYMENT] ?? 0;
-            $processing = ($statusCounts[Order::STATUS_PROCESSING] ?? 0) 
+            $pending = ($statusCounts[Order::STATUS_AWAITING_PAYMENT] ?? 0)
+                     + ($statusCounts[Order::STATUS_PENDING_VERIFICATION] ?? 0);
+            $processing = ($statusCounts[Order::STATUS_PAID] ?? 0)
+                        + ($statusCounts[Order::STATUS_PROCESSING] ?? 0) 
                         + ($statusCounts[Order::STATUS_PICKUP_READY] ?? 0);
-            $shipping = 0;
             $completed = $statusCounts[Order::STATUS_COMPLETED] ?? 0;
 
-            // 2. Total Pendapatan (Revenue) - Synchronized with Trend Chart & Summary Stats
-            $revenueQuery = Order::where('status', '!=', Order::STATUS_CANCELLED);
+            // 2. Total Pendapatan (Revenue) - Only count orders that have been paid
+            $revenueQuery = Order::whereIn('status', [
+                Order::STATUS_PAID,
+                Order::STATUS_PROCESSING,
+                Order::STATUS_PICKUP_READY,
+                Order::STATUS_COMPLETED,
+            ]);
             $applyDateFilter($revenueQuery);
             $totalRevenue = (float) $revenueQuery->sum('total_amount');
 
@@ -159,7 +165,6 @@ class DashboardController extends Controller
             return [
                 'countPending' => $pending,
                 'countProcessing' => $processing,
-                'countShipping' => $shipping,
                 'countCompleted' => $completed,
                 'totalRevenue' => $totalRevenue,
                 'chartDates' => $chartDates,
