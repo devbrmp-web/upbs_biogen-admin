@@ -16,6 +16,16 @@ class StoreSeedLotRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'is_sellable' => $this->has('is_sellable'),
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array

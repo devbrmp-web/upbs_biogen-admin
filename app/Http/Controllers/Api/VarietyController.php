@@ -98,7 +98,9 @@ class VarietyController extends Controller
                     },
                     'seedLots' => function ($q) {
                         $q->select('id', 'variety_id', 'seed_class_id','price_per_unit', 'quantity',
-                            'unit', 'is_sellable', 'production_year');
+                            'unit', 'is_sellable', 'production_year')
+                          ->where('is_sellable', true)
+                          ->where('quantity', '>', 0);
                     },
                     'seedLots.seedClass:id,code,name'
                 ])
