@@ -29,6 +29,7 @@ class VarietyController extends Controller
                     }
                 ])
                 ->withStockCalculations()
+                ->withPriceRange()
                 ->orderBy('name');
 
             // Optional: filter by commodity slug (?commodity=slug)
@@ -65,6 +66,7 @@ class VarietyController extends Controller
                         'total_planlet' => $v->total_planlet,
                         'status' => $v->stock_status,
                     ],
+                    'price_range_text' => $v->price_range,
                 ];
             });
 
