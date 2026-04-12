@@ -5,30 +5,50 @@
 // Logo
 .logo-box {
     position: sticky;
-    overflow: hidden;
-    text-align: center;
+    top: 0;
+    /* overflow: hidden; Removed to prevent tight clipping */
     white-space: nowrap;
     transition: all 0.3s ease-in-out;
-    line-height: $topbar-height;
     padding: 0 calc($main-nav-width-sm * 0.5 - $logo-sm-height * 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: $topbar-height;
+    z-index: 1020;
 
-    .logo-sm {
-        display: inline-block;
-        height: $logo-sm-height;
+    a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
     }
 
-    .logo-lg {
-        margin-left: 0;
-        display: block;
-        height: $logo-lg-height; // tinggi konsisten dan proporsional
-        width: auto;             // lebar menyesuaikan proporsi
-        max-width: 100%;         // jangan melebihi lebar box
-        object-fit: contain;     // jaga proporsi gambar
+    img.logo-sm {
+        display: none; // Hidden by default (lg is shown)
+        height: $logo-sm-height !important;
+        width: auto !important;
     }
 
-    // Default (Light theme): tampilkan logo-light, sembunyikan logo-dark
-    .logo-light { display: block; }
-    .logo-dark { display: none; }
+    img.logo-lg {
+        display: block !important;
+        height: $logo-lg-height !important;
+        width: auto !important;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    // Default (Light theme): tampilkan logo-dark (black logo), sembunyikan logo-light (white logo)
+    .logo-light { 
+        display: none !important; 
+    }
+    .logo-dark { 
+        display: flex !important; 
+        opacity: 1 !important; 
+        visibility: visible !important;
+        position: relative !important;
+        align-items: center;
+    }
 }
 
 .wrapper {
@@ -234,7 +254,11 @@ html[data-menu-size='condensed'] {
             background: $main-nav-bg;
 
             .logo-lg {
-                display: none;
+                display: none !important;
+            }
+            .logo-sm {
+                display: block !important;
+                margin: 0 auto;
             }
         }
 
@@ -568,8 +592,16 @@ html[data-menu-color='dark'],
 html[data-menu-color='brand'] {
     .main-nav {
         .logo-box {
-            .logo-light { display: none !important; }
-            .logo-dark { display: block !important; }
+            .logo-light { 
+                display: flex !important; 
+                opacity: 1 !important;
+                visibility: visible !important;
+                position: relative !important;
+                align-items: center;
+            }
+            .logo-dark { 
+                display: none !important; 
+            }
         }
     }
 }
@@ -611,8 +643,16 @@ html[data-menu-size='sm-hover-active'] {
 html[data-bs-theme='dark'] {
     .main-nav {
         .logo-box {
-            .logo-light { display: none !important; }
-            .logo-dark { display: block !important; }
+            .logo-light { 
+                display: flex !important; 
+                opacity: 1 !important;
+                visibility: visible !important;
+                position: relative !important;
+                align-items: center;
+            }
+            .logo-dark { 
+                display: none !important; 
+            }
         }
     }
 }

@@ -1,12 +1,12 @@
 <div class="main-nav">
-    <!-- Sidebar Logo -->
     <div class="logo-box">
         <a href="{{ route('admin.dashboard') }}" class="logo-light">
-            <img src="/images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png" class="logo-lg d-block" alt="UPBS Biogen logo (light)"/>
+            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png') }}" class="logo-lg" alt="Logo White Large">
+            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png') }}" class="logo-sm" alt="Logo White Small">
         </a>
-
         <a href="{{ route('admin.dashboard') }}" class="logo-dark">
-            <img src="/images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png" class="logo-lg d-block" alt="UPBS Biogen logo (dark)"/>
+            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png') }}" class="logo-lg" alt="Logo Black Large">
+            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png') }}" class="logo-sm" alt="Logo Black Small">
         </a>
     </div>
 

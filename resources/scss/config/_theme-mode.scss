@@ -4,10 +4,11 @@
 
 /* Root Prefix Variable */
 :root {
-    --#{$prefix}logo-lg-height: 72px;
-    --#{$prefix}logo-sm-height: 40px;
+    --#{$prefix}logo-lg-height: 40px;
+    --#{$prefix}logo-sm-height: 22px;
 
     --#{$prefix}main-nav-width: 260px;
+
     --#{$prefix}main-nav-width-sm: 75px;
     --#{$prefix}main-nav-item-icon-size: 20px;
     --#{$prefix}main-nav-item-font-size: 15px;
