@@ -12,22 +12,7 @@
                     </button>
                 </div>
 
-                <!-- App Search-->
-                <form class="app-search d-none d-md-block me-auto">
-                    <div class="position-relative">
-                        <input
-                            type="search"
-                            class="form-control"
-                            placeholder="Search..."
-                            autocomplete="off"
-                            value=""
-                        />
-                        <iconify-icon
-                            icon="iconamoon:search-duotone"
-                            class="search-widget-icon"
-                        ></iconify-icon>
-                    </div>
-                </form>
+
             </div>
 
             <div class="d-flex align-items-center gap-1">
