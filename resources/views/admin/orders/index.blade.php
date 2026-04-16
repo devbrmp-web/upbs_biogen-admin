@@ -631,14 +631,6 @@
                             if(el._detachedMenu) bootstrap.Dropdown.getInstance(el).hide();
                         });
                     }, true);
-
-                    // Ensure modals are moved to body to prevent stacking context issues
-                    document.addEventListener('show.bs.modal', function (event) {
-                        const modal = event.target;
-                        if (modal.closest('#ordersTableContainer')) {
-                            document.body.appendChild(modal);
-                        }
-                    });
                 });
                 </script>
                 @endpush

@@ -78,6 +78,93 @@ class Components {
             })
         }
 
+        // Global Modal Fixes for Z-Index and Stacking Context
+        this.initGlobalModalFixes();
+    }
+
+    initGlobalModalFixes() {
+        // 1. Move ALL modals to body to prevent stacking context issues
+        document.addEventListener('show.bs.modal', function (event) {
+            const modal = event.target;
+            if (modal && modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+
+        // 2. Escape key handler to ensure modals can always be closed
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modalEl => {
+                    const bsModal = bootstrap.Modal.getInstance(modalEl);
+                    if (bsModal) {
+                        bsModal.hide();
+                    }
+                });
+            }
+        });
+
+        // 3. Fallback close button (forced close mechanism)
+        document.addEventListener('DOMContentLoaded', () => {
+            const addForceClose = (modal) => {
+                if (modal.querySelector('.modal-force-close')) return;
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'btn btn-sm btn-danger modal-force-close';
+                closeBtn.innerHTML = '× Close';
+                closeBtn.type = 'button';
+                closeBtn.style.position = 'fixed';
+                closeBtn.style.top = '10px';
+                closeBtn.style.right = '10px';
+                closeBtn.style.zIndex = '10000'; // Extremely high
+                closeBtn.style.padding = '4px 8px';
+                closeBtn.style.fontSize = '12px';
+                closeBtn.style.borderRadius = '4px';
+                closeBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
+                
+                closeBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    if (bsModal) {
+                        bsModal.hide();
+                    } else {
+                        // Fallback hide if instance not found
+                        modal.classList.remove('show');
+                        modal.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                    }
+                };
+                modal.appendChild(closeBtn);
+            };
+
+            document.querySelectorAll('.modal').forEach(addForceClose);
+
+            // Handle dynamically added modals
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) {
+                            if (node.classList.contains('modal')) {
+                                addForceClose(node);
+                            }
+                            node.querySelectorAll('.modal').forEach(addForceClose);
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+
+        // 4. Cleanup orphan backdrops
+        document.addEventListener('hidden.bs.modal', function () {
+            if (document.querySelectorAll('.modal.show').length === 0) {
+                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+        });
     }
 
     initfullScreenListener() {

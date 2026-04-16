@@ -7,6 +7,32 @@
     margin-top: 0;
 }
 
+// Global Modal Fixes for Z-Index and Stacking Context
+.modal {
+    z-index: 1060 !important; /* Ensure it is above backdrop (1050) */
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal-content {
+    position: relative;
+    z-index: 1070; /* Content must be above the modal window layer if any */
+    pointer-events: auto !important; /* Ensure content is always clickable */
+}
+
+/* Fix for all interactive elements inside modal to prevent blocking */
+.modal button,
+.modal select,
+.modal input,
+.modal textarea,
+.modal .btn {
+    position: relative;
+    z-index: 1080;
+    pointer-events: auto !important;
+}
+
 // Modal full width
 .modal-full-width {
     width: 95%;
@@ -49,5 +75,23 @@
 
     .btn-close {
         color: $white !important;
+    }
+}
+
+// Mobile responsiveness improvements
+@media (max-width: 768px) {
+    .modal {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-content {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
     }
 }
