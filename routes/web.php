@@ -61,6 +61,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])
         Route::post('orders/bulk-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');
         Route::post('orders/bulk-update-status', [\App\Http\Controllers\Admin\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-update-status');
         Route::post('orders/export', [\App\Http\Controllers\Admin\OrderController::class, 'export'])->name('orders.export');
+        Route::get('orders/{id}/invoice', [\App\Http\Controllers\Admin\OrderController::class, 'downloadInvoice'])->name('orders.invoice.download');
+        Route::post('orders/invoices/bulk', [\App\Http\Controllers\Admin\OrderController::class, 'downloadBulkInvoices'])->name('orders.invoice.bulk');
 
         // Payment manual sync (Midtrans GET Status)
         Route::get('orders/{order}/payments/sync-midtrans', [\App\Http\Controllers\Admin\PaymentSyncController::class, 'syncMidtransStatus'])

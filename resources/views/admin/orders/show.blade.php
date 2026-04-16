@@ -48,6 +48,9 @@
                         <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.orders.index')) }}" class="btn btn-outline-secondary">
                             <i class="bx bx-arrow-back me-1"></i>Back to Orders
                         </a>
+                        <a href="{{ route('admin.orders.invoice.download', $order->id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Download invoice resmi dalam format PDF">
+                            📄 Unduh Invoice PDF
+                        </a>
                         @if($order->status !== 'cancelled' && $order->status !== 'completed')
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
                                 <i class="bx bx-edit me-1"></i>Update Status

@@ -1,0 +1,114 @@
+/* A4 dimensions: 210mm x 297mm */
+.pdf-page {
+  /* Set exact A4 size */
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 15mm;
+  margin: 0 auto;
+  background: #ffffff;
+  font-family: 'DejaVu Sans', sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #000000;
+  box-sizing: border-box;
+}
+
+/* Watermark Background */
+.watermark-container {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  z-index: -1; 
+  text-align: center;
+  width: 100%;
+}
+
+.watermark-badge {
+  font-weight: bold;
+  font-size: 72pt;
+  border: 8px solid;
+  padding: 20px 40px;
+  display: inline-block;
+  text-align: center;
+  
+  &.paid {
+    color: rgba(40, 167, 69, 0.15);
+    border-color: rgba(40, 167, 69, 0.15);
+  }
+
+  &.unpaid {
+    color: rgba(220, 53, 69, 0.15);
+    border-color: rgba(220, 53, 69, 0.15);
+  }
+}
+
+/* Professional Header */
+.header-official {
+  width: 100%;
+  margin-bottom: 25px;
+  display: table;
+  page-break-after: avoid;
+
+  .header-logo {
+    display: table-cell;
+    vertical-align: middle;
+    width: 120px;
+
+    img { width: 100px; }
+  }
+
+  .header-text {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: left;
+    padding-left: 15px;
+
+    h1 {
+      font-size: 14pt;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+      color: #000;
+      text-transform: uppercase;
+    }
+
+    p.address {
+      font-size: 9pt;
+      margin: 0;
+      color: #333;
+    }
+  }
+}
+
+.header-line {
+  border-top: 3px solid #000;
+  border-bottom: 1px solid #000;
+  height: 2px;
+  margin-top: 15px;
+  margin-bottom: 25px;
+  padding: 0;
+}
+
+/* Footer & QR */
+.footer-validation {
+  text-align: center;
+  font-size: 9pt;
+  color: #555;
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+  page-break-inside: avoid;
+  margin-top: 40px;
+
+  .qr-image {
+    width: 80px;
+    height: 80px;
+    margin: 10px auto;
+    display: block;
+  }
+  
+  .qr-text {
+    font-size: 8pt;
+    color: #666;
+    margin-top: 5px;
+  }
+}

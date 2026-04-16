@@ -89,6 +89,9 @@
                                     <button type="button" class="btn btn-sm btn-success" id="bulkExportBtn">
                                         <i class="bx bx-download me-1"></i>Export Selected
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-primary" id="bulkInvoiceBtn">
+                                        <i class="bx bx-file-blank me-1"></i>Download Invoices (PDF)
+                                    </button>
                                 </div>
                             </div>
                             <div>
@@ -502,8 +505,49 @@
                             form.submit();
                             document.body.removeChild(form);
                             
+                            
                             if (toast) {
                                 toastBodyEl.textContent = 'Export started. Download will begin shortly.';
+                                toast.show();
+                            }
+                        }
+                    });
+
+                    // Bulk Invoice PDF handler
+                    document.addEventListener('click', function(e) {
+                        if (e.target.id === 'bulkInvoiceBtn') {
+                            const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked')).map(cb => cb.value);
+                            if (checked.length === 0) {
+                                if (noSelectionModal) noSelectionModal.show();
+                                return;
+                            }
+                            
+                            // Create form and submit for PDF ZIP export
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '{{ route('admin.orders.invoice.bulk') }}';
+                            form.style.display = 'none';
+                            
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = '{{ csrf_token() }}';
+                            form.appendChild(csrfInput);
+                            
+                            checked.forEach(id => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'selected_orders[]';
+                                input.value = id;
+                                form.appendChild(input);
+                            });
+                            
+                            document.body.appendChild(form);
+                            form.submit();
+                            document.body.removeChild(form);
+                            
+                            if (toast) {
+                                toastBodyEl.textContent = 'Memproses ' + checked.length + ' invoice PDF...';
                                 toast.show();
                             }
                         }

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class OrderController extends Controller
 {
@@ -591,5 +593,98 @@ class OrderController extends Controller
         ];
 
         return in_array($newStatus, $validTransitions[$currentStatus] ?? []);
+    }
+
+    /**
+     * Download a single order invoice as PDF
+     */
+    public function downloadInvoice($id)
+    {
+        ini_set('memory_limit', '256M');
+        $order = Order::with(['orderItems.seedLot.variety.commodity', 'orderItems.seedLot.seedClass', 'payment', 'shipment'])->findOrFail($id);
+        
+        // Calculate correct totals
+        $order->computed_subtotal = $order->orderItems->sum(function($item) {
+            return $item->quantity * $item->price_at_order;
+        });
+        $order->computed_biaya_layanan = $order->computed_subtotal * 0.01;
+        $order->computed_biaya_aplikasi = 2500;
+        $order->computed_total = $order->computed_subtotal + $order->computed_biaya_layanan + $order->computed_biaya_aplikasi;
+
+        $logoPath = public_path('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoBase64 = base64_encode(file_get_contents($logoPath));
+        }
+        
+        $pdf = Pdf::loadView('admin.orders.pdf.invoice', compact('order', 'logoBase64'))
+                  ->setPaper('A4')
+                  ->setOption('margin-top', 20)
+                  ->setOption('margin-right', 15)
+                  ->setOption('margin-bottom', 20)
+                  ->setOption('margin-left', 15)
+                  ->setOption('default_font', 'DejaVu Sans')
+                  ->setOption('isHtml5ParserEnabled', true);
+        
+        return $pdf->download('INVOICE-'.$order->order_code.'.pdf');
+    }
+
+    /**
+     * Download multiple order invoices as ZIP
+     */
+    public function downloadBulkInvoices(Request $request)
+    {
+        ini_set('memory_limit', '512M');
+        $orderIds = $request->input('selected_orders', []);
+        if (empty($orderIds)) {
+            $orderIds = $request->input('order_ids', []);
+        }
+
+        if (empty($orderIds)) {
+            return back()->with('error', 'Tidak ada order yang dipilih untuk diunduh');
+        }
+
+        $zip = new \ZipArchive();
+        $zipFileName = 'INVOICES-'.date('Ymd-His').'.zip';
+        
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $zipPath = $tempDir . '/' . $zipFileName;
+        
+        if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
+            $logoPath = public_path('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png');
+            $logoBase64 = '';
+            if (file_exists($logoPath)) {
+                $logoBase64 = base64_encode(file_get_contents($logoPath));
+            }
+
+            foreach ($orderIds as $id) {
+                $order = Order::with(['orderItems.seedLot.variety.commodity', 'orderItems.seedLot.seedClass', 'payment', 'shipment'])->findOrFail($id);
+                
+                // Calculate correct totals
+                $order->computed_subtotal = $order->orderItems->sum(function($item) {
+                    return $item->quantity * $item->price_at_order;
+                });
+                $order->computed_biaya_layanan = $order->computed_subtotal * 0.01;
+                $order->computed_biaya_aplikasi = 2500;
+                $order->computed_total = $order->computed_subtotal + $order->computed_biaya_layanan + $order->computed_biaya_aplikasi;
+
+                $pdf = Pdf::loadView('admin.orders.pdf.invoice', compact('order', 'logoBase64'))
+                          ->setPaper('A4')
+                          ->setOption('margin-top', 20)
+                          ->setOption('margin-right', 15)
+                          ->setOption('margin-bottom', 20)
+                          ->setOption('margin-left', 15)
+                          ->setOption('default_font', 'DejaVu Sans')
+                          ->setOption('isHtml5ParserEnabled', true);
+                $zip->addFromString('INVOICE-'.$order->order_code.'.pdf', $pdf->output());
+            }
+            $zip->close();
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        }
+        
+        return back()->with('error', 'Gagal membuat archive PDF');
     }
 }
