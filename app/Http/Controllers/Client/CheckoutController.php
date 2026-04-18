@@ -11,7 +11,7 @@ use App\Models\Shipment;
 use App\Models\Variety;
 use App\Models\SeedLot;
 use App\Models\AuditLog;
-use App\Mail\OrderConfirmation;
+use App\Mail\OrderNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -120,16 +120,24 @@ class CheckoutController extends Controller
             
             // Send order confirmation email if customer email is provided
             if ($order->customer_email) {
+                $recipient = trim($order->customer_email);
                 try {
-                    Mail::to($order->customer_email)->send(new OrderConfirmation($order));
+                    Log::info('[EMAIL-DEBUG] Triggering email for Order: ' . $order->order_code . ' to: ' . $recipient . ' | Type: awaiting_payment');
+                    Mail::to($recipient)->send(new OrderNotificationMail($order, 'awaiting_payment'));
+                    Log::info('[EMAIL-DEBUG] Email sent SUCCESSFULLY for Order: ' . $order->order_code);
                 } catch (\Exception $e) {
                     // Log email error but don't fail the order creation
-                    Log::error('Failed to send order confirmation email', [
+                    Log::error('[EMAIL-DEBUG] Failed to send order confirmation email', [
                         'order_id' => $order->id,
+                        'order_code' => $order->order_code,
                         'email' => $order->customer_email,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'exception_class' => get_class($e),
+                        'file' => $e->getFile() . ':' . $e->getLine(),
                     ]);
                 }
+            } else {
+                Log::warning('[EMAIL-DEBUG] No customer_email found for Order: ' . $order->order_code . ' — email skipped.');
             }
             
             // Clear cart

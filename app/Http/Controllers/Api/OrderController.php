@@ -17,6 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderNotificationMail;
 
 class OrderController extends Controller
 {
@@ -222,6 +225,24 @@ class OrderController extends Controller
             ];
 
             DB::commit();
+
+            // Send order confirmation email if customer email is provided
+            if ($order->customer_email) {
+                $recipient = trim($order->customer_email);
+                try {
+                    Log::info('[EMAIL-DEBUG-API] Triggering email for Order: ' . $order->order_code . ' to: ' . $recipient . ' | Type: awaiting_payment');
+                    Mail::to($recipient)->send(new OrderNotificationMail($order, 'awaiting_payment'));
+                    Log::info('[EMAIL-DEBUG-API] Email sent SUCCESSFULLY for Order: ' . $order->order_code);
+                } catch (\Exception $e) {
+                    // Log email error but don't fail the order creation response
+                    Log::error('[EMAIL-DEBUG-API] Failed to send order confirmation email', [
+                        'order_id' => $order->id,
+                        'order_code' => $order->order_code,
+                        'email' => $order->customer_email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // Return response based on payment method
             $responseData = [

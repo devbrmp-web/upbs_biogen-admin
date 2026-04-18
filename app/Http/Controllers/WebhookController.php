@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\AuditLog;
-use App\Mail\OrderStatusUpdate;
+use App\Mail\OrderNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -164,10 +164,9 @@ class WebhookController extends Controller
         // Send payment confirmation email
         if ($order->customer_email) {
             try {
-                Mail::to($order->customer_email)->send(new OrderStatusUpdate(
+                Mail::to($order->customer_email)->send(new OrderNotificationMail(
                     $order,
-                    $previousStatus,
-                    $order->status,
+                    'paid',
                     'Payment has been confirmed. Your order is now being processed.'
                 ));
 

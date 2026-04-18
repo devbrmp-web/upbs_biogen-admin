@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\AuditLog;
-use App\Mail\OrderStatusUpdate;
+use App\Mail\OrderNotificationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -185,7 +185,7 @@ class OrderController extends Controller
         if ($order->customer_email) {
             try {
                 Mail::to($order->customer_email)->send(
-                    new OrderStatusUpdate($order, $oldStatus, $newStatus, $request->notes)
+                    new OrderNotificationMail($order, $newStatus, $request->notes)
                 );
             } catch (\Exception $e) {
                 // Log email error but don't fail the status update
@@ -253,7 +253,7 @@ class OrderController extends Controller
         if ($order->customer_email) {
             try {
                 Mail::to($order->customer_email)->send(
-                    new OrderStatusUpdate($order, $oldStatus, Order::STATUS_CANCELLED, 'Cancelled: ' . $request->cancellation_reason)
+                    new OrderNotificationMail($order, Order::STATUS_CANCELLED, 'Cancelled: ' . $request->cancellation_reason)
                 );
             } catch (\Exception $e) {
                 // Log email error but don't fail the cancellation
@@ -436,9 +436,8 @@ class OrderController extends Controller
                 // Send email notification if customer has email
                 if ($order->customer_email) {
                     try {
-                        Mail::to($order->customer_email)->send(new OrderStatusUpdate(
+                        Mail::to($order->customer_email)->send(new OrderNotificationMail(
                             $order,
-                            $oldStatus,
                             $request->status,
                             $request->notes
                         ));
