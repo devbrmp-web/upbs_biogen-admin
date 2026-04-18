@@ -3,8 +3,8 @@
 Tujuan: Mengaktifkan integrasi data antara upbs_biogen-client (frontend) dan upbs_biogen-admin (backend) melalui API publik yang aman, sesuai SKPL Website UPBS BRMP Biogen.
 
 ## Base URL (Lokal)
-- Admin API: http://localhost:8000/api
-- Client (Frontend): http://localhost:8001
+- Admin API: {{ADMIN_APP_URL}}api
+- Client (Frontend): {{CLIENT_APP_URL}}
 
 ## Endpoint
 
@@ -71,7 +71,7 @@ Tujuan: Mengaktifkan integrasi data antara upbs_biogen-client (frontend) dan upb
 Konfigurasi: `config/cors.php`
 ```php
 'allowed_origins' => [
-    'http://localhost:8001',
+    '{{CLIENT_APP_URL}}',
 ],
 ```
 
@@ -87,7 +87,7 @@ class CatalogController extends Controller
 {
     public function index()
     {
-        $response = Http::get('http://localhost:8000/api/varieties');
+        $response = Http::get('{{ADMIN_APP_URL}}api/varieties');
         $varieties = $response->json('data') ?? [];
         return view('pages.catalog', ['varieties' => $varieties]);
     }
@@ -97,7 +97,7 @@ class CatalogController extends Controller
 ### JavaScript (fetch)
 ```js
 async function loadVarieties() {
-  const res = await fetch('http://localhost:8000/api/varieties');
+  const res = await fetch('{{ADMIN_APP_URL}}api/varieties');
   const json = await res.json();
   const items = json.data || [];
   // Render ke elemen daftar pada halaman (tanpa mengubah HTML/CSS existing)
@@ -106,7 +106,7 @@ async function loadVarieties() {
 
 ### JavaScript (axios)
 ```js
-axios.get('http://localhost:8000/api/varieties')
+axios.get('{{ADMIN_APP_URL}}api/varieties')
   .then(res => {
     const items = res.data.data || [];
     // Render ke elemen daftar pada halaman
@@ -118,15 +118,15 @@ axios.get('http://localhost:8000/api/varieties')
 
 1) Uji CORS
 ```bash
-curl -i -H "Origin: http://localhost:8001" http://localhost:8000/api/varieties
+curl -i -H "Origin: {{CLIENT_APP_URL}}" {{ADMIN_APP_URL}}api/varieties
 ```
-Pastikan header `Access-Control-Allow-Origin: http://localhost:8001` muncul.
+Pastikan header `Access-Control-Allow-Origin: {{CLIENT_APP_URL}}` muncul.
 
 2) Uji Respons API
 ```bash
-curl http://localhost:8000/api/commodities | jq
-curl http://localhost:8000/api/varieties | jq
-curl http://localhost:8000/api/varieties/inpari-32 | jq
+curl {{ADMIN_APP_URL}}api/commodities | jq
+curl {{ADMIN_APP_URL}}api/varieties | jq
+curl {{ADMIN_APP_URL}}api/varieties/inpari-32 | jq
 ```
 
 3) Uji Performa
@@ -135,9 +135,9 @@ curl http://localhost:8000/api/varieties/inpari-32 | jq
 
 ## Troubleshooting
 - CORS blocked:
-  - Pastikan `config/cors.php` ada dan `allowed_origins` memuat `http://localhost:8001`
+  - Pastikan `config/cors.php` ada dan `allowed_origins` memuat `{{CLIENT_APP_URL}}`
   - Jalankan `php artisan config:clear && php artisan config:cache`
-  - Pastikan request dari `http://localhost:8001`
+  - Pastikan request dari `{{CLIENT_APP_URL}}`
 - 404 di `GET /api/varieties/{slug}`:
   - Slug tidak ditemukan; cek data seeders/DB
   - Pastikan route sudah terdaftar di `routes/api.php`

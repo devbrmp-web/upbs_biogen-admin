@@ -21,8 +21,8 @@ Langkah Uji
    - Ekspektasi: seluruh tes lulus.
 
 3) Verifikasi UI (Manual)
-   - Start server: `php artisan serve --host=127.0.0.1 --port=8000`
-   - Buka: `http://127.0.0.1:8000/`
+   - Start server: `php artisan serve --host={{YOUR_DOMAIN}} --port=8000`
+   - Buka: `{{ADMIN_APP_URL}}`
    - Login admin (seed):
      - `admin@upbs.local` / password dari `.env` (AdminUserSeeder)
      - atau `superadmin@upbs.test` / `password`

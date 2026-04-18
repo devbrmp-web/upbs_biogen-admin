@@ -190,7 +190,7 @@ Files modified/added:
 
 ### [05-11-2025] : Implemented API for Commodities and Varieties, added CORS configuration, and rate limiting
 - Created CommodityController and VarietyController with endpoints for retrieving commodities and varieties data.
-- Implemented CORS configuration to allow access from upbs_biogen-client (localhost:8001).
+- Implemented CORS configuration to allow access from upbs_biogen-client ({{CLIENT_APP_URL}}).
 - Applied rate limiting for public API endpoints (/commodities, /varieties).
 - Updated routes/api.php and added necessary middleware for API requests.
 - Added documentation for API endpoints in docs/api-commodities-varieties.md.
@@ -199,7 +199,7 @@ Files modified/added:
 Implemented API for Commodities and Varieties, added CORS configuration, and rate limiting
 
 - Created CommodityController and VarietyController with endpoints for retrieving commodities and varieties data.
-- Implemented CORS configuration to allow access from upbs_biogen-client (localhost:8001).
+- Implemented CORS configuration to allow access from upbs_biogen-client ({{CLIENT_APP_URL}}).
 - Applied rate limiting for public API endpoints (/commodities, /varieties).
 - Updated routes/api.php and added necessary middleware for API requests.
 - Added documentation for API endpoints in docs/api-commodities-varieties.md.

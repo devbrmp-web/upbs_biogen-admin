@@ -51,7 +51,7 @@ php artisan route:list | findstr orders/track
 ```
 php artisan serve
 ```
-- Uji dengan Postman: `GET http://localhost:8000/api/orders/track/ID1234567890`.
+- Uji dengan Postman: `GET {{ADMIN_APP_URL}}api/orders/track/ID1234567890`.
 - Jalankan test:
 ```
 php artisan test --filter=OrderTracking
@@ -59,7 +59,7 @@ php artisan test --filter=OrderTracking
 
 ## Integrasi Frontend (Client)
 - Frontend (`C:\laragon\www\upbs_biogen-client`) melakukan request `GET /api/orders/track/{tracking_number}`.
-- Pastikan base URL sudah mengarah ke host admin (Laragon domain atau `localhost:8000`).
+- Pastikan base URL sudah mengarah ke host admin (Laragon domain atau `{{ADMIN_APP_URL}}`).
 - Verifikasi manual melalui Postman dahulu, lalu pastikan UI menampilkan status dari bidang `status/shipment_status`.
 
 ## Asumsi

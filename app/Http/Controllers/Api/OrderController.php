@@ -230,12 +230,10 @@ class OrderController extends Controller
             if ($order->customer_email) {
                 $recipient = trim($order->customer_email);
                 try {
-                    Log::info('[EMAIL-DEBUG-API] Triggering email for Order: ' . $order->order_code . ' to: ' . $recipient . ' | Type: awaiting_payment');
                     Mail::to($recipient)->send(new OrderNotificationMail($order, 'awaiting_payment'));
-                    Log::info('[EMAIL-DEBUG-API] Email sent SUCCESSFULLY for Order: ' . $order->order_code);
                 } catch (\Exception $e) {
-                    // Log email error but don't fail the order creation response
-                    Log::error('[EMAIL-DEBUG-API] Failed to send order confirmation email', [
+                    // Log email error abstractly
+                    Log::error('Failed to send order confirmation email', [
                         'order_id' => $order->id,
                         'order_code' => $order->order_code,
                         'email' => $order->customer_email,

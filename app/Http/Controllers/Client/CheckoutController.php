@@ -122,12 +122,10 @@ class CheckoutController extends Controller
             if ($order->customer_email) {
                 $recipient = trim($order->customer_email);
                 try {
-                    Log::info('[EMAIL-DEBUG] Triggering email for Order: ' . $order->order_code . ' to: ' . $recipient . ' | Type: awaiting_payment');
                     Mail::to($recipient)->send(new OrderNotificationMail($order, 'awaiting_payment'));
-                    Log::info('[EMAIL-DEBUG] Email sent SUCCESSFULLY for Order: ' . $order->order_code);
                 } catch (\Exception $e) {
-                    // Log email error but don't fail the order creation
-                    Log::error('[EMAIL-DEBUG] Failed to send order confirmation email', [
+                    // Log email error abstractly
+                    Log::error('Failed to send order confirmation email', [
                         'order_id' => $order->id,
                         'order_code' => $order->order_code,
                         'email' => $order->customer_email,
@@ -137,7 +135,7 @@ class CheckoutController extends Controller
                     ]);
                 }
             } else {
-                Log::warning('[EMAIL-DEBUG] No customer_email found for Order: ' . $order->order_code . ' — email skipped.');
+                // No customer email found, shipping email quietly
             }
             
             // Clear cart

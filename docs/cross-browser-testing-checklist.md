@@ -3,9 +3,9 @@
 ## Pagination and Table Styling Standardization
 
 ### Test URLs
-- **Seed Lots**: http://127.0.0.1:8000/admin/seed-lots
-- **Seed Classes**: http://127.0.0.1:8000/admin/seed-classes  
-- **Admin Users**: http://127.0.0.1:8000/admin/admin-users
+- **Seed Lots**: {{ADMIN_APP_URL}}admin/seed-lots
+- **Seed Classes**: {{ADMIN_APP_URL}}admin/seed-classes  
+- **Admin Users**: {{ADMIN_APP_URL}}admin/admin-users
 
 ### Browser Testing Matrix
 

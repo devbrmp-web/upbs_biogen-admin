@@ -6,8 +6,8 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Konfigurasi CORS agar frontend upbs_biogen-client (localhost:8001)
-    | dapat mengakses API di upbs_biogen-admin (localhost:8000).
+    | Konfigurasi CORS agar frontend upbs_biogen-client ({{APP_URL}})
+    | dapat mengakses API di upbs_biogen-admin ({{APP_URL}}).
     |
     */
 
@@ -17,10 +17,7 @@ return [
     'allowed_methods' => ['*'],
 
     // Frontend client yang diizinkan
-    'allowed_origins' => [
-        'http://localhost:8001',
-        'http://127.0.0.1:8001',
-    ],
+    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', '')),
 
     'allowed_origins_patterns' => [],
 

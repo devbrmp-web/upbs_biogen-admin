@@ -30,7 +30,7 @@ class AuditLogSeeder extends Seeder
             'record_id' => $admin->id,
             'description' => "User logged in: {$admin->email}",
             'category' => AuditLog::CATEGORY_AUTHENTICATION,
-            'ip_address' => '127.0.0.1',
+            'ip_address' => '192.168.1.1',
             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'created_at' => now()->subHours(2),
         ]);
@@ -50,7 +50,7 @@ class AuditLogSeeder extends Seeder
             ],
             'description' => 'Created variety record',
             'category' => AuditLog::CATEGORY_INVENTORY_MANAGEMENT,
-            'ip_address' => '127.0.0.1',
+            'ip_address' => '192.168.1.1',
             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'created_at' => now()->subHours(1)->subMinutes(30),
         ]);
@@ -65,7 +65,7 @@ class AuditLogSeeder extends Seeder
             'new_data' => ['price' => 55000],
             'description' => 'Updated varieties record',
             'category' => AuditLog::CATEGORY_INVENTORY_MANAGEMENT,
-            'ip_address' => '127.0.0.1',
+            'ip_address' => '192.168.1.1',
             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'created_at' => now()->subHours(1),
         ]);
@@ -84,7 +84,7 @@ class AuditLogSeeder extends Seeder
             ],
             'description' => 'Created orders record',
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
-            'ip_address' => '127.0.0.1',
+            'ip_address' => '192.168.1.1',
             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'created_at' => now()->subMinutes(45),
         ]);
@@ -99,7 +99,7 @@ class AuditLogSeeder extends Seeder
             'new_data' => null,
             'description' => 'Deleted seed_lots record',
             'category' => AuditLog::CATEGORY_INVENTORY_MANAGEMENT,
-            'ip_address' => '127.0.0.1',
+            'ip_address' => '192.168.1.1',
             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'created_at' => now()->subMinutes(10),
         ]);

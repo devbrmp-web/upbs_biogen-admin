@@ -31,7 +31,7 @@ Zona waktu: Asia/Jakarta | Bahasa: Indonesia | Mata uang: IDR
 2. Jalankan test unit terkait stok:
    - `php artisan test --filter=VarietyStockCalculationTest --stop-on-failure`
 3. Jalankan server untuk pratinjau UI:
-   - `php artisan serve` lalu buka `http://127.0.0.1:8000/`.
+   - `php artisan serve` lalu buka `{{ADMIN_APP_URL}}`.
 
 ## Env & Prasyarat
 - `APP_ENV`, `APP_KEY`, koneksi `DB_*` telah dikonfigurasi di `.env`.

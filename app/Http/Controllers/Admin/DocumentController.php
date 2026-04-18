@@ -18,7 +18,7 @@ class DocumentController extends Controller
             'order_code' => 'required|string|exists:orders,order_code',
         ]);
 
-        // Redirect to client app on port 8001 as requested
-        return redirect()->away('http://localhost:8001/pesanan/signature/'.$request->order_code);
+        // Redirect to client app
+        return redirect()->away(rtrim(config('app.client_url'), '/') . '/pesanan/signature/' . $request->order_code);
     }
 }

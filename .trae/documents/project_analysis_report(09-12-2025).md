@@ -240,8 +240,8 @@ GET  /tentang-kami         # About page
 
 ```php
 'allowed_origins' => [
-    'http://localhost:8001',
-    'http://127.0.0.1:8001',
+    '{{CLIENT_APP_URL}}',
+    '{{CLIENT_APP_URL}}',
 ],
 'paths' => ['api/*', 'sanctum/csrf-cookie'],
 'supports_credentials' => false,

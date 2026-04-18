@@ -229,7 +229,7 @@ class DemoOrderSeeder extends Seeder
                 'status' => $paymentStatus,
                 'paid_at' => $paidAt,
                 'expires_at' => (clone $createdAt)->modify('+1 day'),
-                'payment_ip' => '127.0.0.1',
+                'payment_ip' => '192.168.1.1',
                 'notes' => $paymentStatus === Payment::STATUS_PAID ? 'Demo paid payment' : 'Demo pending payment',
             ]);
 

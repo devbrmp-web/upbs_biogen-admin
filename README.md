@@ -273,3 +273,10 @@ docs/
 
 Private / Internal Use Only.
 Hak cipta © 2025 UPBS Biogen. Semua hak dilindungi.
+
+
+## 🔧 Konfigurasi Port & URL
+> **Semua port dan URL dijalankan secara dinamis berdasarkan file `.env`**. 
+> Pastikan untuk mereferensikan pengaturan CORS (jika ada script spesifik port lokal) dari API Admin ke port yang sesuai. Atur semua Base URLs (`APP_URL`, `CLIENT_APP_URL`, `VITE_API_BASE_URL`) di dalam file `.env` sebelum menjalankan aplikasi. Dilarang mensimulasikan env production dengan raw code modification.
+\ n >   * * P e n t i n g   u n t u k   F i t u r   E m a i l : * *   A p l i k a s i   i n i   t e r h u b u n g   d a n   m e m b u t u h k a n   r e s o l u s i   A P P _ U R L   s e r t a   C L I E N T _ A P P _ U R L   ( a t a u   V I T E _ A P I _ B A S E _ U R L )   y a n g   t e r k o n f i g u r a s i   d e n g a n   b e n a r   d i   . e n v   a g a r   m e k a n i s m e   l i n k   t r a c k i n g   s t a t u s   o r d e r   p a d a   t e m p l a t e   e m a i l   d a p a t   d i   * c l i c k *   o l e h   p e n g g u n a .  
+ 
