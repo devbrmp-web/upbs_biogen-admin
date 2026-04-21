@@ -100,13 +100,12 @@ class OrderNotificationMail extends Mailable implements ShouldQueue
         // Ensure relations are loaded
         $this->order->load(['orderItems.seedLot.variety.commodity', 'orderItems.seedLot.seedClass', 'payment', 'shipment']);
         
-        // Calculate correct totals (Snapshot for PDF)
-        $this->order->computed_subtotal = $this->order->orderItems->sum(function($item) {
-            return $item->quantity * $item->price_at_order;
-        });
-        $this->order->computed_biaya_layanan = $this->order->computed_subtotal * 0.01;
-        $this->order->computed_biaya_aplikasi = 2500;
-        $this->order->computed_total = $this->order->computed_subtotal + $this->order->computed_biaya_layanan + $this->order->computed_biaya_aplikasi;
+        // Use authoritative values from DB (calculated by Order::calculateTotals())
+        // Do NOT recalculate manually — single source of truth is the database.
+        $this->order->computed_subtotal         = (float) $this->order->subtotal;
+        $this->order->computed_biaya_layanan    = (float) $this->order->service_fee;
+        $this->order->computed_biaya_aplikasi   = (float) $this->order->app_fee;
+        $this->order->computed_total            = (float) $this->order->total_amount;
 
         $logoPath = public_path('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png');
         $logoBase64 = '';

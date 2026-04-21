@@ -70,10 +70,12 @@ class CheckoutController extends Controller
             ];
         }
 
-        // Calculate fees
-        $serviceFee = round($subtotal * 0.01);
-        $appFee = 1000;
+        // Calculate fees for preview display (mirrors Order::calculateTotals() formula)
+        // These values are NEVER persisted directly — calculateTotals() is the authoritative source.
+        $serviceFee = round($subtotal * 0.01); // 1% service fee
+        $appFee = 4000;                         // Flat application fee (must match Order::calculateTotals)
         $totalAmount = $subtotal + $serviceFee + $appFee;
+
         
         return view('client.checkout.index', [
             'title' => 'Checkout',
@@ -94,20 +96,24 @@ class CheckoutController extends Controller
         try {
             DB::beginTransaction();
             
-            // Create the order with price snapshots
+            // Step 1: Create the order record (totals = 0 at this point)
             $order = $this->createOrder($request);
             
-            // Create order items with price snapshots
+            // Step 2: Create order items — this populates total_price per item
             $this->createOrderItems($order, $request->items);
             
-            // Create initial payment record
+            // Step 3: CALCULATE TOTALS FIRST — ensures service_fee, app_fee, total_amount
+            // are correctly computed from items BEFORE any money amount is recorded.
+            // IMPORTANT: This MUST run before createPayment() to avoid payment.amount = 0.
+            $order->load('items');
+            $order->calculateTotals();
+            $order->refresh(); // Ensure in-memory model reflects updated totals
+
+            // Step 4: Create payment record — now uses the correctly computed total_amount
             $payment = $this->createPayment($order, $request);
             
-            // Create shipment record
+            // Step 5: Create shipment record
             $shipment = $this->createShipment($order);
-            
-            // Calculate final totals
-            $order->calculateTotals();
             
             // Log the order creation
             AuditLog::logCreate(

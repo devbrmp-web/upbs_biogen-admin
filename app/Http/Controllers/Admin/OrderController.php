@@ -602,13 +602,12 @@ class OrderController extends Controller
         ini_set('memory_limit', '256M');
         $order = Order::with(['orderItems.seedLot.variety.commodity', 'orderItems.seedLot.seedClass', 'payment', 'shipment'])->findOrFail($id);
         
-        // Calculate correct totals
-        $order->computed_subtotal = $order->orderItems->sum(function($item) {
-            return $item->quantity * $item->price_at_order;
-        });
-        $order->computed_biaya_layanan = $order->computed_subtotal * 0.01;
-        $order->computed_biaya_aplikasi = 2500;
-        $order->computed_total = $order->computed_subtotal + $order->computed_biaya_layanan + $order->computed_biaya_aplikasi;
+        // Use authoritative values from DB (calculated by Order::calculateTotals())
+        // Do NOT recalculate manually — single source of truth is the database.
+        $order->computed_subtotal         = (float) $order->subtotal;
+        $order->computed_biaya_layanan    = (float) $order->service_fee;
+        $order->computed_biaya_aplikasi   = (float) $order->app_fee;
+        $order->computed_total            = (float) $order->total_amount;
 
         $logoPath = public_path('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png');
         $logoBase64 = '';
@@ -662,13 +661,12 @@ class OrderController extends Controller
             foreach ($orderIds as $id) {
                 $order = Order::with(['orderItems.seedLot.variety.commodity', 'orderItems.seedLot.seedClass', 'payment', 'shipment'])->findOrFail($id);
                 
-                // Calculate correct totals
-                $order->computed_subtotal = $order->orderItems->sum(function($item) {
-                    return $item->quantity * $item->price_at_order;
-                });
-                $order->computed_biaya_layanan = $order->computed_subtotal * 0.01;
-                $order->computed_biaya_aplikasi = 2500;
-                $order->computed_total = $order->computed_subtotal + $order->computed_biaya_layanan + $order->computed_biaya_aplikasi;
+                // Use authoritative values from DB (calculated by Order::calculateTotals())
+                // Do NOT recalculate manually — single source of truth is the database.
+                $order->computed_subtotal         = (float) $order->subtotal;
+                $order->computed_biaya_layanan    = (float) $order->service_fee;
+                $order->computed_biaya_aplikasi   = (float) $order->app_fee;
+                $order->computed_total            = (float) $order->total_amount;
 
                 $pdf = Pdf::loadView('admin.orders.pdf.invoice', compact('order', 'logoBase64'))
                           ->setPaper('A4')
