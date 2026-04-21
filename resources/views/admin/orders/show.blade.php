@@ -296,13 +296,26 @@
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
-                                <th colspan="3" class="text-end">Subtotal:</th>
-                                <th class="text-end">Rp {{ number_format($order->subtotal_amount, 0, ',', '.') }}</th>
+                                <th colspan="3" class="text-end">Subtotal Produk:</th>
+                                {{-- FIXED: was using $order->subtotal_amount (non-existent accessor) → now uses $order->subtotal --}}
+                                <th class="text-end">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</th>
                             </tr>
+                            @if($order->service_fee > 0)
+                                <tr>
+                                    <th colspan="3" class="text-end fw-normal text-muted">Biaya Layanan (1%):</th>
+                                    <th class="text-end fw-normal">Rp {{ number_format($order->service_fee, 0, ',', '.') }}</th>
+                                </tr>
+                            @endif
+                            @if($order->app_fee > 0)
+                                <tr>
+                                    <th colspan="3" class="text-end fw-normal text-muted">Biaya Aplikasi:</th>
+                                    <th class="text-end fw-normal">Rp {{ number_format($order->app_fee, 0, ',', '.') }}</th>
+                                </tr>
+                            @endif
                             @if($order->shipping_cost > 0)
                                 <tr>
-                                    <th colspan="3" class="text-end">Shipping:</th>
-                                    <th class="text-end">Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</th>
+                                    <th colspan="3" class="text-end fw-normal text-muted">Biaya Pengiriman:</th>
+                                    <th class="text-end fw-normal">Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</th>
                                 </tr>
                             @endif
                             <tr class="table-primary">

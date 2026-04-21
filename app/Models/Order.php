@@ -316,19 +316,38 @@ class Order extends Model
 
     /**
      * Calculate totals
+     *
+     * Formula:
+     *   subtotal     = sum of all order_items.total_price
+     *   service_fee  = round(subtotal * 0.01)   [1% biaya layanan]
+     *   app_fee      = 4000                      [biaya aplikasi flat]
+     *   total_amount = subtotal + service_fee + app_fee + shipping_cost
+     *
+     * Note: shipping_cost is set separately via courier logic AFTER this call.
+     * We persist what we know now; the caller must call $order->update(['shipping_cost'=>...])
+     * and recalculate if needed — OR include shipping_cost here via the already-saved value.
      */
     public function calculateTotals(): void
     {
-        $subtotal = $this->items->sum('total_price');
+        // Step 1: Sum all item totals (each item.total_price = unit_price * quantity)
+        $subtotal = (float) $this->items->sum('total_price');
+
+        // Step 2: 1% service fee, rounded to nearest Rupiah
         $serviceFee = round($subtotal * 0.01);
+
+        // Step 3: Flat application fee
         $appFee = 4000;
-        
-        $totalAmount = $subtotal + $serviceFee + $appFee;
-        
+
+        // Step 4: Include existing shipping_cost (set before or after, 0 for pickup)
+        $shippingCost = (float) ($this->shipping_cost ?? 0);
+
+        // Step 5: Grand total is purely additive — no hidden fees
+        $totalAmount = $subtotal + $serviceFee + $appFee + $shippingCost;
+
         $this->update([
-            'subtotal' => $subtotal,
-            'service_fee' => $serviceFee,
-            'app_fee' => $appFee,
+            'subtotal'     => $subtotal,
+            'service_fee'  => $serviceFee,
+            'app_fee'      => $appFee,
             'total_amount' => $totalAmount,
         ]);
     }

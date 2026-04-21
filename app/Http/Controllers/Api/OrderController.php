@@ -449,44 +449,50 @@ class OrderController extends Controller
         $payment = $order->payment;
         
         $data = [
-            'order_code' => $order->order_code,
-            'status' => $order->status,
-            'subtotal' => (float) $order->subtotal,
-            'total_amount' => (float) $order->total_amount,
-            'customer_name' => $order->customer_name,
+            'order_code'     => $order->order_code,
+            'status'         => $order->status,
+            // === Financial data — all from DB, client must NOT recalculate ===
+            'subtotal'       => (float) $order->subtotal,
+            'service_fee'    => (float) $order->service_fee,
+            'app_fee'        => (float) $order->app_fee,
+            'shipping_cost'  => (float) $order->shipping_cost,
+            'total_amount'   => (float) $order->total_amount,
+            // === Customer ===
+            'customer_name'  => $order->customer_name,
             'customer_phone' => $order->customer_phone,
             'customer_address' => $order->customer_address,
             'customer_email' => $order->customer_email,
+            // === Shipping ===
             'shipping_method' => $order->shipping_method,
             'shipping_method_label' => $order->shipping_method_label,
-            'courier_name' => $shipment?->courier_name ?: $order->courier_name,
+            'courier_name'    => $shipment?->courier_name ?: $order->courier_name,
             'courier_service' => $shipment?->courier_service ?: $order->courier_service,
             'shipment_status' => $shipment?->status,
             'tracking_number' => $shipment?->tracking_number ?: $order->tracking_number,
-            'signature_path' => $order->signature_path,
-            // Payment info addition
-            'payment_type' => $order->payment_type,
-            'transaction_id' => $order->transaction_id,
-            'transaction_status' => $order->transaction_status,
-            'paid_at' => $order->paid_at,
-            'settlement_time' => $order->settlement_time,
+            'signature_path'  => $order->signature_path,
+            // === Payment info ===
+            'payment_type'        => $order->payment_type,
+            'transaction_id'      => $order->transaction_id,
+            'transaction_status'  => $order->transaction_status,
+            'paid_at'             => $order->paid_at,
+            'settlement_time'     => $order->settlement_time,
             'payment' => $payment ? [
-                'payment_method' => $payment->payment_method,
-                'status' => $payment->status,
-                'paid_at' => $payment->paid_at,
-                'transaction_id' => $payment->transaction_id,
+                'payment_method'    => $payment->payment_method,
+                'status'            => $payment->status,
+                'paid_at'           => $payment->paid_at,
+                'transaction_id'    => $payment->transaction_id,
                 'gateway_reference' => $payment->gateway_reference,
-                'pnbp_receipt_no' => $payment->pnbp_receipt_no,
+                'pnbp_receipt_no'   => $payment->pnbp_receipt_no,
             ] : null,
             'items' => $order->orderItems->map(function ($it) {
                 return [
-                    'variety_id' => $it->variety_id,
-                    'name' => $it->name,
-                    'quantity' => (int) $it->quantity,
-                    'unit_price' => (float) $it->unit_price,
-                    'seed_lot_id' => $it->seed_lot_id,
-                    'seed_class_code' => $it->seed_class_code,
-                    'resolved_variety_name' => $it->variety_name // Ensure variety name is available
+                    'variety_id'           => $it->variety_id,
+                    'name'                 => $it->name,
+                    'quantity'             => (int) $it->quantity,
+                    'unit_price'           => (float) $it->unit_price,
+                    'seed_lot_id'          => $it->seed_lot_id,
+                    'seed_class_code'      => $it->seed_class_code,
+                    'resolved_variety_name' => $it->variety_name,
                 ];
             })->toArray(),
         ];
