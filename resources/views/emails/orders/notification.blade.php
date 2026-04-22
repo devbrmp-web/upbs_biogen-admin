@@ -6,7 +6,7 @@
     <title>{{ $order->order_code }} - Update Status Pesanan</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', Inter, sans-serif;
             line-height: 1.6;
             color: #333;
             margin: 0;
@@ -17,14 +17,14 @@
             max-width: 600px;
             margin: 20px auto;
             background: #ffffff;
-            border-radius: 8px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .header {
-            background-color: #2E7D32;
+            background-color: #047857;
             color: #ffffff;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
         }
         .header h1 {
@@ -33,7 +33,7 @@
             letter-spacing: 1px;
         }
         .content {
-            padding: 30px;
+            padding: 40px 30px;
         }
         .status-badge {
             display: inline-block;
@@ -45,9 +45,9 @@
             margin-bottom: 20px;
         }
         .status-awaiting_payment { background-color: #FFF3E0; color: #E65100; }
-        .status-paid, .status-processing { background-color: #E8F5E9; color: #2E7D32; }
+        .status-paid, .status-processing { background-color: #ecfdf5; color: #047857; }
         .status-pickup_ready { background-color: #E3F2FD; color: #1565C0; }
-        .status-completed { background-color: #E8F5E9; color: #2E7D32; }
+        .status-completed { background-color: #ecfdf5; color: #047857; }
         .status-cancelled { background-color: #FFEBEE; color: #C62828; }
 
         .order-info {
@@ -55,14 +55,14 @@
             border-radius: 6px;
             padding: 20px;
             margin-bottom: 25px;
-            border-left: 4px solid #2E7D32;
+            border-left: 4px solid #047857;
         }
         .order-info p {
             margin: 5px 0;
             font-size: 14px;
         }
         .order-info strong {
-            color: #2E7D32;
+            color: #047857;
         }
 
         .items-table {
@@ -72,7 +72,7 @@
         }
         .items-table th {
             text-align: left;
-            border-bottom: 2px solid #E8F5E9;
+            border-bottom: 2px solid #ecfdf5;
             padding: 10px 5px;
             font-size: 13px;
             color: #666;
@@ -85,13 +85,13 @@
         .total-row {
             font-weight: bold;
             font-size: 16px;
-            color: #2E7D32;
+            color: #047857;
         }
 
         .button {
             display: inline-block;
             padding: 14px 28px;
-            background-color: #2E7D32;
+            background-color: #047857;
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 6px;
