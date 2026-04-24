@@ -73,6 +73,26 @@ class SeedLot extends Model
     }
 
     /**
+     * Get the quantity normalized to Kilograms.
+     */
+    public function getQuantityInKgAttribute(): float
+    {
+        $unit = strtolower($this->unit);
+        $qty = (float) $this->quantity;
+
+        if (in_array($unit, ['gr', 'gram', 'grams'])) {
+            return $qty / 1000;
+        }
+
+        if (in_array($unit, ['kg', 'kilogram', 'kilograms'])) {
+            return $qty;
+        }
+
+        // For other units like 'botol' or 'pcs', they are ignored in weight calculations
+        return 0;
+    }
+
+    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName(): string

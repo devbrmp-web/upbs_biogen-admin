@@ -394,13 +394,14 @@ class DashboardController extends Controller
                     : Carbon::createFromDate($lot->production_year, 1, 1);
                 
                 $ageInMonths = $harvestDate->diffInMonths(Carbon::now());
+                $qty = $lot->quantity_in_kg;
 
                 if ($ageInMonths < 6) {
-                    $fresh += $lot->quantity;
+                    $fresh += $qty;
                 } elseif ($ageInMonths >= 6 && $ageInMonths <= 12) {
-                    $warning += $lot->quantity;
+                    $warning += $qty;
                 } else {
-                    $critical += $lot->quantity;
+                    $critical += $qty;
                 }
             }
 
