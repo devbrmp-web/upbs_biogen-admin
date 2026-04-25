@@ -12,40 +12,40 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Unit options for different seed classes
-    const unitOptions = {
-        'BS': [
-            { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'ton', text: 'Ton' }
-        ],
-        'FS': [
-            { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'ton', text: 'Ton' }
-        ],
-        'PL': [
-            { value: 'bottle', text: 'Bottle' },
-            { value: 'piece', text: 'Piece' }
-        ],
-        'default': [
-            { value: 'kg', text: 'Kilogram (kg)' },
-            { value: 'ton', text: 'Ton' },
-            { value: 'piece', text: 'Piece' },
-            { value: 'bottle', text: 'Bottle' }
-        ]
-    };
-
     function updateUnitOptions() {
         const selectedOption = seedClassSelect.options[seedClassSelect.selectedIndex];
-        const seedClassCode = selectedOption.getAttribute('data-code');
+        if (!selectedOption || !selectedOption.value) {
+            unitSelect.innerHTML = '<option value="">Select Unit</option>';
+            return;
+        }
+
+        const category = selectedOption.getAttribute('data-category');
+        const defaultUnit = selectedOption.getAttribute('data-unit') || 'kg';
         const currentValue = unitSelect.value;
         
-        // Clear current options except the first one (placeholder)
-        while (unitSelect.children.length > 1) {
-            unitSelect.removeChild(unitSelect.lastChild);
-        }
+        // Clear current options except the first one
+        unitSelect.innerHTML = '<option value="">Select Unit</option>';
         
-        // Get appropriate unit options
-        const options = unitOptions[seedClassCode] || unitOptions['default'];
+        // Build dynamic options
+        let options = [];
+        if (category === 'weight') {
+            options = [
+                { value: 'kg', text: 'Kilogram (kg)' },
+                { value: 'ton', text: 'Ton' }
+            ];
+            // If default_unit is something else (like gram), add it
+            if (defaultUnit !== 'kg' && defaultUnit !== 'ton') {
+                options.push({ value: defaultUnit, text: defaultUnit.charAt(0).toUpperCase() + defaultUnit.slice(1) });
+            }
+        } else {
+            // Unit-based category: allow the default unit
+            options = [
+                { value: defaultUnit, text: defaultUnit.charAt(0).toUpperCase() + defaultUnit.slice(1) }
+            ];
+            // Add piece/bottle as fallback options if not already the default
+            if (defaultUnit !== 'piece') options.push({ value: 'piece', text: 'Piece' });
+            if (defaultUnit !== 'bottle') options.push({ value: 'bottle', text: 'Bottle' });
+        }
         
         // Add new options
         options.forEach(option => {
@@ -53,11 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
             optionElement.value = option.value;
             optionElement.textContent = option.text;
             
-            // Restore previous selection if valid
             if (option.value === currentValue) {
                 optionElement.selected = true;
             }
-            
             unitSelect.appendChild(optionElement);
         });
         
@@ -65,99 +63,67 @@ document.addEventListener('DOMContentLoaded', function() {
         const validValues = options.map(opt => opt.value);
         if (currentValue && !validValues.includes(currentValue)) {
             unitSelect.value = '';
-            
-            // Show validation message
-            showUnitValidationMessage(seedClassCode);
+            showUnitValidationMessage(category, defaultUnit);
         } else {
             hideUnitValidationMessage();
         }
 
         // Update quantity behavior based on seed class
-        updateQuantityBehavior(seedClassCode);
+        updateQuantityBehavior(category);
     }
 
-    function showUnitValidationMessage(seedClassCode) {
+    function showUnitValidationMessage(category, defaultUnit) {
         let message = '';
-        
-        switch (seedClassCode) {
-            case 'BS':
-            case 'FS':
-                message = 'BS and FS classes must use kg or ton units.';
-                break;
-            case 'PL':
-                message = 'PL class must use bottle or piece units.';
-                break;
+        if (category === 'weight') {
+            message = `Weight-based classes should use kg, ton, or ${defaultUnit}.`;
+        } else {
+            message = `Unit-based classes should use ${defaultUnit}, piece, or bottle.`;
         }
         
         if (message) {
-            // Remove existing message
             hideUnitValidationMessage();
-            
-            // Create new message
             const messageDiv = document.createElement('div');
             messageDiv.className = 'alert alert-warning mt-2 seed-class-unit-message';
             messageDiv.innerHTML = `<small><i class="bx bx-info-circle"></i> ${message}</small>`;
-            
             unitSelect.parentNode.appendChild(messageDiv);
         }
     }
 
     function hideUnitValidationMessage() {
         const existingMessage = document.querySelector('.seed-class-unit-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-    }
-
-    // Update seed class options to include data-code attribute
-    function initializeSeedClassOptions() {
-        const seedClassOptions = seedClassSelect.querySelectorAll('option[value]');
-        
-        seedClassOptions.forEach(option => {
-            const text = option.textContent;
-            
-            // Extract code from text like "Breeder Seed (BS)" -> "BS"
-            const codeMatch = text.match(/\(([^)]+)\)$/);
-            if (codeMatch) {
-                option.setAttribute('data-code', codeMatch[1]);
-            }
-        });
+        if (existingMessage) existingMessage.remove();
     }
 
     // Initialize
-    initializeSeedClassOptions();
-    
-    // Listen for seed class changes
     seedClassSelect.addEventListener('change', updateUnitOptions);
     
-    // Initial update if seed class is already selected
     if (seedClassSelect.value) {
         updateUnitOptions();
     }
 
-    /**
-     * Update quantity input step and validation behavior
-     * - Integer-only for ALL classes
-     */
-    function updateQuantityBehavior(seedClassCode) {
+    function updateQuantityBehavior(category) {
         if (!quantityInput) return;
-        // Enforce integer-only for ALL seed classes
         quantityInput.setAttribute('step', '1');
         quantityInput.setAttribute('min', '0');
         showQuantityValidationMessage('Quantity must be an integer (no decimals) for all classes.');
     }
 
-    // Enforce integer input
-    quantityInput.addEventListener('keypress', function(e) {
-        const char = String.fromCharCode(e.which);
-        // Block any non-digit input (including '.')
-        if (!/[0-9]/.test(char)) {
+    // Enforce integer input (Integer-Only Policy)
+    quantityInput.addEventListener('keydown', function(e) {
+        // Block: . , - e
+        if (['.', ',', '-', 'e', 'E'].includes(e.key)) {
             e.preventDefault();
         }
     });
+
     quantityInput.addEventListener('input', function() {
-        // Strip non-digits to enforce integer-only
-        this.value = this.value.replace(/[^0-9]/g, '');
+        // Strict normalization: strip anything non-digit and floor if necessary
+        let val = this.value.replace(/[^0-9]/g, '');
+        if (val !== '') {
+            this.value = Math.floor(parseInt(val));
+        } else {
+            this.value = '';
+        }
     });
 
     function showQuantityValidationMessage(message) {

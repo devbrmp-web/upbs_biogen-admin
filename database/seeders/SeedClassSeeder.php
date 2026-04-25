@@ -27,9 +27,9 @@ class SeedClassSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'code' => 'PL',
-                'name' => 'Planlet',
-                'description' => 'Planlet - Tissue culture plantlets, measured in bottles',
+                'code' => 'ST',
+                'name' => 'Starter',
+                'description' => 'Starter - Tissue culture plantlets, measured in bottles',
                 'is_active' => true,
             ],
         ];

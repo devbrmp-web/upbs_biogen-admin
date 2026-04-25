@@ -46,11 +46,62 @@
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control @error('description') is-invalid @enderror" 
-                                  id="description" name="description" rows="4" 
-                                  placeholder="Enter description for this seed class...">{{ old('description', $seedClass->description) }}</textarea>
+                                  id="description" name="description" rows="2" 
+                                  placeholder="Enter description...">{{ old('description', $seedClass->description) }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock_category" class="form-label">Stock Category <span class="text-danger">*</span></label>
+                                <select class="form-select @error('stock_category') is-invalid @enderror" id="stock_category" name="stock_category" required>
+                                    <option value="weight" {{ old('stock_category', $seedClass->stock_category) == 'weight' ? 'selected' : '' }}>Weight (Kg/Gram)</option>
+                                    <option value="unit" {{ old('stock_category', $seedClass->stock_category) == 'unit' ? 'selected' : '' }}>Unit (Bottle/Piece)</option>
+                                </select>
+                                @error('stock_category')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="default_unit" class="form-label">Default Unit <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('default_unit') is-invalid @enderror" 
+                                       id="default_unit" name="default_unit" value="{{ old('default_unit', $seedClass->default_unit) }}" 
+                                       placeholder="e.g., kg, bottle" required>
+                                @error('default_unit')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="min_order_qty" class="form-label">Min. Order Qty <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control @error('min_order_qty') is-invalid @enderror" 
+                                       id="min_order_qty" name="min_order_qty" value="{{ old('min_order_qty', $seedClass->min_order_qty) }}" 
+                                       min="1" required>
+                                @error('min_order_qty')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="step_increment" class="form-label">Step Increment <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control @error('step_increment') is-invalid @enderror" 
+                                       id="step_increment" name="step_increment" value="{{ old('step_increment', $seedClass->step_increment) }}" 
+                                       min="1" required>
+                                @error('step_increment')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">

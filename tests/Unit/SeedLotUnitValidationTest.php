@@ -25,7 +25,7 @@ class SeedLotUnitValidationTest extends TestCase
 
     protected SeedClass $fsSeedClass;
 
-    protected SeedClass $plSeedClass;
+    protected SeedClass $stSeedClass;
 
     protected function setUp(): void
     {
@@ -40,7 +40,7 @@ class SeedLotUnitValidationTest extends TestCase
         // Get seed classes
         $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
-        $this->plSeedClass = SeedClass::where('code', 'PL')->first();
+        $this->stSeedClass = SeedClass::where('code', 'ST')->first();
     }
 
     #[Test]
@@ -114,36 +114,36 @@ class SeedLotUnitValidationTest extends TestCase
     }
 
     #[Test]
-    public function store_request_validates_planlet_seed_class_units_correctly()
+    public function store_request_validates_starter_seed_class_units_correctly()
     {
         $request = new StoreSeedLotRequest;
 
-        // Valid units for Planlet
+        // Valid units for Starter
         $validUnits = ['bottle', 'piece'];
         foreach ($validUnits as $unit) {
             $data = $this->getBaseSeedLotData([
-                'seed_class_id' => $this->plSeedClass->id,
+                'seed_class_id' => $this->stSeedClass->id,
                 'unit' => $unit,
             ]);
 
             $request->merge($data);
             $validator = Validator::make($request->all(), $request->rules(), $request->messages());
             $this->assertFalse($validator->fails(),
-                "Unit '{$unit}' should be valid for Planlet seed class. Errors: ".json_encode($validator->errors()));
+                "Unit '{$unit}' should be valid for Starter seed class. Errors: ".json_encode($validator->errors()));
         }
 
-        // Invalid units for Planlet
+        // Invalid units for Starter
         $invalidUnits = ['kg', 'ton'];
         foreach ($invalidUnits as $unit) {
             $data = $this->getBaseSeedLotData([
-                'seed_class_id' => $this->plSeedClass->id,
+                'seed_class_id' => $this->stSeedClass->id,
                 'unit' => $unit,
             ]);
 
             $request->merge($data);
             $validator = Validator::make($request->all(), $request->rules(), $request->messages());
             $this->assertTrue($validator->fails(),
-                "Unit '{$unit}' should be invalid for Planlet seed class");
+                "Unit '{$unit}' should be invalid for Starter seed class");
             $this->assertTrue($validator->errors()->has('unit'));
         }
     }
@@ -211,22 +211,24 @@ class SeedLotUnitValidationTest extends TestCase
         $this->assertTrue($validator->fails());
 
         $unitError = $validator->errors()->first('unit');
-        $this->assertStringContainsString('Breeder Seed (BS) and Foundation Seed (FS)', $unitError);
-        $this->assertStringContainsString('kg or ton', $unitError);
+        $this->assertStringContainsString('The unit is invalid for Breeder Seed', $unitError);
+        $this->assertStringContainsString('Valid units: kg, ton', $unitError);
     }
 
     #[Test]
-    public function unknown_seed_class_accepts_all_units()
+    public function unknown_seed_class_still_respects_default_weight_category()
     {
         $unknownSeedClass = SeedClass::firstOrCreate(
             ['code' => 'UK'],
             ['name' => 'Unknown Class']
+            // default stock_category is 'weight'
         );
 
         $request = new StoreSeedLotRequest;
-        $allUnits = ['kg', 'ton', 'piece', 'bottle'];
-
-        foreach ($allUnits as $unit) {
+        
+        // Weight units should be valid
+        $weightUnits = ['kg', 'ton'];
+        foreach ($weightUnits as $unit) {
             $data = $this->getBaseSeedLotData([
                 'seed_class_id' => $unknownSeedClass->id,
                 'unit' => $unit,
@@ -235,7 +237,21 @@ class SeedLotUnitValidationTest extends TestCase
             $request->merge($data);
             $validator = Validator::make($request->all(), $request->rules(), $request->messages());
             $this->assertFalse($validator->fails(),
-                "Unit '{$unit}' should be valid for unknown seed class. Errors: ".json_encode($validator->errors()));
+                "Unit '{$unit}' should be valid for unknown weight-based class.");
+        }
+
+        // Unit units should be invalid
+        $unitUnits = ['piece', 'bottle'];
+        foreach ($unitUnits as $unit) {
+            $data = $this->getBaseSeedLotData([
+                'seed_class_id' => $unknownSeedClass->id,
+                'unit' => $unit,
+            ]);
+
+            $request->merge($data);
+            $validator = Validator::make($request->all(), $request->rules(), $request->messages());
+            $this->assertTrue($validator->fails(),
+                "Unit '{$unit}' should be invalid for unknown weight-based class.");
         }
     }
 

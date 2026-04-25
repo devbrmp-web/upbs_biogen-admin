@@ -5,7 +5,9 @@
                 <tr>
                     <th>Code</th>
                     <th>Name</th>
-                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Step</th>
                     <th>Seed Lots</th>
                     <th>Created</th>
                     <th>Updated</th>
@@ -17,7 +19,13 @@
                 <tr>
                     <td><span class="badge bg-primary">{{ $seedClass->code }}</span></td>
                     <td class="fw-semibold">{{ $seedClass->name }}</td>
-                    <td class="text-muted">{{ Str::limit($seedClass->description, 50) ?: 'No description' }}</td>
+                    <td>
+                        <span class="badge bg-{{ $seedClass->stock_category === 'weight' ? 'soft-primary' : 'soft-info' }}">
+                            {{ ucfirst($seedClass->stock_category) }}
+                        </span>
+                    </td>
+                    <td><code>{{ $seedClass->default_unit }}</code></td>
+                    <td><span class="text-primary fw-medium">{{ $seedClass->step_increment }}</span></td>
                     <td><span class="badge bg-info">{{ $seedClass->seed_lots_count ?? $seedClass->seedLots->count() }}</span></td>
                     <td>{{ $seedClass->created_at?->format('Y-m-d H:i') }}</td>
                     <td>{{ $seedClass->updated_at?->format('Y-m-d H:i') }}</td>
@@ -34,7 +42,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center py-4">
+                    <td colspan="9" class="text-center py-4">
                         <div class="text-muted">
                             <i class="bx bx-package fs-1 d-block mb-2"></i>
                             No seed classes found

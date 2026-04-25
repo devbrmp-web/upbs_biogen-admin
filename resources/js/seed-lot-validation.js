@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { value: 'kg', text: 'Kilogram (kg)' },
             { value: 'ton', text: 'Ton' }
         ],
-        'PL': [
+        'ST': [
             { value: 'bottle', text: 'Bottle' },
             { value: 'piece', text: 'Piece' }
         ]
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const hintMessages = {
         'BS': 'Use kg or ton. 1 ton = 1000 kg (stored as kg).',
         'FS': 'Use kg or ton. 1 ton = 1000 kg (stored as kg).',
-        'PL': 'Use bottle or piece. Planlet not counted in total kg.'
+        'ST': 'Use bottle or piece. Starter not counted in total kg.'
     };
 
     function updateUnitOptions() {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentValue === 'piece' || currentValue === 'bottle') {
                     unitSelect.value = 'kg';
                 }
-            } else if (seedClassCode === 'PL') {
+            } else if (seedClassCode === 'ST') {
                 // If previous was kg/ton, switch to bottle
                 if (currentValue === 'kg' || currentValue === 'ton') {
                     unitSelect.value = 'bottle';

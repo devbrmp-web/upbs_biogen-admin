@@ -34,7 +34,7 @@ class CheckoutRequest extends FormRequest
             'items' => 'required|array|min:1',
             'items.*.variety_id' => 'required|integer|exists:varieties,id',
             'items.*.seed_lot_id' => 'required|integer|exists:seed_lots,id', // Now required
-            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.quantity' => 'required|integer|min:1',
         ];
     }
 
@@ -43,6 +43,8 @@ class CheckoutRequest extends FormRequest
         return [
             'terms_accepted.in' => 'Anda harus menyetujui syarat & ketentuan.',
             'items.*.seed_lot_id.required' => 'Seed Lot harus dipilih untuk setiap item.',
+            'items.*.quantity.integer' => 'Jumlah harus berupa angka bulat (tidak boleh desimal).',
+            'items.*.quantity.min' => 'Jumlah minimal adalah 1.',
         ];
     }
 
@@ -109,17 +111,19 @@ class CheckoutRequest extends FormRequest
                     $class = SeedClass::find($seedLot->seed_class_id);
 
                     if ($class) {
-                        if ($class->code === 'FS' && ($item['quantity'] % 5 !== 0)) {
+                        // Dynamic step validation
+                        if ($class->step_increment > 1 && ($item['quantity'] % $class->step_increment !== 0)) {
                             $validator->errors()->add(
                                 "items.{$index}.quantity",
-                                'Pembelian benih FS harus kelipatan 5 kg.'
+                                sprintf('Pembelian benih %s harus kelipatan %d %s.', $class->name, $class->step_increment, $class->default_unit)
                             );
                         }
 
-                        if ($class->code === 'BS' && $item['quantity'] < 1) {
+                        // Dynamic min order validation
+                        if ($item['quantity'] < $class->min_order_qty) {
                             $validator->errors()->add(
                                 "items.{$index}.quantity",
-                                'Pembelian benih BS minimal 1 kg.'
+                                sprintf('Pembelian benih %s minimal %d %s.', $class->name, $class->min_order_qty, $class->default_unit)
                             );
                         }
                     }

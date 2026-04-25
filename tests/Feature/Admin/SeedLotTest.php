@@ -21,7 +21,7 @@ class SeedLotTest extends TestCase
     protected Variety $variety;
     protected SeedClass $bsSeedClass;
     protected SeedClass $fsSeedClass;
-    protected SeedClass $plSeedClass;
+    protected SeedClass $stSeedClass;
 
     protected function setUp(): void
     {
@@ -64,7 +64,7 @@ class SeedLotTest extends TestCase
         // Initialize seed classes
         $this->bsSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
-        $this->plSeedClass = SeedClass::where('code', 'PL')->first();
+        $this->stSeedClass = SeedClass::where('code', 'ST')->first();
     }
 
     public function test_admin_can_view_seed_lots_index(): void
@@ -363,9 +363,9 @@ class SeedLotTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.seed-lots.store'), [
-                'lot_code' => 'PL-2024-001',
+                'lot_code' => 'ST-2024-001',
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->plSeedClass->id,
+                'seed_class_id' => $this->stSeedClass->id,
                 'production_year' => 2024,
                 'quantity' => 500,
                 'unit' => 'bottle', // Valid unit for PL
@@ -377,8 +377,8 @@ class SeedLotTest extends TestCase
         $response->assertSessionHas('success', 'Seed lot created successfully.');
 
         $this->assertDatabaseHas('seed_lots', [
-            'lot_code' => 'PL-2024-001',
-            'seed_class_id' => $this->plSeedClass->id,
+            'lot_code' => 'ST-2024-001',
+            'seed_class_id' => $this->stSeedClass->id,
             'unit' => 'bottle',
         ]);
     }
@@ -387,9 +387,9 @@ class SeedLotTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)
             ->post(route('admin.seed-lots.store'), [
-                'lot_code' => 'PL-2024-002',
+                'lot_code' => 'ST-2024-002',
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->plSeedClass->id,
+                'seed_class_id' => $this->stSeedClass->id,
                 'production_year' => 2024,
                 'quantity' => 500,
                 'unit' => 'kg', // Invalid unit for PL
@@ -399,7 +399,7 @@ class SeedLotTest extends TestCase
 
         $response->assertSessionHasErrors(['unit']);
         $this->assertDatabaseMissing('seed_lots', [
-            'lot_code' => 'PL-2024-002',
+            'lot_code' => 'ST-2024-002',
         ]);
     }
 

@@ -74,14 +74,20 @@ class SeedStockImportCommand extends Command
                 continue;
             }
 
-            // Validate class code mapping to BS/FS/PL
-            $classCode = match ($classCodeRaw) {
-                'BS' => 'BS',
-                'FS' => 'FS',
-                'PL', 'PLANLET', 'PLANLETS' => 'PL',
-                default => null,
-            };
-            if (!$classCode) { $skipped++; continue; }
+            // Lookup class code in database (support common aliases)
+            $seedClass = SeedClass::where('code', $classCodeRaw)
+                ->orWhere('name', $classCodeRaw)
+                ->first();
+
+            // Fallback for common aliases if not found exactly
+            if (!$seedClass) {
+                if (in_array($classCodeRaw, ['STARTER', 'STARTERS', 'PLANLET'])) {
+                    $seedClass = SeedClass::where('code', 'ST')->first();
+                }
+            }
+
+            if (!$seedClass) { $skipped++; continue; }
+            $classCode = $seedClass->code;
 
             $quantity = is_numeric($quantityRaw) ? (int) $quantityRaw : null;
             $price = is_numeric($priceRaw) ? (float) $priceRaw : null;
@@ -98,14 +104,12 @@ class SeedStockImportCommand extends Command
             ], [
                 'sku' => strtoupper('VAR-' . substr(md5($varietyName), 0, 8)),
                 'description' => $varietyName . ' — imported from CSV',
-                'price' => $price ?? ($classCode === 'PL' ? 75000 : 50000),
+                'price' => $price ?? ($seedClass->stock_category === 'unit' ? 75000 : 50000),
                 'status' => 'available',
                 'is_active' => true,
             ]);
 
-            // Seed class
-            $seedClass = SeedClass::where('code', $classCode)->first();
-            if (!$seedClass) { $skipped++; continue; }
+            // Seed class (already found above)
 
             // Upsert seed lot by unique lot_code constructed from class-year-name
             $lotCode = $classCode . '-' . $year . '-' . strtoupper(Str::slug(substr($varietyName, 0, 12))) . '-' . strtoupper(Str::random(4));

@@ -8,16 +8,16 @@ use App\Models\Variety;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-class PlanletSeedLotSeeder extends Seeder
+class StarterSeedLotSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $plClass = SeedClass::where('code', 'PL')->first();
-        if (!$plClass) {
-            $this->command->warn('Seed class PL (Planlet) not found. Please run SeedClassSeeder first.');
+        $stClass = SeedClass::where('code', 'ST')->first();
+        if (!$stClass) {
+            $this->command->warn('Seed class ST (Starter) not found. Please run SeedClassSeeder first.');
             return;
         }
 
@@ -30,18 +30,18 @@ class PlanletSeedLotSeeder extends Seeder
         foreach ($varieties as $variety) {
             SeedLot::create([
                 'variety_id' => $variety->id,
-                'seed_class_id' => $plClass->id,
-                'lot_code' => 'PL-' . date('Y') . '-' . strtoupper(substr(Str::random(8), 0, 6)),
+                'seed_class_id' => $stClass->id,
+                'lot_code' => 'ST-' . date('Y') . '-' . strtoupper(substr(Str::random(8), 0, 6)),
                 'production_year' => (int) date('Y'),
                 'quantity' => rand(10, 100), // number of bottles
                 'unit' => 'bottle',
                 'price_per_unit' => rand(50000, 150000),
-                'description' => 'Planlet seed lot (bottles) for ' . $variety->name,
+                'description' => 'Starter seed lot (bottles) for ' . $variety->name,
                 'is_sellable' => true,
             ]);
         }
 
-        $this->command->info('PlanletSeedLotSeeder: Created ' . $varieties->count() . ' PL (planlet) seed lots.');
+        $this->command->info('StarterSeedLotSeeder: Created ' . $varieties->count() . ' ST (starter) seed lots.');
     }
 }
 

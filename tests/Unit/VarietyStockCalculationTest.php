@@ -409,10 +409,8 @@ class VarietyStockCalculationTest extends TestCase
         ]);
 
         // Ensure PL class exists
-        $plSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'PL'],
-            ['name' => 'Planlet']
-        );
+        $stSeedClass = SeedClass::where('code', 'ST')->first();
+        $stSeedClass->update(['stock_category' => 'unit', 'default_unit' => 'bottle']);
 
         // KG lots (should be counted)
         SeedLot::create([
@@ -449,11 +447,11 @@ class VarietyStockCalculationTest extends TestCase
             'is_sellable' => true,
         ]);
 
-        // Non-weight units for Planlet (should be ignored)
+        // Non-weight units for Starter (should be ignored)
         SeedLot::create([
             'variety_id' => $variety->id,
-            'seed_class_id' => $plSeedClass->id,
-            'lot_code' => 'PL-BOTTLE-001',
+            'seed_class_id' => $stSeedClass->id,
+            'lot_code' => 'ST-BOTTLE-001',
             'production_year' => 2024,
             'quantity' => 10,
             'unit' => 'bottle',
@@ -463,8 +461,8 @@ class VarietyStockCalculationTest extends TestCase
 
         SeedLot::create([
             'variety_id' => $variety->id,
-            'seed_class_id' => $plSeedClass->id,
-            'lot_code' => 'PL-PIECE-001',
+            'seed_class_id' => $stSeedClass->id,
+            'lot_code' => 'ST-PIECE-001',
             'production_year' => 2024,
             'quantity' => 25,
             'unit' => 'piece',
@@ -477,8 +475,9 @@ class VarietyStockCalculationTest extends TestCase
 
         // Also verify subquery calculations
         $varWithCalc = Variety::withStockCalculations()->find($variety->id);
-        $this->assertEquals(15, (int) $varWithCalc->total_stock_calculated);
-        $this->assertEquals(10, (int) $varWithCalc->bs_stock_calculated);
-        $this->assertEquals(5, (int) $varWithCalc->fs_stock_calculated);
+        $this->assertEquals(15, (int) $varWithCalc->total_weight_stock_calculated);
+        
+        // Total unit stock should be 10 (bottle) + 25 (piece) = 35
+        $this->assertEquals(35, (int) $varWithCalc->total_unit_stock_calculated);
     }
 }

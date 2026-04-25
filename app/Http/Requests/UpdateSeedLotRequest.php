@@ -39,40 +39,29 @@ class UpdateSeedLotRequest extends FormRequest
             'production_year' => 'required|integer|min:2000|max:' . (date('Y') + 1),
             'harvest_date' => 'required|date',
             // Integer-only policy by default
-            'quantity' => 'required|integer|min:0',
+            'quantity' => 'required|integer|min:1',
             'unit' => 'required|string|in:kg,ton,piece,bottle',
             'price_per_unit' => 'required|integer|min:0',
             'is_sellable' => 'boolean',
             'description' => 'nullable|string|max:1000',
         ];
 
-        // Add conditional validation based on seed class
+        // Add conditional validation based on seed class category
         if ($this->filled('seed_class_id')) {
             $seedClass = SeedClass::find($this->seed_class_id);
             
             if ($seedClass) {
-                switch ($seedClass->code) {
-                    case 'BS':
-                    case 'FS':
-                        // BS and FS should use weight-based units (kg, ton)
-                        $rules['unit'] = 'required|string|in:kg,ton';
-                        // Quantity must be integer for consistency
-                        $rules['quantity'] = 'required|integer|min:0';
-                        break;
-                    
-                    case 'PL':
-                        // Planlet should use bottle/piece units
-                        $rules['unit'] = 'required|string|in:bottle,piece';
-                        // Quantity must be integer (no decimals)
-                        $rules['quantity'] = 'required|integer|min:0';
-                        break;
-                    
-                    default:
-                        // Other seed classes can use any of the allowed units (excluding gram)
-                        $rules['unit'] = 'required|string|in:kg,ton,piece,bottle';
-                        $rules['quantity'] = 'required|integer|min:0';
-                        break;
+                $allowedUnits = [$seedClass->default_unit];
+                if ($seedClass->stock_category === 'weight') {
+                    $allowedUnits = array_unique(array_merge($allowedUnits, ['kg', 'ton']));
+                } else {
+                    $allowedUnits = array_unique(array_merge($allowedUnits, ['bottle', 'piece']));
                 }
+                
+                $rules['unit'] = 'required|string|in:' . implode(',', $allowedUnits);
+                
+                // Quantity must be integer for consistency across all classes
+                $rules['quantity'] = 'required|integer|min:1';
             }
         }
 
@@ -91,10 +80,10 @@ class UpdateSeedLotRequest extends FormRequest
                 $seedClass = SeedClass::find($this->seed_class_id);
             }
             $unit = $this->input('unit');
-            if ($seedClass && in_array($seedClass->code, ['BS', 'FS']) && $unit === 'ton') {
+            if ($seedClass && $seedClass->stock_category === 'weight' && $unit === 'ton') {
                 $price = $this->input('price_per_unit');
                 if (is_numeric($price) && ((int) $price % 1000 !== 0)) {
-                    $validator->errors()->add('price_per_unit', 'For BS/FS with unit ton, price per unit must be a multiple of 1000 to normalize to per kg.');
+                    $validator->errors()->add('price_per_unit', 'For weight-based classes with unit ton, price per unit must be a multiple of 1000 to normalize to per kg.');
                 }
             }
         });
@@ -117,8 +106,8 @@ class UpdateSeedLotRequest extends FormRequest
             'production_year.max' => 'Production year cannot be more than next year.',
             'quantity.required' => 'Quantity is required.',
             // Integer-only policy across all seed classes
-            'quantity.integer' => 'Quantity must be an integer for this seed class.',
-            'quantity.min' => 'Quantity must be at least 0.',
+            'quantity.integer' => 'Jumlah harus berupa angka bulat (tidak boleh desimal).',
+            'quantity.min' => 'Jumlah minimal adalah 1.',
             'unit.required' => 'Unit is required.',
             'unit.in' => 'The selected unit is invalid for this seed class.',
             'price_per_unit.required' => 'Price per unit is required.',
@@ -126,27 +115,15 @@ class UpdateSeedLotRequest extends FormRequest
             'price_per_unit.min' => 'Price per unit must be at least 0.',
         ];
 
-        // Add conditional messages based on seed class
+        // Add conditional messages based on seed class category
         if ($this->filled('seed_class_id')) {
             $seedClass = SeedClass::find($this->seed_class_id);
             
             if ($seedClass) {
-                switch ($seedClass->code) {
-                    case 'BS':
-                    case 'FS':
-                        $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: kg, ton.';
-                        $messages['quantity.integer'] = 'Quantity must be an integer (no decimals) for weight-based seed classes.';
-                        break;
-                    
-                    case 'PL':
-                        $messages['unit.in'] = 'The unit is invalid for this seed class. Valid units: bottle, piece.';
-                        $messages['quantity.integer'] = 'Quantity must be an integer for planlet (bottle/piece).';
-                        break;
-                    
-                    default:
-                        $messages['unit.in'] = 'The selected unit is invalid for this seed class.';
-                        $messages['quantity.integer'] = 'Quantity must be an integer (no decimals).';
-                        break;
+                if ($seedClass->stock_category === 'weight') {
+                    $messages['unit.in'] = sprintf('The unit is invalid for %s. Valid units: kg, ton.', $seedClass->name);
+                } elseif ($seedClass->stock_category === 'unit') {
+                    $messages['unit.in'] = sprintf('The unit is invalid for %s. Valid units: bottle, piece.', $seedClass->name);
                 }
             }
         }

@@ -12,9 +12,7 @@ use App\Models\Shipment;
 use App\Models\Commodity;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\OrderConfirmation;
-use App\Mail\OrderStatusUpdate;
-use App\Mail\ShippingInstructions;
+use App\Mail\OrderNotificationMail;
 
 class OrderManagementEmailTest extends TestCase
 {
@@ -154,9 +152,9 @@ class OrderManagementEmailTest extends TestCase
         $this->assertEquals('jane@test.com', $order->customer_email);
         $this->assertEquals(Order::SHIPPING_DELIVERY, $order->shipping_method);
 
-        // Assert that the order confirmation email was queued (since OrderConfirmation implements ShouldQueue)
-        Mail::assertQueued(OrderConfirmation::class, function ($mail) use ($order) {
-            return $mail->order->id === $order->id;
+        // Assert that the order confirmation email was queued
+        Mail::assertQueued(OrderNotificationMail::class, function ($mail) use ($order) {
+            return $mail->order->id === $order->id && $mail->type === 'awaiting_payment';
         });
     }
 
@@ -181,9 +179,9 @@ class OrderManagementEmailTest extends TestCase
 
         $response->assertRedirect();
 
-        // Assert status update email was queued (since OrderStatusUpdate implements ShouldQueue)
-        Mail::assertQueued(OrderStatusUpdate::class, function ($mail) use ($order) {
-            return $mail->order->id === $order->id;
+        // Assert status update email was queued
+        Mail::assertQueued(OrderNotificationMail::class, function ($mail) use ($order) {
+            return $mail->order->id === $order->id && $mail->type === Order::STATUS_PROCESSING;
         });
     }
 }

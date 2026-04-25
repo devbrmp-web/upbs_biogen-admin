@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\SeedClass;
 use App\Models\SeedLot;
 use App\Models\Variety;
 use Illuminate\Http\JsonResponse;
@@ -490,6 +491,7 @@ class DashboardController extends Controller
         $totalVolume = 0;
         $totalOmzet = 0;
 
+        $seedClasses = SeedClass::all();
         foreach ($orders as $order) {
             $address = $order->customer_address;
             $parts = explode(',', $address);
@@ -517,13 +519,15 @@ class DashboardController extends Controller
 
                 foreach ($order->items as $item) {
                     $qty = (float) $item->quantity;
-                    $class = strtoupper($item->seed_class);
-                    if ($class === 'BS') {
-                        $dataByProvince[$isoCode]['qty_bs'] += $qty;
-                    } elseif ($class === 'FS') {
-                        $dataByProvince[$isoCode]['qty_fs'] += $qty;
-                    } elseif ($class === 'PL') {
-                        $dataByProvince[$isoCode]['qty_pl'] += $qty;
+                    $classCode = strtoupper($item->seed_class);
+                    $class = $seedClasses->firstWhere('code', $classCode);
+                    
+                    if ($class) {
+                        $key = 'qty_' . strtolower($class->stock_category);
+                        if (!isset($dataByProvince[$isoCode][$key])) {
+                            $dataByProvince[$isoCode][$key] = 0;
+                        }
+                        $dataByProvince[$isoCode][$key] += $qty;
                     }
                 }
             }
@@ -590,16 +594,15 @@ class DashboardController extends Controller
             // Byte Order Mark for Excel
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
-            fputcsv($file, ['No', 'Provinsi', 'Pesanan', 'BS (kg)', 'FS (kg)', 'PL (botol)', 'Revenue']);
+            fputcsv($file, ['No', 'Provinsi', 'Pesanan', 'Volume Weight (kg)', 'Volume Unit (botol/pcs)', 'Revenue']);
 
             foreach ($tableData as $index => $row) {
                 fputcsv($file, [
                     $index + 1,
                     $row['name'],
                     $row['total_orders'],
-                    $row['qty_bs'],
-                    $row['qty_fs'],
-                    $row['qty_pl'],
+                    $row['qty_weight'] ?? 0,
+                    $row['qty_unit'] ?? 0,
                     $row['total_revenue']
                 ]);
             }

@@ -21,7 +21,7 @@ class SeedLotValidationTest extends TestCase
     protected Variety $variety;
     protected SeedClass $basicSeedClass;
     protected SeedClass $fsSeedClass;
-    protected SeedClass $planletSeedClass;
+    protected SeedClass $starterSeedClass;
 
     protected function setUp(): void
     {
@@ -41,7 +41,7 @@ class SeedLotValidationTest extends TestCase
         // Initialize seed classes
         $this->basicSeedClass = SeedClass::where('code', 'BS')->first();
         $this->fsSeedClass = SeedClass::where('code', 'FS')->first();
-        $this->planletSeedClass = SeedClass::where('code', 'PL')->first();
+        $this->starterSeedClass = SeedClass::where('code', 'ST')->first();
     }
 
     #[Test]
@@ -59,6 +59,7 @@ class SeedLotValidationTest extends TestCase
                 'unit' => $unit,
                 'price_per_unit' => 2000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -91,6 +92,7 @@ class SeedLotValidationTest extends TestCase
                 'unit' => $unit,
                 'price_per_unit' => 2000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -119,6 +121,7 @@ class SeedLotValidationTest extends TestCase
                 'unit' => $unit,
                 'price_per_unit' => 3000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -151,6 +154,7 @@ class SeedLotValidationTest extends TestCase
                 'unit' => $unit,
                 'price_per_unit' => 3000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -165,20 +169,21 @@ class SeedLotValidationTest extends TestCase
     }
 
     #[Test]
-    public function planlet_seed_class_accepts_bottle_and_piece_units()
+    public function starter_seed_class_accepts_bottle_and_piece_units()
     {
         $validUnits = ['bottle', 'piece'];
         
         foreach ($validUnits as $unit) {
             $seedLotData = [
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->planletSeedClass->id,
-                'lot_code' => 'LOT-PL-' . strtoupper($unit),
+                'seed_class_id' => $this->starterSeedClass->id,
+                'lot_code' => 'LOT-ST-' . strtoupper($unit),
                 'production_year' => 2024,
                 'quantity' => 100,
                 'unit' => $unit,
                 'price_per_unit' => 5000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -188,27 +193,28 @@ class SeedLotValidationTest extends TestCase
                 ->assertSessionHasNoErrors();
 
             $this->assertDatabaseHas('seed_lots', [
-                'lot_code' => 'LOT-PL-' . strtoupper($unit),
+                'lot_code' => 'LOT-ST-' . strtoupper($unit),
                 'unit' => $unit,
             ]);
         }
     }
 
     #[Test]
-    public function planlet_seed_class_rejects_weight_units()
+    public function starter_seed_class_rejects_weight_units()
     {
         $invalidUnits = ['kg', 'ton'];
         
         foreach ($invalidUnits as $unit) {
             $seedLotData = [
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $this->planletSeedClass->id,
-                'lot_code' => 'LOT-PL-INVALID-' . strtoupper($unit),
+                'seed_class_id' => $this->starterSeedClass->id,
+                'lot_code' => 'LOT-ST-INVALID-' . strtoupper($unit),
                 'production_year' => 2024,
                 'quantity' => 100,
                 'unit' => $unit,
                 'price_per_unit' => 5000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
@@ -217,7 +223,7 @@ class SeedLotValidationTest extends TestCase
             $response->assertSessionHasErrors('unit');
             
             $this->assertDatabaseMissing('seed_lots', [
-                'lot_code' => 'LOT-PL-INVALID-' . strtoupper($unit),
+                'lot_code' => 'LOT-ST-INVALID-' . strtoupper($unit),
             ]);
         }
     }
@@ -243,6 +249,7 @@ class SeedLotValidationTest extends TestCase
             'unit' => 'bottle', // Invalid for BS
             'price_per_unit' => 2500,
             'is_sellable' => true,
+            'harvest_date' => '2024-01-01',
         ];
 
         $response = $this->actingAs($this->admin)
@@ -269,6 +276,7 @@ class SeedLotValidationTest extends TestCase
             'unit' => 'bottle', // Invalid for BS
             'price_per_unit' => 2000,
             'is_sellable' => true,
+            'harvest_date' => '2024-01-01',
         ];
 
         $response = $this->actingAs($this->admin)
@@ -279,41 +287,93 @@ class SeedLotValidationTest extends TestCase
         $errors = session('errors');
         $unitError = $errors->get('unit')[0];
         
-        $this->assertStringContainsString('Breeder Seed (BS) and Foundation Seed (FS)', $unitError);
+        $this->assertStringContainsString('The unit is invalid for Breeder Seed', $unitError);
     }
 
     #[Test]
-    public function unknown_seed_class_accepts_all_units()
+    public function custom_seed_classes_respect_their_categories()
     {
-        $unknownSeedClass = SeedClass::firstOrCreate(
-            ['code' => 'UK'],
-            ['name' => 'Unknown Class']
-        );
+        // 1. Test Custom Weight Class
+        $weightClass = SeedClass::create([
+            'code' => 'CW',
+            'name' => 'Custom Weight',
+            'stock_category' => 'weight',
+            'default_unit' => 'gram'
+        ]);
 
-        $allUnits = ['kg', 'ton', 'piece', 'bottle'];
-        
-        foreach ($allUnits as $unit) {
+        $weightUnits = ['kg', 'ton', 'gram'];
+        foreach ($weightUnits as $unit) {
             $seedLotData = [
                 'variety_id' => $this->variety->id,
-                'seed_class_id' => $unknownSeedClass->id,
-                'lot_code' => 'LOT-UK-' . strtoupper($unit),
+                'seed_class_id' => $weightClass->id,
+                'lot_code' => 'LOT-CW-' . strtoupper($unit),
                 'production_year' => 2024,
                 'quantity' => 10,
                 'unit' => $unit,
                 'price_per_unit' => 1000,
                 'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
             ];
 
             $response = $this->actingAs($this->admin)
                 ->post(route('admin.seed-lots.store'), $seedLotData);
 
-            $response->assertRedirect()
-                ->assertSessionHasNoErrors();
-
-            $this->assertDatabaseHas('seed_lots', [
-                'lot_code' => 'LOT-UK-' . strtoupper($unit),
-                'unit' => $unit,
-            ]);
+            $response->assertRedirect()->assertSessionHasNoErrors();
         }
+
+        // 2. Test Custom Unit Class
+        $unitClass = SeedClass::create([
+            'code' => 'CU',
+            'name' => 'Custom Unit',
+            'stock_category' => 'unit',
+            'default_unit' => 'knol'
+        ]);
+
+        $unitUnits = ['bottle', 'piece', 'knol'];
+        foreach ($unitUnits as $unit) {
+            $seedLotData = [
+                'variety_id' => $this->variety->id,
+                'seed_class_id' => $unitClass->id,
+                'lot_code' => 'LOT-CU-' . strtoupper($unit),
+                'production_year' => 2024,
+                'quantity' => 10,
+                'unit' => $unit,
+                'price_per_unit' => 1000,
+                'is_sellable' => true,
+                'harvest_date' => '2024-01-01',
+            ];
+
+            $response = $this->actingAs($this->admin)
+                ->post(route('admin.seed-lots.store'), $seedLotData);
+
+            $response->assertRedirect()->assertSessionHasNoErrors();
+        }
+    }
+    #[Test]
+    public function quantity_must_be_an_integer()
+    {
+        $seedLotData = [
+            'variety_id' => $this->variety->id,
+            'seed_class_id' => $this->basicSeedClass->id,
+            'lot_code' => 'LOT-DECIMAL-TEST',
+            'production_year' => 2024,
+            'quantity' => 25.5, // Decimal quantity
+            'unit' => 'kg',
+            'price_per_unit' => 2000,
+            'is_sellable' => true,
+            'harvest_date' => '2024-01-01',
+        ];
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('admin.seed-lots.store'), $seedLotData);
+
+        $response->assertSessionHasErrors('quantity');
+        
+        $errors = session('errors');
+        $this->assertEquals('Jumlah harus berupa angka bulat (tidak boleh desimal).', $errors->get('quantity')[0]);
+        
+        $this->assertDatabaseMissing('seed_lots', [
+            'lot_code' => 'LOT-DECIMAL-TEST',
+        ]);
     }
 }

@@ -53,6 +53,10 @@ class SeedClassController extends Controller
             'code' => 'required|string|max:10|unique:seed_classes,code',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'stock_category' => 'required|in:weight,unit',
+            'default_unit' => 'required|string|max:50',
+            'min_order_qty' => 'required|integer|min:1',
+            'step_increment' => 'required|integer|min:1',
             'is_active' => 'boolean',
         ]);
 
@@ -94,6 +98,10 @@ class SeedClassController extends Controller
             ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'stock_category' => 'required|in:weight,unit',
+            'default_unit' => 'required|string|max:50',
+            'min_order_qty' => 'required|integer|min:1',
+            'step_increment' => 'required|integer|min:1',
             'is_active' => 'boolean',
         ]);
 

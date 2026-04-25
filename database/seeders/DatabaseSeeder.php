@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             SeedClassSeeder::class,
             SeedLotSeeder::class,
             DemoDataSeeder::class,
-            PlanletSeedLotSeeder::class,
+            StarterSeedLotSeeder::class,
             DemoOrderSeeder::class,
         ]);
     }

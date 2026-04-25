@@ -25,14 +25,14 @@ class SeedClassApiTest extends TestCase
 
     public function test_index_supports_search_q(): void
     {
-        SeedClass::factory()->create(['code' => 'PL', 'name' => 'Planlet', 'is_active' => true]);
+        SeedClass::factory()->create(['code' => 'ST', 'name' => 'Starter', 'is_active' => true]);
         SeedClass::factory()->create(['code' => 'FS', 'name' => 'Foundation Seed', 'is_active' => true]);
 
         $response = $this->getJson('/api/seed-classes?q=Plan');
 
         $response->assertStatus(200)
             ->assertJsonPath('meta.count', 1)
-            ->assertJsonPath('data.0.code', 'PL');
+            ->assertJsonPath('data.0.code', 'ST');
     }
 
     public function test_show_returns_class_by_code(): void

@@ -65,7 +65,7 @@ class VarietyQueryOptimizationTest extends TestCase
         // 3. Count total seed lots
         // 4. Calculate stock totals
         // 5. Get seed classes for dropdown
-        // 6. Additional query for planlet calculations
+        // 6. Additional query for starter calculations
         $this->assertLessThanOrEqual(8, $queryCount, 
             'Too many queries executed. Possible N+1 query issue. Queries: ' . json_encode($queries));
 

@@ -58,6 +58,9 @@ class AuthenticatedSessionController extends Controller
         // Clear any cached redirect responses
         $request->session()->reflash();
 
+        // Log the successful login
+        \App\Models\AuditLog::logLogin($user);
+
         return redirect('/admin/dashboard');
     }
 

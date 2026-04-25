@@ -88,7 +88,11 @@
                                         id="seed_class_id" name="seed_class_id" required>
                                     <option value="">Select Seed Class</option>
                                     @foreach($seedClasses as $seedClass)
-                                        <option value="{{ $seedClass->id }}" data-code="{{ $seedClass->code }}" @selected(old('seed_class_id', $selectedSeedClassId) == $seedClass->id)>
+                                        <option value="{{ $seedClass->id }}" 
+                                                data-code="{{ $seedClass->code }}" 
+                                                data-category="{{ $seedClass->stock_category }}"
+                                                data-unit="{{ $seedClass->default_unit }}"
+                                                @selected(old('seed_class_id', $selectedSeedClassId) == $seedClass->id)>
                                             {{ $seedClass->name }} ({{ $seedClass->code }})
                                         </option>
                                     @endforeach
@@ -104,9 +108,11 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="quantity" class="form-label">Quantity (whole number) <span class="text-danger">*</span></label>
-                                <input type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" class="form-control @error('quantity') is-invalid @enderror"
-                                id="quantity" name="quantity" value="{{ old('quantity') }}"
-                                placeholder="Enter quantity as whole number (no decimals)" />
+                                <input type="number" step="1" min="1" inputmode="numeric" pattern="[0-9]*" 
+                                       oninput="this.value = !!this.value && Math.abs(this.value) >= 1 ? Math.abs(Math.floor(this.value)) : null"
+                                       class="form-control @error('quantity') is-invalid @enderror"
+                                       id="quantity" name="quantity" value="{{ old('quantity') }}"
+                                       placeholder="Enter quantity as whole number" required>
                                 @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

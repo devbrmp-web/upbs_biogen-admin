@@ -62,9 +62,10 @@ class VarietyController extends Controller
                         'slug' => optional($v->commodity)->slug,
                     ],
                     'stock' => [
-                        'total_stock_kg' => $v->total_stock,
-                        'total_planlet' => $v->total_planlet,
+                        'total_weight_kg' => (float) $v->total_stock,
+                        'total_unit_qty' => (float) ($v->total_unit_stock_calculated ?? 0),
                         'status' => $v->stock_status,
+                        'details' => $v->getStocksByClass(),
                     ],
                     'price_range_text' => $v->price_range,
                 ];
@@ -161,9 +162,10 @@ class VarietyController extends Controller
                     'slug' => optional($v->commodity)->slug,
                 ],
                 'stock' => [
-                    'total_stock_kg' => $v->total_stock,
-                    'total_planlet' => $v->total_planlet,
+                    'total_weight_kg' => (float) $v->total_stock,
+                    'total_unit_qty' => (float) ($v->total_unit_stock_calculated ?? 0),
                     'status' => $v->stock_status,
+                    'details' => $v->getStocksByClass(),
                 ],
                 'stock_by_class' => $stockByClass,
                 'seed_lots' => $seedLots,

@@ -91,17 +91,16 @@ class SeedLotController extends Controller
         // Ensure harvest_date is saved
         // (Validation is handled in FormRequest, but ensure it's in $validated)
         
-        // Normalize unit and quantity for BS/FS when using 'ton' -> convert to kg
+        // Normalize unit and quantity for weight-based classes when using 'ton' -> convert to kg
         if (!empty($validated['seed_class_id'])) {
             $seedClass = SeedClass::find($validated['seed_class_id']);
-            if ($seedClass && in_array($seedClass->code, ['BS', 'FS'])) {
+            if ($seedClass && $seedClass->stock_category === 'weight') {
                 if (isset($validated['unit']) && $validated['unit'] === 'ton') {
                     $validated['quantity'] = (int) ($validated['quantity'] * 1000);
                     // Normalize price to per kg when incoming unit is ton
                     $validated['price_per_unit'] = (int) ($validated['price_per_unit'] / 1000);
+                    $validated['unit'] = 'kg'; // Normalize weight to base unit
                 }
-                // Always store as kg for BS/FS
-                $validated['unit'] = 'kg';
             }
         }
 
@@ -155,17 +154,16 @@ class SeedLotController extends Controller
     {
         $validated = $request->validated();
 
-        // Normalize unit and quantity for BS/FS when using 'ton' -> convert to kg
+        // Normalize unit and quantity for weight-based classes when using 'ton' -> convert to kg
         if (!empty($validated['seed_class_id'])) {
             $seedClass = SeedClass::find($validated['seed_class_id']);
-            if ($seedClass && in_array($seedClass->code, ['BS', 'FS'])) {
+            if ($seedClass && $seedClass->stock_category === 'weight') {
                 if (isset($validated['unit']) && $validated['unit'] === 'ton') {
                     $validated['quantity'] = (int) ($validated['quantity'] * 1000);
                     // Normalize price to per kg when incoming unit is ton
                     $validated['price_per_unit'] = (int) ($validated['price_per_unit'] / 1000);
+                    $validated['unit'] = 'kg'; // Normalize weight to base unit
                 }
-                // Always store as kg for BS/FS
-                $validated['unit'] = 'kg';
             }
         }
 

@@ -163,17 +163,17 @@ class DemoOrderSeeder extends Seeder
                 $qty = match ($customerType) {
                     'individual_farmer' => match ($seedLot->seedClass->code ?? 'BS') {
                         'BS', 'FS' => rand(1, 10),      // 1-10 kg for basic/foundation
-                        'PL' => rand(50, 200),          // 50-200 bottles for planlets
+                        'ST' => rand(50, 200),          // 50-200 bottles for starters
                         default => rand(1, 5),
                     },
                     'cooperative' => match ($seedLot->seedClass->code ?? 'BS') {
                         'BS', 'FS' => rand(10, 50),     // 10-50 kg for cooperatives
-                        'PL' => rand(200, 500),         // 200-500 bottles
+                        'ST' => rand(200, 500),         // 200-500 bottles
                         default => rand(5, 25),
                     },
                     'institution' => match ($seedLot->seedClass->code ?? 'BS') {
                         'BS', 'FS' => rand(25, 100),    // 25-100 kg for institutions
-                        'PL' => rand(300, 1000),        // 300-1000 bottles
+                        'ST' => rand(300, 1000),        // 300-1000 bottles
                         default => rand(10, 50),
                     },
                 };

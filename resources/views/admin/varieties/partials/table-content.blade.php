@@ -7,7 +7,7 @@
                     <th>Name</th>
                     <th>Commodity</th>
                     <th>Price Range</th>
-                    <th>Planlet</th>
+                    <th>Starter</th>
                     <th>Stock Status</th>
                     <th>Seed Lots</th>
                     <th>Updated</th>
@@ -45,7 +45,7 @@
                         @endif
                     </td>
                     <td>
-                        <span class="badge bg-secondary">{{ $variety->total_planlet ?? 0 }}</span>
+                        <span class="badge bg-secondary">{{ $variety->total_starter ?? 0 }}</span>
                     </td>
                     <td>
                         <span class="badge bg-{{ $variety->stock_status_class }}">{{ $variety->stock_status_label }}</span>

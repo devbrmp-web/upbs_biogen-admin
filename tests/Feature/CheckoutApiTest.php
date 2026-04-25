@@ -50,7 +50,7 @@ class CheckoutApiTest extends TestCase
         ];
 
         $response = $this->postJson('/api/orders/checkout', $payload);
-
+        dump($response->json());
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
@@ -84,5 +84,36 @@ class CheckoutApiTest extends TestCase
 
         $this->assertNotNull($order->shipment);
         $this->assertEquals(Order::SHIPPING_PICKUP, $order->shipment->shipping_method);
+    }
+    public function test_checkout_rejects_decimal_quantity(): void
+    {
+        $variety = Variety::factory()->available()->create();
+        $seedClass = SeedClass::factory()->create(['code' => 'BS', 'is_active' => true]);
+        $seedLot = SeedLot::factory()->create([
+            'variety_id' => $variety->id,
+            'seed_class_id' => $seedClass->id,
+            'quantity' => 100,
+            'is_sellable' => true,
+        ]);
+
+        $payload = [
+            'customer_name' => 'John Doe',
+            'customer_address' => 'Jl. Contoh No. 1, Jakarta',
+            'customer_phone' => '+628123456789',
+            'customer_email' => 'john@example.com',
+            'shipping_method' => Order::SHIPPING_PICKUP,
+            'items' => [
+                ['variety_id' => $variety->id, 'quantity' => 2.5, 'seed_lot_id' => $seedLot->id],
+            ],
+            'payment_method' => Payment::METHOD_QRIS,
+            'terms_accepted' => true,
+        ];
+
+        $response = $this->postJson('/api/orders/checkout', $payload);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['items.0.quantity']);
+        
+        $this->assertEquals('Jumlah harus berupa angka bulat (tidak boleh desimal).', $response->json('errors')['items.0.quantity'][0]);
     }
 }

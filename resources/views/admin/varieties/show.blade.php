@@ -60,14 +60,12 @@
                                 <td class="fw-semibold">Total Stock:</td>
                                 <td><strong>{{ number_format($variety->total_stock ?? 0, 0) }} kg</strong></td>
                             </tr>
+                            @foreach($variety->stock_summary as $summary)
                             <tr>
-                                <td class="fw-semibold">Min. Limit:</td>
-                                <td>{{ number_format($variety->minimum_limit ?? 0, 0) }} kg</td>
+                                <td class="fw-semibold">Total {{ $summary['name'] }}:</td>
+                                <td><strong>{{ number_format($summary['quantity'], 0) }} {{ $summary['default_unit'] }}</strong></td>
                             </tr>
-                            <tr>
-                                <td class="fw-semibold">Total Planlet:</td>
-                                <td>{{ number_format($variety->total_planlet ?? 0, 0) }} bottles</td>
-                            </tr>
+                            @endforeach
                             <tr>
                                 <td class="fw-semibold">Description:</td>
                                 <td>{!! $variety->description ? nl2br(e($variety->description)) : 'No description available' !!}</td>
@@ -118,17 +116,20 @@
                     <p class="text-muted mt-2 mb-0"><small>Calculated from sellable Seed Lots with unit kg</small></p>
                 </div>
                 <hr class="my-3">
-                <div class="row text-center">
+                <div class="row text-center mt-3 g-2">
+                    @foreach($variety->stock_summary->where('category', 'unit') as $summary)
                     <div class="col-6">
-                        <div class="border-end">
+                        <div class="p-2 border rounded bg-light">
+                            <h5 class="text-secondary mb-1">{{ number_format($summary['quantity'], 0) }}</h5>
+                            <small class="text-muted">{{ $summary['name'] }} ({{ $summary['default_unit'] }})</small>
+                        </div>
+                    </div>
+                    @endforeach
+                    <div class="col-12 mt-2">
+                        <div class="p-2 border rounded bg-light">
                             <h5 class="text-info mb-1">{{ number_format($variety->minimum_limit ?? 0, 0) }}</h5>
                             <small class="text-muted">Min. Limit (kg)</small>
                         </div>
-                    </div>
-                    <div class="col-6">
-                        <h5 class="text-secondary mb-1">{{ number_format($variety->total_planlet ?? 0, 0) }}</h5>
-                        <small class="text-muted">Total Planlet (bottles)</small>
-                        <p class="text-muted mt-1 mb-0"><small>From sellable PL Seed Lots</small></p>
                     </div>
                 </div>
                 @if(($variety->minimum_limit ?? 0) > 0 && ($variety->total_stock ?? 0) <= ($variety->minimum_limit ?? 0))

@@ -14,11 +14,17 @@ class SeedClass extends Model
         'code',
         'name',
         'description',
+        'stock_category',
+        'default_unit',
+        'min_order_qty',
+        'step_increment',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'min_order_qty' => 'integer',
+        'step_increment' => 'integer',
     ];
 
     /**

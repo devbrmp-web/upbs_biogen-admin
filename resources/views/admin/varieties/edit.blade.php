@@ -97,7 +97,7 @@
                         <!-- Help Text -->
                         <div class="alert alert-info">
                             <i class="bx bx-info-circle me-2"></i>
-                            <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Planlets are not counted in total kg as they are measured per bottle.
+                            <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Starters are not counted in total kg as they are measured per bottle.
                         </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-3">

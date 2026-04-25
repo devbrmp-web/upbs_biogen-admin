@@ -212,20 +212,17 @@ class VarietyController extends Controller
         // Load aggregate data for stock calculations
         $variety->loadCount(['seedLots as seed_lots_count']);
 
-        // Calculate stock totals using aggregate queries
-        $stockTotals = $variety->seedLots()
+        // Load detailed stock summary using the new model methods
+        $variety->stock_summary = $variety->getStocksByClass();
+        $variety->total_weight_stock_calculated = $variety->total_stock; // Uses accessor
+        
+        // Find total unit stock if any
+        $variety->total_unit_stock_calculated = $variety->seedLots()
             ->where('is_sellable', true)
-            ->where('unit', 'kg')
-            ->selectRaw('
-                SUM(quantity) as total_stock,
-                SUM(CASE WHEN seed_class_id IN (SELECT id FROM seed_classes WHERE code = "BS") THEN quantity ELSE 0 END) as bs_stock,
-                SUM(CASE WHEN seed_class_id IN (SELECT id FROM seed_classes WHERE code = "FS") THEN quantity ELSE 0 END) as fs_stock
-            ')
-            ->first();
-
-        $variety->total_stock_calculated = $stockTotals->total_stock ?? 0;
-        $variety->bs_stock_calculated = $stockTotals->bs_stock ?? 0;
-        $variety->fs_stock_calculated = $stockTotals->fs_stock ?? 0;
+            ->whereHas('seedClass', function($q) {
+                $q->where('stock_category', 'unit');
+            })
+            ->sum('quantity');
 
         return view('admin.varieties.show', compact('variety'));
     }
