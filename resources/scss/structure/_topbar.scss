@@ -4,8 +4,10 @@
 
 .topbar {
     top: 0;
-    z-index: 1005;
-    position: sticky;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    position: sticky !important;
     transition: all 0.3s ease-in-out;
     height: $topbar-height;
     background-color: $topbar-bg;
@@ -15,7 +17,7 @@
 
     .navbar-header {
         display: flex;
-        margin: 0 auto;
+        width: 100%;
         align-items: center;
         justify-content: space-between;
     }

@@ -71,10 +71,9 @@ class Components {
         })
 
 
-        const alertTrigger = document.getElementById('liveAlertBtn')
         if (alertTrigger) {
             alertTrigger.addEventListener('click', () => {
-                alert('Nice, you triggered this alert message!', 'success')
+                window.toast('Success', 'Nice, you triggered this message!', 'success');
             })
         }
 
@@ -91,78 +90,42 @@ class Components {
             }
         });
 
-        // 2. Escape key handler to ensure modals can always be closed
+        // 2. Comprehensive Backdrop Cleanup
+        // Ensures that closing any modal or offcanvas properly clears all backdrops
+        const cleanupBackdrops = () => {
+            setTimeout(() => {
+                const hasOpenModals = document.querySelectorAll('.modal.show').length > 0;
+                const hasOpenOffcanvas = document.querySelectorAll('.offcanvas.show').length > 0;
+                
+                if (!hasOpenModals && !hasOpenOffcanvas) {
+                    // The "Sakti" Line: Force remove all backdrops and reset overflow
+                    document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop, .mobile-backdrop').forEach(b => b.remove());
+                    document.body.classList.remove('modal-open', 'sidebar-enable');
+                    document.body.style.overflow = 'auto';
+                    document.body.style.paddingRight = '';
+                }
+            }, 100);
+        };
+
+        document.addEventListener('hidden.bs.modal', cleanupBackdrops);
+        document.addEventListener('hidden.bs.offcanvas', cleanupBackdrops);
+
+        // 3. Global Escape Key Support for all overlay types
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
+                // Hide modals
                 document.querySelectorAll('.modal.show').forEach(modalEl => {
                     const bsModal = bootstrap.Modal.getInstance(modalEl);
-                    if (bsModal) {
-                        bsModal.hide();
-                    }
+                    if (bsModal) bsModal.hide();
+                    else modalEl.classList.remove('show');
                 });
-            }
-        });
-
-        // 3. Fallback close button (forced close mechanism)
-        document.addEventListener('DOMContentLoaded', () => {
-            const addForceClose = (modal) => {
-                if (modal.querySelector('.modal-force-close')) return;
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'btn btn-sm btn-danger modal-force-close';
-                closeBtn.innerHTML = '× Close';
-                closeBtn.type = 'button';
-                closeBtn.style.position = 'fixed';
-                closeBtn.style.top = '10px';
-                closeBtn.style.right = '10px';
-                closeBtn.style.zIndex = '10000'; // Extremely high
-                closeBtn.style.padding = '4px 8px';
-                closeBtn.style.fontSize = '12px';
-                closeBtn.style.borderRadius = '4px';
-                closeBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
-                
-                closeBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const bsModal = bootstrap.Modal.getInstance(modal);
-                    if (bsModal) {
-                        bsModal.hide();
-                    } else {
-                        // Fallback hide if instance not found
-                        modal.classList.remove('show');
-                        modal.style.display = 'none';
-                        document.body.classList.remove('modal-open');
-                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-                    }
-                };
-                modal.appendChild(closeBtn);
-            };
-
-            document.querySelectorAll('.modal').forEach(addForceClose);
-
-            // Handle dynamically added modals
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    mutation.addedNodes.forEach((node) => {
-                        if (node.nodeType === 1) {
-                            if (node.classList.contains('modal')) {
-                                addForceClose(node);
-                            }
-                            node.querySelectorAll('.modal').forEach(addForceClose);
-                        }
-                    });
+                // Hide offcanvas
+                document.querySelectorAll('.offcanvas.show').forEach(el => {
+                    const bsOffcanvas = bootstrap.Offcanvas.getInstance(el);
+                    if (bsOffcanvas) bsOffcanvas.hide();
+                    else el.classList.remove('show');
                 });
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
-
-        // 4. Cleanup orphan backdrops
-        document.addEventListener('hidden.bs.modal', function () {
-            if (document.querySelectorAll('.modal.show').length === 0) {
-                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+                cleanupBackdrops();
             }
         });
     }

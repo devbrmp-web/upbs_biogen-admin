@@ -127,6 +127,9 @@ class ResponsiveEnhancements {
     }
 
     showMobileBackdrop() {
+        // Check if a theme backdrop already exists to avoid duplicates
+        if (document.querySelector('.offcanvas-backdrop')) return;
+
         let backdrop = document.querySelector('.mobile-backdrop');
         if (!backdrop) {
             backdrop = document.createElement('div');
@@ -137,10 +140,11 @@ class ResponsiveEnhancements {
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 1050;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 1040;
                 opacity: 0;
                 transition: opacity 0.3s ease;
+                backdrop-filter: blur(2px);
             `;
             document.body.appendChild(backdrop);
         }
@@ -156,8 +160,14 @@ class ResponsiveEnhancements {
         if (backdrop) {
             backdrop.style.opacity = '0';
             setTimeout(() => {
-                backdrop.remove();
+                if (backdrop.parentNode) backdrop.remove();
             }, 300);
+        }
+        
+        // Also cleanup body styles just in case
+        if (!document.querySelector('.modal.show') && !document.querySelector('.offcanvas.show')) {
+            document.body.style.overflow = '';
+            document.body.classList.remove('sidebar-enable');
         }
     }
 
