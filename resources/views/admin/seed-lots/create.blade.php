@@ -49,9 +49,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="harvest_date" class="form-label">Harvest Date <span class="text-danger">*</span></label>
+                                <label for="harvest_date" class="form-label">Harvest Date</label>
                                 <input type="date" class="form-control @error('harvest_date') is-invalid @enderror" 
-                                       id="harvest_date" name="harvest_date" value="{{ old('harvest_date') }}" required>
+                                       id="harvest_date" name="harvest_date" value="{{ old('harvest_date') }}">
                                 @error('harvest_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
