@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Commodity;
+use App\Models\SeedClass;
 use App\Models\Variety;
+use App\Models\SeedLot;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -11,183 +13,320 @@ class VarietySeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
-     * Note: Stock and price data are now managed via seed_lots table.
-     * This seeder only creates base variety records.
+     *
+     * Data varietas & harga riil bersumber dari:
+     *  - Buku Saku BSIP Biogen 2024
+     *  - Penetapan PNBP PPHP BRMP Biogen (PNBP 2026)
+     *  - Rekapitulasi Pelayanan Publik 2026
+     *
+     * Harga = price_per_unit pada seed_lots (bukan di varieties).
+     * image = null (produksi-ready, tanpa gambar dummy).
      */
     public function run(): void
     {
-        $varieties = [
-            // Rice varieties
-            'Rice' => [
-                [
-                    'name' => 'IR64',
-                    'description' => 'High-yielding rice variety with good grain quality and disease resistance.',
-                    'minimum_limit' => 50,
-                ],
-                [
-                    'name' => 'Ciherang',
-                    'description' => 'Popular Indonesian rice variety with excellent taste and adaptability.',
-                    'minimum_limit' => 75,
-                ],
-                [
-                    'name' => 'Inpari 32',
-                    'description' => 'Modern rice variety with high productivity and pest resistance.',
-                    'minimum_limit' => 40,
-                ],
-            ],
-            // Corn varieties
-            'Corn' => [
-                [
-                    'name' => 'Pioneer P21',
-                    'description' => 'High-yielding hybrid corn variety suitable for various growing conditions.',
-                    'minimum_limit' => 25,
-                ],
-                [
-                    'name' => 'Bisi 18',
-                    'description' => 'Premium hybrid corn with excellent grain quality and disease tolerance.',
-                    'minimum_limit' => 30,
-                ],
-                [
-                    'name' => 'NK 212',
-                    'description' => 'Drought-tolerant corn variety with consistent performance.',
-                    'minimum_limit' => 20,
-                ],
-            ],
-            // Soybean varieties
-            'Soybean' => [
-                [
-                    'name' => 'Grobogan',
-                    'description' => 'High-yielding soybean variety with large seed size and good protein content.',
-                    'minimum_limit' => 15,
-                ],
-                [
-                    'name' => 'Anjasmoro',
-                    'description' => 'Popular soybean variety with excellent adaptability and yield stability.',
-                    'minimum_limit' => 12,
-                ],
-            ],
-            // Peanut varieties
-            'Peanut' => [
-                [
-                    'name' => 'Kancil',
-                    'description' => 'Early maturing peanut variety with good oil content.',
-                    'minimum_limit' => 10,
-                ],
-                [
-                    'name' => 'Gajah',
-                    'description' => 'Large-seeded peanut variety suitable for direct consumption.',
-                    'minimum_limit' => 8,
-                ],
-            ],
-            // Mung Bean varieties
-            'Mung Bean' => [
-                [
-                    'name' => 'Vima 1',
-                    'description' => 'High-yielding mung bean variety with uniform pod maturity.',
-                    'minimum_limit' => 5,
-                ],
-                [
-                    'name' => 'Sriti',
-                    'description' => 'Early maturing mung bean variety with good disease resistance.',
-                    'minimum_limit' => 5,
-                ],
-            ],
-            // Chili varieties
-            'Chili' => [
-                [
-                    'name' => 'Cabe Rawit',
-                    'description' => 'Very hot small chili variety popular in Indonesian cuisine.',
-                    'minimum_limit' => 2,
-                ],
-                [
-                    'name' => 'Cabe Merah Besar',
-                    'description' => 'Large red chili variety with moderate heat level.',
-                    'minimum_limit' => 3,
-                ],
-                [
-                    'name' => 'Cabe Keriting',
-                    'description' => 'Curly chili variety with unique shape and good flavor.',
-                    'minimum_limit' => 2,
-                ],
-            ],
-            // Tomato varieties
-            'Tomato' => [
-                [
-                    'name' => 'Permata',
-                    'description' => 'High-quality tomato variety with excellent fruit characteristics.',
-                    'minimum_limit' => 3,
-                ],
-                [
-                    'name' => 'Intan',
-                    'description' => 'Disease-resistant tomato variety with good shelf life.',
-                    'minimum_limit' => 4,
-                ],
-            ],
-            // Eggplant varieties
-            'Eggplant' => [
-                [
-                    'name' => 'Terong Ungu',
-                    'description' => 'Purple eggplant variety with tender flesh and mild flavor.',
-                    'minimum_limit' => 2,
-                ],
-                [
-                    'name' => 'Terong Hijau',
-                    'description' => 'Green eggplant variety popular in traditional Indonesian dishes.',
-                    'minimum_limit' => 2,
-                ],
-            ],
-            // Cucumber varieties
-            'Cucumber' => [
-                [
-                    'name' => 'Timun Suri',
-                    'description' => 'Sweet cucumber variety commonly used for fresh consumption.',
-                    'minimum_limit' => 3,
-                ],
-                [
-                    'name' => 'Timun Hijau',
-                    'description' => 'Green cucumber variety with crisp texture and refreshing taste.',
-                    'minimum_limit' => 2,
-                ],
-            ],
-            // Lettuce varieties
-            'Lettuce' => [
-                [
-                    'name' => 'Selada Hijau',
-                    'description' => 'Green lettuce variety with tender leaves and mild flavor.',
-                    'minimum_limit' => 1,
-                ],
-                [
-                    'name' => 'Selada Merah',
-                    'description' => 'Red lettuce variety with attractive color and nutritional value.',
-                    'minimum_limit' => 1,
-                ],
-            ],
-        ];
+        // ────────────────────────────────────────────────────────────────────
+        // Ambil kelas benih sekali
+        // ────────────────────────────────────────────────────────────────────
+        $sc = SeedClass::all()->keyBy('code');
 
-        foreach ($varieties as $commodityName => $varietyList) {
-            $commodity = Commodity::where('name', $commodityName)->first();
-            
-            if ($commodity) {
-                foreach ($varietyList as $varietyData) {
-                    Variety::firstOrCreate(
-                        [
-                            'name' => $varietyData['name'],
-                            'commodity_id' => $commodity->id,
-                        ],
-                        [
-                            'slug' => Str::slug($varietyData['name']),
-                            'sku' => 'SKU-' . strtoupper(Str::random(8)),
-                            'description' => $varietyData['description'],
-                            'minimum_limit' => $varietyData['minimum_limit'],
-                            'status' => 'available',
-                            'is_active' => true,
-                        ]
-                    );
-                }
+        // ─── PADI ────────────────────────────────────────────────────────────
+        // Harga BS: 40.000/kg | FS: 14.000/kg | SS: 12.000/kg
+        $padi = Commodity::where('slug', 'padi')->first();
+        if ($padi) {
+            $padiVarieties = [
+                [
+                    'name'        => 'Bioni 63 Ciherang',
+                    'description' => 'Varietas padi Bioni 63 Ciherang unggul BSIP Biogen — adaptif sawah irigasi, produktivitas tinggi, rasa nasi pulen.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Bioprima Agritan',
+                    'description' => 'Varietas padi Bioprima unggul BSIP Biogen — tahan wereng batang coklat biotipe 1, 2, dan 3.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Bioryza Agritan',
+                    'description' => 'Varietas padi Bioryza unggul BSIP Biogen — tahan penyakit hawar daun bakteri, potensi hasil tinggi.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Biomonas Agritan',
+                    'description' => 'Varietas padi Biomonas unggul BSIP Biogen — tahan blast, adaptif lahan pasang surut.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Inpari Blas',
+                    'description' => 'Inpari Blas — varietas padi inbrida sawah irigasi tahan penyakit blas dengan produktivitas optimal.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Inpari HDB',
+                    'description' => 'Inpari HDB — varietas padi inbrida sawah irigasi tahan hawar daun bakteri (HDB).',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Inpari 40',
+                    'description' => 'Inpari 40 — varietas padi inbrida sawah irigasi adaptif dengan umur panen genjah.',
+                    'min_limit'   => 50,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Biosalin 1',
+                    'description' => 'Biosalin 1 — varietas padi toleran salinitas untuk lahan rawa/pasang surut pesisir.',
+                    'min_limit'   => 30,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Biosalin 2',
+                    'description' => 'Biosalin 2 — varietas padi toleran salinitas generasi kedua, lebih adaptif pada berbagai tingkat salinitas.',
+                    'min_limit'   => 30,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Bio Patenggang',
+                    'description' => 'Bio Patenggang — varietas padi unggul toleran kekeringan, cocok untuk lahan sawah tadah hujan.',
+                    'min_limit'   => 40,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Biobestari',
+                    'description' => 'Biobestari — varietas padi premium BSIP Biogen dengan penampilan gabah bening dan rasa nasi istimewa.',
+                    'min_limit'   => 40,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+                [
+                    'name'        => 'Bioemas',
+                    'description' => 'Bioemas — varietas padi aromatik unggul dengan tekstur nasi pulen dan aroma harum khas.',
+                    'min_limit'   => 40,
+                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
+                ],
+            ];
+
+            foreach ($padiVarieties as $vd) {
+                $variety = Variety::updateOrCreate(
+                    ['name' => $vd['name'], 'commodity_id' => $padi->id],
+                    [
+                        'slug'          => Str::slug($vd['name']),
+                        'description'   => $vd['description'],
+                        'minimum_limit' => $vd['min_limit'],
+                        'status'        => 'available',
+                        'is_active'     => true,
+                        'image_path'    => null,
+                    ]
+                );
+                // Simpan harga pada variety data untuk digunakan SeedLotSeeder
+                $variety->_prices = $vd['prices'];
             }
         }
 
-        $this->command->info('VarietySeeder: Created varieties successfully.');
+        // ─── KEDELAI / EDAMAME ───────────────────────────────────────────────
+        // Harga BS: 70.000/kg
+        $kedelai = Commodity::where('slug', 'kedelai')->first();
+        if ($kedelai) {
+            $kedelaiVarieties = [
+                [
+                    'name'        => 'Biosoy 1',
+                    'description' => 'Biosoy 1 — varietas kedelai/edamame unggul BSIP Biogen, biji besar, protein tinggi.',
+                    'min_limit'   => 15,
+                    'prices'      => ['BS' => 70000],
+                ],
+                [
+                    'name'        => 'Biosoy 2',
+                    'description' => 'Biosoy 2 — varietas kedelai unggul BSIP Biogen, tahan penyakit karat daun, produktif.',
+                    'min_limit'   => 15,
+                    'prices'      => ['BS' => 70000],
+                ],
+                [
+                    'name'        => 'Biomax 1',
+                    'description' => 'Biomax 1 — varietas edamame premium BSIP Biogen, biji hijau besar, kadar gula tinggi.',
+                    'min_limit'   => 15,
+                    'prices'      => ['BS' => 70000],
+                ],
+                [
+                    'name'        => 'Biomax 2',
+                    'description' => 'Biomax 2 — varietas edamame unggul BSIP Biogen generasi kedua, adaptif dataran menengah.',
+                    'min_limit'   => 15,
+                    'prices'      => ['BS' => 70000],
+                ],
+            ];
+
+            foreach ($kedelaiVarieties as $vd) {
+                Variety::updateOrCreate(
+                    ['name' => $vd['name'], 'commodity_id' => $kedelai->id],
+                    [
+                        'slug'          => Str::slug($vd['name']),
+                        'description'   => $vd['description'],
+                        'minimum_limit' => $vd['min_limit'],
+                        'status'        => 'available',
+                        'is_active'     => true,
+                        'image_path'    => null,
+                    ]
+                );
+            }
+        }
+
+        // ─── SORGUM ──────────────────────────────────────────────────────────
+        // Harga BS: 35.000/kg
+        $sorgum = Commodity::where('slug', 'sorgum')->first();
+        if ($sorgum) {
+            $sorgumVarieties = [
+                [
+                    'name'        => 'Bioguma 1',
+                    'description' => 'Bioguma 1 — varietas sorgum unggul BSIP Biogen, tinggi produksi biomassa untuk pakan ternak.',
+                    'min_limit'   => 20,
+                    'prices'      => ['BS' => 35000],
+                ],
+                [
+                    'name'        => 'Bioguma 2',
+                    'description' => 'Bioguma 2 — varietas sorgum manis BSIP Biogen, kadar brix tinggi, cocok untuk bioetanol.',
+                    'min_limit'   => 20,
+                    'prices'      => ['BS' => 35000],
+                ],
+                [
+                    'name'        => 'Bioguma 3',
+                    'description' => 'Bioguma 3 — varietas sorgum biji putih unggul, potensi hasil biji tinggi, toleran kekeringan.',
+                    'min_limit'   => 20,
+                    'prices'      => ['BS' => 35000],
+                ],
+            ];
+
+            foreach ($sorgumVarieties as $vd) {
+                Variety::updateOrCreate(
+                    ['name' => $vd['name'], 'commodity_id' => $sorgum->id],
+                    [
+                        'slug'          => Str::slug($vd['name']),
+                        'description'   => $vd['description'],
+                        'minimum_limit' => $vd['min_limit'],
+                        'status'        => 'available',
+                        'is_active'     => true,
+                        'image_path'    => null,
+                    ]
+                );
+            }
+        }
+
+        // ─── CABAI ───────────────────────────────────────────────────────────
+        // Harga BS: 3.000/gram (disimpan sebagai 3000, unit = gram)
+        $cabai = Commodity::where('slug', 'cabai')->first();
+        if ($cabai) {
+            Variety::updateOrCreate(
+                ['name' => 'Carvi Agrihorti', 'commodity_id' => $cabai->id],
+                [
+                    'slug'          => 'carvi-agrihorti',
+                    'description'   => 'Carvi Agrihorti — varietas cabai merah keriting unggul Balithorti, buah panjang, produktif, tahan layu Fusarium.',
+                    'minimum_limit' => 10,
+                    'status'        => 'available',
+                    'is_active'     => true,
+                    'image_path'    => null,
+                ]
+            );
+        }
+
+        // ─── KENTANG ─────────────────────────────────────────────────────────
+        // Harga Starter: 50.000/botol | G0: 2.000/umbi
+        $kentang = Commodity::where('slug', 'kentang')->first();
+        if ($kentang) {
+            Variety::updateOrCreate(
+                ['name' => 'Bio Granola', 'commodity_id' => $kentang->id],
+                [
+                    'slug'          => 'bio-granola',
+                    'description'   => 'Bio Granola — varietas kentang unggul BSIP Biogen adaptif dataran tinggi, umbi besar seragam, tahan penyakit hawar daun (P. infestans).',
+                    'minimum_limit' => 10,
+                    'status'        => 'available',
+                    'is_active'     => true,
+                    'image_path'    => null,
+                ]
+            );
+        }
+
+        // ─── RUMPUT GAJAH ────────────────────────────────────────────────────
+        // Harga BSM (Stek): 500/stek
+        $rumputGajah = Commodity::where('slug', 'rumput-gajah')->first();
+        if ($rumputGajah) {
+            Variety::updateOrCreate(
+                ['name' => 'Biograss Agrinak', 'commodity_id' => $rumputGajah->id],
+                [
+                    'slug'          => 'biograss-agrinak',
+                    'description'   => 'Biograss Agrinak — varietas rumput gajah unggul BSIP Agrinak, produksi biomassa super tinggi, cocok untuk silase pakan ternak.',
+                    'minimum_limit' => 50,
+                    'status'        => 'available',
+                    'is_active'     => true,
+                    'image_path'    => null,
+                ]
+            );
+        }
+
+        // ─── ANGGREK ─────────────────────────────────────────────────────────
+        // Phalaenopsis: Starter 50.000/botol | Dendrobium: Starter 33.000/botol
+        $anggrek = Commodity::where('slug', 'anggrek')->first();
+        if ($anggrek) {
+            $anggrekVarieties = [
+                [
+                    'name'        => 'Phalaenopsis',
+                    'description' => 'Phalaenopsis (Anggrek Bulan) — planlet anggrek bulan unggul hasil kultur jaringan BSIP Biogen, bunga besar, tahan lama.',
+                    'min_limit'   => 5,
+                ],
+                [
+                    'name'        => 'Dendrobium',
+                    'description' => 'Dendrobium — planlet anggrek Dendrobium unggul hasil kultur jaringan BSIP Biogen, bunga lebat, siklus berbunga pendek.',
+                    'min_limit'   => 5,
+                ],
+            ];
+
+            foreach ($anggrekVarieties as $vd) {
+                Variety::updateOrCreate(
+                    ['name' => $vd['name'], 'commodity_id' => $anggrek->id],
+                    [
+                        'slug'          => 'anggrek-' . Str::slug($vd['name']),
+                        'description'   => $vd['description'],
+                        'minimum_limit' => $vd['min_limit'],
+                        'status'        => 'available',
+                        'is_active'     => true,
+                        'image_path'    => null,
+                    ]
+                );
+            }
+        }
+
+        // ─── JERUK ───────────────────────────────────────────────────────────
+        $jeruk = Commodity::where('slug', 'jeruk')->first();
+        if ($jeruk) {
+            Variety::updateOrCreate(
+                ['name' => 'Jeruk Keprok SoE', 'commodity_id' => $jeruk->id],
+                [
+                    'slug'          => 'jeruk-keprok-soe',
+                    'description'   => 'Jeruk Keprok SoE — varietas jeruk unggul nasional asal NTT, rasa manis segar dengan aroma khas, warna oranye menarik.',
+                    'minimum_limit' => 10,
+                    'status'        => 'available',
+                    'is_active'     => true,
+                    'image_path'    => null,
+                ]
+            );
+        }
+
+        // ─── AREN ────────────────────────────────────────────────────────────
+        $aren = Commodity::where('slug', 'aren')->first();
+        if ($aren) {
+            Variety::updateOrCreate(
+                ['name' => 'Aren Akel', 'commodity_id' => $aren->id],
+                [
+                    'slug'          => 'aren-akel',
+                    'description'   => 'Aren Akel — varietas aren unggul dengan potensi produksi nira tinggi, adaptif di berbagai ekosistem lahan kering.',
+                    'minimum_limit' => 10,
+                    'status'        => 'available',
+                    'is_active'     => true,
+                    'image_path'    => null,
+                ]
+            );
+        }
+
+        $total = Variety::count();
+        $this->command->info("✅ VarietySeeder: {$total} varietas riil BSIP Biogen berhasil di-seed.");
     }
 }
