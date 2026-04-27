@@ -52,7 +52,7 @@
                             📄 Unduh Invoice PDF
                         </a>
                         @if($order->status !== 'cancelled' && $order->status !== 'completed')
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
+                            <button type="button" class="btn btn-primary" id="updateStatusBtn">
                                 <i class="bx bx-edit me-1"></i>Update Status
                             </button>
                         @endif
@@ -358,44 +358,7 @@
     </div>
 </div>
 
-<!-- Status Update Modal -->
-@if($order->status !== 'cancelled' && $order->status !== 'completed')
-    <div class="modal fade" id="statusModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <div class="modal-header">
-                        <h5 class="modal-title">Update Order Status</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="status" class="form-label">New Status</label>
-                            <select class="form-select" id="status" name="status" required>
-                                @foreach($order->getNextValidStatuses() as $status)
-                                    <option value="{{ $status }}">
-                                        {{ ucwords(str_replace('_', ' ', $status)) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="notes" class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" 
-                                      placeholder="Add any notes about this status change..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Status</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-@endif
+<!-- Bootstrap Modal Removed for SweetAlert2 -->
 
 @endsection
 
@@ -450,4 +413,61 @@
     margin-bottom: 5px;
 }
 </style>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const updateBtn = document.getElementById('updateStatusBtn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Update Status Pesanan',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <label class="form-label">Status Baru</label>
+                            <select class="form-select" id="swalStatus">
+                                @foreach($order->getNextValidStatuses() as $status)
+                                    <option value="{{ $status }}">{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Catatan (Opsional)</label>
+                            <textarea class="form-control" id="swalNotes" rows="3" placeholder="Tambahkan catatan..."></textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Update Status',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#10b981',
+                preConfirm: () => {
+                    const status = document.getElementById('swalStatus').value;
+                    const notes = document.getElementById('swalNotes').value;
+                    if (!status) {
+                        Swal.showValidationMessage('Silakan pilih status');
+                        return false;
+                    }
+                    return { status, notes };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route('admin.orders.update-status', $order) }}';
+                    form.innerHTML = `
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="${result.value.status}">
+                        <input type="hidden" name="notes" value="${result.value.notes}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    }
+});
+</script>
+@endpush
 @endpush

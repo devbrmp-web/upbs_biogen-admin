@@ -37,29 +37,7 @@
 </div>
 <!-- end row -->
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete admin user "<span id="deleteItemName"></span>"?</p>
-                <p class="text-danger"><small><i class="bx bx-info-circle"></i> This action cannot be undone.</small></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Bootstrap Delete Modal Removed for SweetAlert2 -->
 
 @endsection
 
@@ -191,24 +169,18 @@ document.addEventListener('DOMContentLoaded', function() {
     updateClearVisibility(new URL(window.location.href));
 });
 
-// Delete confirmation function using Bootstrap modal
+// Delete confirmation function using SweetAlert2
 function confirmDelete(adminName, adminId) {
-    document.getElementById('deleteItemName').textContent = adminName;
-    document.getElementById('deleteForm').action = `{{ route('admin.admin-users.index') }}/${adminId}`;
-    
-    // Try Bootstrap modal first
-    if (typeof bootstrap !== 'undefined') {
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        modal.show();
-    } else if (typeof $ !== 'undefined') {
-        // Fallback to jQuery modal
-        $('#deleteModal').modal('show');
-    } else {
-        // Fallback to native confirm
-        if (confirm(`Are you sure you want to delete admin user "${adminName}"? This action cannot be undone.`)) {
-            document.getElementById('deleteForm').submit();
+    window.confirmAction('Hapus Admin?', `Apakah Anda yakin ingin menghapus admin "${adminName}"? Tindakan ini tidak dapat dibatalkan.`, 'error').then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ route('admin.admin-users.index') }}/${adminId}`;
+            form.innerHTML = `@csrf @method('DELETE')`;
+            document.body.appendChild(form);
+            form.submit();
         }
-    }
+    });
 }
 </script>
 @endpush

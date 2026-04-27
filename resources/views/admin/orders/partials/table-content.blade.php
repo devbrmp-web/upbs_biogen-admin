@@ -96,13 +96,15 @@
                             </li>
                             @if($order->status !== 'cancelled' && $order->status !== 'completed')
                                 <li>
-                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#statusModal{{ $order->id }}">
+                                    <button type="button" class="dropdown-item" 
+                                            onclick="updateOrderStatus('{{ $order->id }}', '{{ $order->order_code }}', {{ json_encode($order->getNextValidStatuses()) }})">
                                         <i class="bx bx-edit me-2"></i>Update Status
                                     </button>
                                 </li>
                                 @if($order->canTransitionTo('cancelled'))
                                     <li>
-                                        <button type="button" class="dropdown-item text-warning" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $order->id }}">
+                                        <button type="button" class="dropdown-item text-warning" 
+                                                onclick="cancelOrder('{{ $order->id }}', '{{ $order->order_code }}')">
                                             <i class="bx bx-x-circle me-2"></i>Cancel Order
                                         </button>
                                     </li>
@@ -111,7 +113,8 @@
                             @if($order->status === 'cancelled')
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $order->id }}">
+                                    <button type="button" class="dropdown-item text-danger" 
+                                            onclick="deleteOrder('{{ $order->id }}', '{{ $order->order_code }}')">
                                         <i class="bx bx-trash me-2"></i>Delete Order
                                     </button>
                                 </li>
@@ -121,110 +124,7 @@
                 </td>
             </tr>
 
-            <!-- Status Update Modal -->
-            @if($order->status !== 'cancelled' && $order->status !== 'completed')
-                <div class="modal fade" id="statusModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
-                    <div class="modal-dialog" style="z-index: 1060;">
-                        <div class="modal-content">
-                            <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
-                                @csrf
-                                @method('PATCH')
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Update Order Status</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="status{{ $order->id }}" class="form-label">New Status</label>
-                                        <select class="form-select" id="status{{ $order->id }}" name="status" required>
-                                            @foreach($order->getNextValidStatuses() as $status)
-                                                <option value="{{ $status }}">{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="notes{{ $order->id }}" class="form-label">Notes (Optional)</label>
-                                        <textarea class="form-control" id="notes{{ $order->id }}" name="notes" rows="3" placeholder="Add any notes about this status change..."></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Update Status</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Cancel Order Modal -->
-            @if($order->canTransitionTo('cancelled'))
-                <div class="modal fade" id="cancelModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
-                    <div class="modal-dialog" style="z-index: 1060;">
-                        <div class="modal-content">
-                            <form action="{{ route('admin.orders.cancel', $order) }}" method="POST">
-                                @csrf
-                                @method('PATCH')
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Cancel Order</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="alert alert-warning">
-                                        <i class="bx bx-warning me-2"></i>
-                                        This will cancel the order and restore stock quantities. This action cannot be undone.
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="cancellation_reason{{ $order->id }}" class="form-label">Cancellation Reason</label>
-                                        <textarea class="form-control" id="cancellation_reason{{ $order->id }}" name="cancellation_reason" rows="3" required placeholder="Please provide a reason for cancelling this order..."></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
-                                    <button type="submit" class="btn btn-warning">Cancel Order</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Delete Order Modal -->
-            @if($order->status === 'cancelled')
-                <div class="modal fade" id="deleteModal{{ $order->id }}" tabindex="-1" style="z-index: 1055;">
-                    <div class="modal-dialog" style="z-index: 1060;">
-                        <div class="modal-content">
-                            <form action="{{ route('admin.orders.destroy', $order) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Delete Order</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="alert alert-danger">
-                                        <i class="bx bx-warning me-2"></i>
-                                        <strong>Warning!</strong> This will permanently delete the order and all its data. This action cannot be undone.
-                                    </div>
-                                    <p class="mb-3">
-                                        <strong>Order:</strong> {{ $order->order_code }}<br>
-                                        <strong>Customer:</strong> {{ $order->customer_name }}<br>
-                                        <strong>Total:</strong> {{ number_format($order->total_amount, 0, ',', '.') }} IDR
-                                    </p>
-                                    <div class="mb-3">
-                                        <label for="deletion_reason{{ $order->id }}" class="form-label">Deletion Reason</label>
-                                        <textarea class="form-control" id="deletion_reason{{ $order->id }}" name="deletion_reason" rows="3" required placeholder="Please provide a reason for deleting this order..."></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
-                                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
+<!-- Bootstrap Modals Removed for SweetAlert2 -->
         @empty
             <tr>
                 <td colspan="8" class="text-center py-4">

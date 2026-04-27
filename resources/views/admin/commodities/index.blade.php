@@ -36,26 +36,9 @@
 
 @endsection
 
-@push('modals')
-<!-- Confirmation modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Delete Commodity</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p class="mb-0">Are you sure you want to delete this commodity? This action cannot be undone.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Bootstrap Delete Modal Removed for SweetAlert2 -->
 
+@push('modals')
 <!-- Constraint Error Modal -->
 <div class="modal fade" id="constraintErrorModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -99,29 +82,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!btn) return;
         e.preventDefault();
         targetFormId = btn.getAttribute('data-delete-form');
-        if (bsModal) {
-            bsModal.show();
-        } else if (typeof $ !== 'undefined') {
-            $('#confirmDeleteModal').modal('show');
-        } else {
-            if (confirm('Are you sure you want to delete this commodity?')) {
+        
+        window.confirmAction('Hapus Komoditas?', 'Apakah Anda yakin ingin menghapus komoditas ini? Tindakan ini tidak dapat dibatalkan.', 'error').then((result) => {
+            if (result.isConfirmed) {
                 const form = document.getElementById(targetFormId);
                 if (form) form.submit();
             }
-        }
-    });
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            if (!targetFormId) return;
-            const form = document.getElementById(targetFormId);
-            if (form) form.submit();
-            if (bsModal) {
-                bsModal.hide();
-            } else if (typeof $ !== 'undefined') {
-                $('#confirmDeleteModal').modal('hide');
-            }
         });
-    }
+    });
 
     // Progressive enhancement for search + pagination
     const root = document.getElementById('list-root');

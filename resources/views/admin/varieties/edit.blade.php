@@ -226,7 +226,7 @@
                     });
                     this.on("error", function(file, message) {
                         console.error(message);
-                        alert("Error uploading: " + (message.message || message));
+                        window.toast('Error', "Gagal mengunggah: " + (message.message || message), 'error');
                     });
                 }
             });
