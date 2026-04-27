@@ -7,22 +7,30 @@
 @section('content')
 
 <!-- Dashboard Header & Filter -->
-<div class="row mb-3">
+<div class="row mb-4">
     <div class="col-12">
-        <div class="page-title-box d-flex align-items-center justify-content-between">
+        <div class="page-title-box d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 flex-md-nowrap">
             <h4 class="mb-0 fs-18 fw-bold text-dark">Ringkasan Distribusi & Stok</h4>
             
-            <form action="{{ route('admin.dashboard') }}" method="GET" class="d-flex align-items-center gap-2">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white border-end-0 border-primary-subtle"><iconify-icon icon="solar:calendar-bold-duotone" class="text-primary"></iconify-icon></span>
-                    <input type="date" name="start_date" class="form-control border-start-0 border-primary-subtle" value="{{ $startDate }}" placeholder="Mulai">
+            <form action="{{ route('admin.dashboard') }}" method="GET" class="row g-2 w-100 w-md-auto ms-md-auto">
+                <div class="col-12 col-sm-6 col-md-auto">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 border-primary-subtle"><iconify-icon icon="solar:calendar-bold-duotone" class="text-primary"></iconify-icon></span>
+                        <input type="date" name="start_date" class="form-control border-start-0 border-primary-subtle" value="{{ $startDate }}" placeholder="Mulai">
+                    </div>
                 </div>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white border-end-0 border-primary-subtle"><iconify-icon icon="solar:calendar-bold-duotone" class="text-primary"></iconify-icon></span>
-                    <input type="date" name="end_date" class="form-control border-start-0 border-primary-subtle" value="{{ $endDate }}" placeholder="Selesai">
+                <div class="col-12 col-sm-6 col-md-auto">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0 border-primary-subtle"><iconify-icon icon="solar:calendar-bold-duotone" class="text-primary"></iconify-icon></span>
+                        <input type="date" name="end_date" class="form-control border-start-0 border-primary-subtle" value="{{ $endDate }}" placeholder="Selesai">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm">Filter</button>
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-soft-secondary">Reset</a>
+                <div class="col-6 col-md-auto">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 px-3 shadow-sm">Filter</button>
+                </div>
+                <div class="col-6 col-md-auto">
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-soft-secondary w-100">Reset</a>
+                </div>
             </form>
         </div>
     </div>
