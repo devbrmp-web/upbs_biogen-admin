@@ -350,7 +350,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalWeight = calculateTotalWeight();
         
         if (courierPosRadio && courierPosRadio.checked && totalWeight > 10) {
-            alert(`Total weight (${totalWeight} kg) exceeds Pos Indonesia limit of 10 kg. Please select Indah Cargo for heavier orders.`);
+            Swal.fire({
+                title: 'Batas Berat Terlampaui',
+                text: `Total berat (${totalWeight} kg) melebihi batas Pos Indonesia (10 kg). Silakan gunakan Indah Cargo untuk pesanan yang lebih berat.`,
+                icon: 'warning',
+                confirmButtonColor: '#10b981'
+            });
             courierIndahRadio.checked = true;
             return false;
         }
@@ -366,7 +371,12 @@ document.addEventListener('DOMContentLoaded', function() {
     checkoutForm.addEventListener('submit', function(e) {
         if (deliveryRadio.checked && !deliveryAcknowledged.checked) {
             e.preventDefault();
-            alert('Please acknowledge that shipping coordination will be handled via Call Center/WhatsApp for delivery orders.');
+            Swal.fire({
+                title: 'Konfirmasi Diperlukan',
+                text: 'Harap setujui bahwa koordinasi pengiriman akan ditangani melalui Call Center/WhatsApp untuk pesanan pengiriman.',
+                icon: 'info',
+                confirmButtonColor: '#10b981'
+            });
             deliveryAcknowledged.focus();
             return false;
         }
@@ -376,7 +386,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const courierSelected = document.querySelector('input[name="courier_name"]:checked');
             if (!courierSelected) {
                 e.preventDefault();
-                alert('Please select a courier for delivery.');
+                Swal.fire({
+                    title: 'Kurir Belum Dipilih',
+                    text: 'Silakan pilih kurir untuk pengiriman.',
+                    icon: 'warning',
+                    confirmButtonColor: '#10b981'
+                });
                 return false;
             }
             

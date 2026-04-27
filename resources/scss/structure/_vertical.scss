@@ -60,7 +60,7 @@
     .main-nav {
         top: 0;
         bottom: 0;
-        z-index: 1010;
+        z-index: 1060; // Increased to be above topbar (1050)
         margin-left: 0;
         position: fixed;
         transition: all 0.3s ease-in-out;
@@ -70,6 +70,19 @@
         padding-bottom: $spacer;
         box-shadow: $box-shadow;
         border-right: $card-border-width solid $main-nav-border-color;
+
+        .logo-box {
+            position: sticky;
+            top: 0;
+            z-index: 1061 !important; // Above main-nav
+            background: $main-nav-bg;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: $topbar-height;
+            transition: all 0.3s ease-in-out;
+            padding: 0 calc($main-nav-width-sm * 0.5 - $logo-sm-height * 0.5);
+        }
 
         .scrollbar {
             height: calc(100% - $topbar-height);
@@ -417,14 +430,41 @@ html[data-menu-size='condensed'] {
         }
     }
 
+.topbar {
+    padding-left: $main-nav-width;
+    transition: all 0.3s ease-in-out;
+}
+
+html[data-menu-size='condensed'],
+html[data-menu-size='sm-hover'] {
     .topbar {
         padding-left: $main-nav-width-sm;
     }
+}
 
+html[data-menu-size='hidden'] {
+    .topbar {
+        padding-left: 0;
+    }
+}
+
+.page-content {
+    margin-left: $main-nav-width;
+    transition: all 0.3s ease-in-out;
+}
+
+html[data-menu-size='condensed'],
+html[data-menu-size='sm-hover'] {
     .page-content {
         margin-left: $main-nav-width-sm;
-        min-height: 1300px;
     }
+}
+
+html[data-menu-size='hidden'] {
+    .page-content {
+        margin-left: 0;
+    }
+}
 }
 
 // Sidebar sm hover Toggle Menu Button
@@ -474,7 +514,7 @@ html[data-menu-size='sm-hover'] {
     }
 
     .button-toggle-menu {
-        display: none;
+        display: block;
     }
 
     .main-nav:not(:hover) {
@@ -549,12 +589,16 @@ html[data-menu-size='sm-hover'] {
 // Small Hover Active
 html[data-menu-size='sm-hover-active'] {
     .button-toggle-menu {
-        display: none;
+        display: block;
     }
 
     .main-nav {
+        margin-left: 0 !important;
+        width: $main-nav-width;
+        
         .logo-box {
             text-align: left;
+            left: 0 !important;
         }
 
         .button-sm-hover {
@@ -643,16 +687,3 @@ html[data-menu-size='sm-hover-active'] {
 html[data-bs-theme='dark'] {
     .main-nav {
         .logo-box {
-            .logo-light { 
-                display: flex !important; 
-                opacity: 1 !important;
-                visibility: visible !important;
-                position: relative !important;
-                align-items: center;
-            }
-            .logo-dark { 
-                display: none !important; 
-            }
-        }
-    }
-}

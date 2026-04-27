@@ -100,12 +100,13 @@ class VarietyController extends Controller
                         $q->orderBy('order')->orderBy('id');
                     },
                     'seedLots' => function ($q) {
-                        $q->select('id', 'variety_id', 'seed_class_id','price_per_unit', 'quantity',
-                            'unit', 'is_sellable', 'production_year')
+                        $q->select('id', 'variety_id', 'seed_class_id', 'lot_code', 'price_per_unit',
+                            'quantity', 'unit', 'is_sellable', 'production_year')
                           ->where('is_sellable', true)
                           ->where('quantity', '>', 0);
                     },
-                    'seedLots.seedClass:id,code,name'
+                    // Eager-load semua kolom seed_class agar price & step tersedia
+                    'seedLots.seedClass',
                 ])
                 ->where('is_active', true)
                 ->where('slug', $slug)
@@ -113,69 +114,99 @@ class VarietyController extends Controller
                     'minimum_limit', 'image_path', 'description'])
                 ->firstOrFail();
 
-            // Mapping Seed Lots untuk frontend
+            // ── Mapping Seed Lots (sertakan seed_class.id agar view bisa filter) ──
             $seedLots = $v->seedLots->map(function ($sl) {
                 return [
-                    'id' => $sl->id,
-                    'lot_code' => $sl->lot_code,
-                    'price_per_unit' => $sl->price_per_unit,
-                'price_per_unit_cents' => ((int) $sl->price_per_unit) * 100,
-                    'quantity' => $sl->quantity,
-                    'unit' => $sl->unit,
-                    'is_sellable' => (bool) $sl->is_sellable,
-                    'production_year' => $sl->production_year,
+                    'id'                   => $sl->id,
+                    'lot_code'             => $sl->lot_code,
+                    'price_per_unit'       => (int) $sl->price_per_unit,
+                    'price_per_unit_cents' => ((int) $sl->price_per_unit) * 100,
+                    'quantity'             => (int) $sl->quantity,
+                    'unit'                 => $sl->unit,
+                    'is_sellable'          => (bool) $sl->is_sellable,
+                    'production_year'      => $sl->production_year,
                     'seed_class' => [
+                        'id'   => optional($sl->seedClass)->id,
                         'code' => optional($sl->seedClass)->code,
                         'name' => optional($sl->seedClass)->name,
-                    ]
+                    ],
                 ];
             });
 
-            // Group stok berdasarkan seed class (PHP-side)
+            // ── Group stok per kelas benih (kode → total qty) ─────────────────
             $stockByClass = $v->seedLots
                 ->filter(fn ($sl) => $sl->is_sellable && $sl->quantity > 0)
                 ->groupBy(fn ($sl) => optional($sl->seedClass)->code)
                 ->map(fn ($items) => $items->sum('quantity'));
 
-            // Map images
+            // ── Stock details (getStocksByClass + enriched dengan price & step) ─
+            //
+            // getStocksByClass() mengembalikan semua kelas benih aktif.
+            // Kita enrich dengan price (min price dari seed_lots yang ada) dan
+            // field step_increment / min_order_qty dari seed_class.
+            $stockDetails = $v->getStocksByClass()->map(function ($classData) use ($v) {
+                $seedClassId = $classData['class_id'];
+
+                // Ambil harga terendah dari lots yang tersedia untuk kelas ini
+                $lowestPriceLot = $v->seedLots
+                    ->filter(fn ($sl) =>
+                        optional($sl->seedClass)->id == $seedClassId
+                        && $sl->is_sellable
+                        && $sl->quantity > 0
+                    )
+                    ->sortBy('price_per_unit')
+                    ->first();
+
+                // Ambil seed_class model untuk step_increment & min_order_qty
+                $scModel = $lowestPriceLot?->seedClass
+                    ?? \App\Models\SeedClass::find($seedClassId);
+
+                return array_merge($classData, [
+                    'price'          => $lowestPriceLot ? (int) $lowestPriceLot->price_per_unit : 0,
+                    'step_increment' => (int) ($scModel->step_increment ?? 1),
+                    'min_order_qty'  => (int) ($scModel->min_order_qty ?? 1),
+                ]);
+            });
+
+            // ── Map images ────────────────────────────────────────────────────
             $images = $v->images->map(function ($img) {
                 return [
-                    'id' => $img->id,
-                    'image_url' => $img->image_url,
+                    'id'         => $img->id,
+                    'image_url'  => $img->image_url,
                     'is_primary' => (bool) $img->is_primary,
-                    'order' => $img->order,
+                    'order'      => $img->order,
                 ];
             });
 
             $payload = [
-                'id' => $v->id,
-                'name' => $v->name,
-                'slug' => $v->slug,
-                'sku' => $v->sku,
-                'description' => $v->description,
-                'image_path' => $v->image_path,
-                'image_url' => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
-                'images' => $images,
-                'minimum_limit' => (int) ($v->minimum_limit ?? 0),
+                'id'             => $v->id,
+                'name'           => $v->name,
+                'slug'           => $v->slug,
+                'sku'            => $v->sku,
+                'description'    => $v->description,
+                'image_path'     => $v->image_path,
+                'image_url'      => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
+                'images'         => $images,
+                'minimum_limit'  => (int) ($v->minimum_limit ?? 0),
                 'commodity' => [
                     'name' => optional($v->commodity)->name,
                     'slug' => optional($v->commodity)->slug,
                 ],
                 'stock' => [
                     'total_weight_kg' => (float) $v->total_stock,
-                    'total_unit_qty' => (float) ($v->total_unit_stock_calculated ?? 0),
-                    'status' => $v->stock_status,
-                    'details' => $v->getStocksByClass(),
+                    'total_unit_qty'  => (float) ($v->total_unit_stock_calculated ?? 0),
+                    'status'          => $v->stock_status,
+                    'details'         => $stockDetails,
                 ],
                 'stock_by_class' => $stockByClass,
-                'seed_lots' => $seedLots,
+                'seed_lots'      => $seedLots,
             ];
 
             return response()->json(['data' => $payload]);
         } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Database query error',
+                'error'   => 'Database query error',
                 'message' => $e->getMessage(),
             ], 500);
         }
