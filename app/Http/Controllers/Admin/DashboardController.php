@@ -30,7 +30,7 @@ class DashboardController extends Controller
         $version = Cache::get('admin_dashboard_v', 1);
         $cacheKey = "admin_dashboard_stats_{$version}_" . ($startDate ?: 'all') . "_" . ($endDate ?: 'all');
 
-        $dashboardData = Cache::remember($cacheKey, 3600, function () use ($startDate, $endDate) {
+        $dashboardData = Cache::remember($cacheKey, 60, function () use ($startDate, $endDate) {
             // 0. Safe Date Parsing
             try {
                 $parseStartDate = $startDate ? Carbon::parse($startDate)->startOfDay() : null;
@@ -432,7 +432,12 @@ class DashboardController extends Controller
             $parseEndDate = null;
         }
 
-        $query = Order::where('status', '!=', Order::STATUS_CANCELLED)
+        $query = Order::whereIn('status', [
+                Order::STATUS_PAID,
+                Order::STATUS_PROCESSING,
+                Order::STATUS_PICKUP_READY,
+                Order::STATUS_COMPLETED,
+            ])
             ->with(['items']);
 
         if ($parseStartDate) {
@@ -472,9 +477,12 @@ class DashboardController extends Controller
             'Maluku Utara' => 'ID-MU',
             'Nusa Tenggara Barat' => 'ID-NB',
             'Nusa Tenggara Timur' => 'ID-NT',
-            'Papua' => 'ID-PA',
+            'Papua Barat Daya' => 'ID-PS',
             'Papua Barat' => 'ID-PB',
-            'Irian Jaya Barat' => 'ID-PB',
+            'Papua Pegunungan' => 'ID-PY',
+            'Papua Selatan' => 'ID-PE',
+            'Papua Tengah' => 'ID-PT',
+            'Papua' => 'ID-PA',
             'Riau' => 'ID-RI',
             'Sulawesi Barat' => 'ID-SR',
             'Sulawesi Selatan' => 'ID-SN',
@@ -494,40 +502,48 @@ class DashboardController extends Controller
         $seedClasses = SeedClass::all();
         foreach ($orders as $order) {
             $address = $order->customer_address;
-            $parts = explode(',', $address);
-            $provinceName = trim(end($parts));
+            
+            // Robust Scanner: Check if any part of the address matches a province
+            $isoCode = null;
+            $matchedProvince = 'Luar Jangkauan/Lainnya';
+            
+            foreach ($provinceMapping as $name => $code) {
+                if (stripos($address, $name) !== false) {
+                    $isoCode = $code;
+                    $matchedProvince = $name;
+                    break;
+                }
+            }
 
-            $isoCode = $provinceMapping[$provinceName] ?? null;
-
-            // Global stats
+            // Global stats - now synchronized with filtered orders
             $totalOmzet += (float) $order->total_amount;
             $totalVolume += (float) $order->items->sum('quantity');
 
-            if ($isoCode) {
-                if (!isset($dataByProvince[$isoCode])) {
-                    $dataByProvince[$isoCode] = [
-                        'name' => $provinceName,
-                        'total_orders' => 0,
-                        'total_revenue' => 0,
-                        'qty_bs' => 0,
-                        'qty_fs' => 0,
-                        'qty_pl' => 0,
-                    ];
-                }
-                $dataByProvince[$isoCode]['total_orders']++;
-                $dataByProvince[$isoCode]['total_revenue'] += (float) $order->total_amount;
+            // Map & Table Data
+            $key = $isoCode ?: 'UNKNOWN';
+            if (!isset($dataByProvince[$key])) {
+                $dataByProvince[$key] = [
+                    'name' => $isoCode ? $matchedProvince : 'Lainnya/Luar Jangkauan',
+                    'total_orders' => 0,
+                    'total_revenue' => 0,
+                    'qty_bs' => 0,
+                    'qty_fs' => 0,
+                    'qty_pl' => 0,
+                ];
+            }
+            
+            $dataByProvince[$key]['total_orders']++;
+            $dataByProvince[$key]['total_revenue'] += (float) $order->total_amount;
 
-                foreach ($order->items as $item) {
-                    $qty = (float) $item->quantity;
-                    $classCode = strtoupper($item->seed_class);
-                    $class = $seedClasses->firstWhere('code', $classCode);
-                    
-                    if ($class) {
-                        $key = 'qty_' . strtolower($class->stock_category);
-                        if (!isset($dataByProvince[$isoCode][$key])) {
-                            $dataByProvince[$isoCode][$key] = 0;
-                        }
-                        $dataByProvince[$isoCode][$key] += $qty;
+            foreach ($order->items as $item) {
+                $qty = (float) $item->quantity;
+                $classCode = strtoupper($item->seed_class);
+                $class = $seedClasses->firstWhere('code', $classCode);
+                
+                if ($class) {
+                    $categoryKey = 'qty_' . strtolower($class->stock_category);
+                    if (isset($dataByProvince[$key][$categoryKey])) {
+                        $dataByProvince[$key][$categoryKey] += $qty;
                     }
                 }
             }
@@ -537,8 +553,10 @@ class DashboardController extends Controller
         $mapData = [];
         $revenueData = [];
         foreach ($dataByProvince as $iso => $val) {
-            $mapData[$iso] = $val['total_orders'];
-            $revenueData[$iso] = $val['total_revenue'];
+            if ($iso !== 'UNKNOWN') {
+                $mapData[$iso] = $val['total_orders'];
+                $revenueData[$iso] = $val['total_revenue'];
+            }
         }
 
         // Top 5 Provinces
