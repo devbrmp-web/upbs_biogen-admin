@@ -101,23 +101,11 @@
                         <p class="text-muted mb-1 fs-12 fw-semibold text-uppercase ls-1">Total Penjualan</p>
                         <h3 class="mb-0 fw-bold">Rp {{ number_format($summaryStats['omzet'], 0, ',', '.') }}</h3>
                         <div class="mt-1">
-                            @if($revenueGrowth > 0)
-                                <span class="text-success fs-12 fw-bold">
-                                    <iconify-icon icon="solar:alt-arrow-up-bold-duotone" class="align-middle"></iconify-icon> 
-                                    {{ number_format($revenueGrowth, 1) }}%
-                                    <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
-                                </span>
-                            @elseif($revenueGrowth < 0)
-                                <span class="text-danger fs-12 fw-bold">
-                                    <iconify-icon icon="solar:alt-arrow-down-bold-duotone" class="align-middle"></iconify-icon> 
-                                    {{ number_format(abs($revenueGrowth), 1) }}%
-                                    <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
-                                </span>
-                            @else
-                                <span class="text-muted fs-12 fw-normal">
-                                    0% <span class="ms-1">vs bulan lalu</span>
-                                </span>
-                            @endif
+                            <span class="{{ $revenueGrowth >= 0 ? 'text-success' : 'text-danger' }} fs-12 fw-bold">
+                                <iconify-icon icon="{{ $revenueGrowth >= 0 ? 'lucide:trending-up' : 'lucide:trending-down' }}" class="align-middle"></iconify-icon> 
+                                {{ $revenueGrowth >= 0 ? '+' : '' }}{{ number_format($revenueGrowth, 1) }}%
+                                <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -171,17 +159,11 @@
                         <p class="text-muted mb-1 fs-12 fw-medium">Completed</p>
                         <h4 class="mb-0 fw-bold">{{ $countCompleted }}</h4>
                         <div class="mt-1">
-                            @if($completedGrowth > 0)
-                                <span class="text-success fs-11 fw-bold">
-                                    <iconify-icon icon="solar:alt-arrow-up-bold-duotone" class="align-middle"></iconify-icon> 
-                                    {{ number_format($completedGrowth, 1) }}%
-                                </span>
-                            @elseif($completedGrowth < 0)
-                                <span class="text-danger fs-11 fw-bold">
-                                    <iconify-icon icon="solar:alt-arrow-down-bold-duotone" class="align-middle"></iconify-icon> 
-                                    {{ number_format(abs($completedGrowth), 1) }}%
-                                </span>
-                            @endif
+                            <span class="{{ $completedGrowth >= 0 ? 'text-success' : 'text-danger' }} fs-11 fw-bold">
+                                <iconify-icon icon="{{ $completedGrowth >= 0 ? 'lucide:trending-up' : 'lucide:trending-down' }}" class="align-middle"></iconify-icon> 
+                                {{ $completedGrowth >= 0 ? '+' : '' }}{{ number_format($completedGrowth, 1) }}%
+                                <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -426,6 +408,19 @@
 
 @endsection
 
+<!-- Hidden Data Container for JS (Zero Red Lines Method) -->
+<div id="dashboard-data" 
+     style="display: none;"
+     data-geo="{{ json_encode($geoData) }}" 
+     data-revenue="{{ json_encode($revenueData) }}"
+     data-chart-values="{{ json_encode($chartValues) }}"
+     data-chart-dates="{{ json_encode($chartDates) }}"
+     data-viability-categories="{{ json_encode($viabilityCategories) }}"
+     data-viability-fresh="{{ json_encode($viabilityFresh) }}"
+     data-viability-warning="{{ json_encode($viabilityWarning) }}"
+     data-viability-critical="{{ json_encode($viabilityCritical) }}">
+</div>
+
 @section('script-bottom')
 <!-- ApexCharts -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -436,189 +431,69 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- 1. Indonesia Map ---
-        @if(!empty($geoData))
-        const map = new jsVectorMap({
-            selector: '#indonesia-map',
-            map: 'indonesia',
-            zoomOnScroll: false,
-            regionStyle: {
-                initial: {
-                    fill: '#f4f4f4',
-                    stroke: '#dee2e6',
-                    strokeWidth: 0.5,
-                    fillOpacity: 1
+        const container = document.getElementById('dashboard-data');
+        if (!container) return;
+        
+        const data = container.dataset;
+        const geoData = data.geo ? JSON.parse(data.geo) : {};
+        const revenueData = data.revenue ? JSON.parse(data.revenue) : {};
+        const chartValues = data.chartValues ? JSON.parse(data.chartValues) : [];
+        const chartDates = data.chartDates ? JSON.parse(data.chartDates) : [];
+        const vCats = data.viabilityCategories ? JSON.parse(data.viabilityCategories) : [];
+        const vFresh = data.viabilityFresh ? JSON.parse(data.viabilityFresh) : [];
+        const vWarn = data.viabilityWarning ? JSON.parse(data.viabilityWarning) : [];
+        const vCrit = data.viabilityCritical ? JSON.parse(data.viabilityCritical) : [];
+
+        // 1. Indonesia Map
+        if (Object.keys(geoData).length > 0) {
+            new jsVectorMap({
+                selector: '#indonesia-map',
+                map: 'indonesia',
+                zoomOnScroll: false,
+                regionStyle: {
+                    initial: { fill: '#f4f4f4', stroke: '#dee2e6', strokeWidth: 0.5, fillOpacity: 1 },
+                    hover: { fillOpacity: 0.8, cursor: 'pointer' }
                 },
-                hover: {
-                    fillOpacity: 0.8,
-                    cursor: 'pointer'
+                visualizeData: { scale: ['#e0f2fe', '#0369a1'], values: geoData },
+                onRegionTooltipShow(event, tooltip, code) {
+                    const count = geoData[code] || 0;
+                    const revenue = revenueData[code] || 0;
+                    const formattedRevenue = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(revenue);
+                    tooltip.text(`<div class="p-1"><div class="fw-bold mb-1">${tooltip.text()}</div><div class="fs-12 d-flex align-items-center gap-1"><iconify-icon icon="lucide:shopping-cart" class="text-primary"></iconify-icon><span>${count} Pesanan</span></div><div class="fs-12 d-flex align-items-center gap-1 text-success"><iconify-icon icon="lucide:banknote"></iconify-icon><span>Revenue: ${formattedRevenue}</span></div></div>`, true);
                 }
-            },
-            visualizeData: {
-                scale: ['#e3ebf6', '#3e60d5'],
-                values: @json($geoData)
-            },
-            onRegionTooltipShow(event, tooltip, code) {
-                let count = @json($geoData)[code] || 0;
-                let revenue = @json($revenueData)[code] || 0;
-                let formattedRevenue = new Intl.NumberFormat('id-ID', { 
-                    style: 'currency', 
-                    currency: 'IDR',
-                    maximumFractionDigits: 0
-                }).format(revenue);
+            });
+        }
 
-                tooltip.text(
-                    `<strong>${tooltip.text()}</strong><br>
-                     <span class="fs-12">${count} Pesanan</span><br>
-                     <span class="fs-12 text-success">Revenue: ${formattedRevenue}</span>`
-                , true)
-            }
-        });
-        @endif
-
-        // --- 2. Revenue Chart ---
-        var revenueOptions = {
-            series: [{
-                name: "Pendapatan",
-                data: @json($chartValues)
-            }],
-            chart: {
-                height: 350,
-                type: 'area',
-                toolbar: { show: false },
-                fontFamily: 'inherit'
-            },
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.7,
-                    opacityTo: 0.3,
-                    stops: [0, 90, 100]
-                }
-            },
-            xaxis: {
-                categories: @json($chartDates),
-                axisBorder: { show: false },
-                axisTicks: { show: false }
-            },
-            yaxis: {
-                labels: {
-                    formatter: function (value) {
-                        return new Intl.NumberFormat('id-ID', { 
-                            style: 'currency', 
-                            currency: 'IDR',
-                            maximumFractionDigits: 0 
-                        }).format(value);
-                    }
-                }
-            },
-            colors: ['#0ab39c'], // Brand-like Success Green (Tealish-Green)
-            grid: {
-                borderColor: '#eef1f5',
-                strokeDashArray: 5,
-            },
-            markers: {
-                size: 4,
+        // 2. Revenue Chart
+        if (chartValues.length > 0) {
+            new ApexCharts(document.querySelector("#revenue-trend-chart"), {
+                series: [{ name: "Pendapatan", data: chartValues }],
+                chart: { height: 350, type: 'area', toolbar: { show: false }, fontFamily: 'inherit' },
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] } },
+                xaxis: { categories: chartDates, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { formatter: (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v) } },
                 colors: ['#0ab39c'],
-                strokeColors: '#fff',
-                strokeWidth: 2,
-                hover: { size: 6 }
-            },
-            tooltip: {
-                y: {
-                    formatter: function (value) {
-                        return new Intl.NumberFormat('id-ID', { 
-                            style: 'currency', 
-                            currency: 'IDR' 
-                        }).format(value);
-                    }
-                }
-            }
-        };
+                grid: { borderColor: '#eef1f5', strokeDashArray: 5 },
+                tooltip: { y: { formatter: (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(v) } }
+            }).render();
+        }
 
-        var revenueChart = new ApexCharts(document.querySelector("#revenue-trend-chart"), revenueOptions);
-        revenueChart.render();
-
-        // --- 2. Seed Viability Chart (Stacked Bar) ---
-        @if(!empty($viabilityCategories))
-        var viabilityOptions = {
-            series: [
-                {
-                    name: 'Fresh (< 6 Months)',
-                    data: @json($viabilityFresh)
-                },
-                {
-                    name: 'Warning (6-12 Months)',
-                    data: @json($viabilityWarning)
-                },
-                {
-                    name: 'Critical (> 12 Months)',
-                    data: @json($viabilityCritical)
-                }
-            ],
-            chart: {
-                type: 'bar',
-                height: 350,
-                stacked: true,
-                toolbar: { show: false },
-                fontFamily: 'inherit'
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    dataLabels: {
-                        total: {
-                            enabled: true,
-                            offsetX: 0,
-                            style: {
-                                fontSize: '13px',
-                                fontWeight: 900
-                            }
-                        }
-                    }
-                },
-            },
-            stroke: {
-                width: 1,
-                colors: ['#fff']
-            },
-            xaxis: {
-                categories: @json($viabilityCategories),
-                labels: {
-                    formatter: function (val) {
-                        return val // + " Kg" or unit if consistent
-                    }
-                }
-            },
-            yaxis: {
-                title: {
-                    text: undefined
-                },
-            },
-            tooltip: {
-                y: {
-                    formatter: function (val) {
-                        return val + " (Qty)";
-                    }
-                }
-            },
-            fill: {
-                opacity: 1
-            },
-            legend: {
-                position: 'top',
-                horizontalAlign: 'left',
-                offsetX: 40
-            },
-            colors: ['#0ab39c', '#f7b84b', '#f06548'] // Fresh (Green), Warning (Yellow), Critical (Red)
-        };
-
-        var viabilityChart = new ApexCharts(document.querySelector("#seed-viability-chart"), viabilityOptions);
-        viabilityChart.render();
-        @endif
+        // 3. Viability Chart
+        if (vCats.length > 0) {
+            new ApexCharts(document.querySelector("#seed-viability-chart"), {
+                series: [
+                    { name: 'Fresh (< 6 Months)', data: vFresh },
+                    { name: 'Warning (6-12 Months)', data: vWarn },
+                    { name: 'Critical (> 12 Months)', data: vCrit }
+                ],
+                chart: { type: 'bar', height: 350, stacked: true, toolbar: { show: false }, fontFamily: 'inherit' },
+                plotOptions: { bar: { horizontal: true, dataLabels: { total: { enabled: true, style: { fontSize: '13px', fontWeight: 900 } } } } },
+                xaxis: { categories: vCats },
+                legend: { position: 'top', horizontalAlign: 'left', offsetX: 40 },
+                colors: ['#0ab39c', '#f7b84b', '#f06548']
+            }).render();
+        }
     });
 </script>
 @endsection

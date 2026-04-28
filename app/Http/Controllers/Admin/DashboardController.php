@@ -186,11 +186,11 @@ class DashboardController extends Controller
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
                 ->sum('total_amount');
             
-            // Completed Growth
-            $currComp = Order::where('status', Order::STATUS_COMPLETED)
+            // Completed Growth - Synchronized with Revenue logic
+            $currComp = Order::whereIn('status', $validStatuses)
                 ->whereBetween('created_at', [$currStart, $currEnd])
                 ->count();
-            $prevComp = Order::where('status', Order::STATUS_COMPLETED)
+            $prevComp = Order::whereIn('status', $validStatuses)
                 ->whereBetween('created_at', [$prevStart, $prevEnd])
                 ->count();
 
@@ -228,10 +228,14 @@ class DashboardController extends Controller
      */
     private function calculateDetailedGrowth($current, $previous)
     {
+        $current = (float) $current;
+        $previous = (float) $previous;
+
         if ($previous == 0) {
             return $current > 0 ? 100.0 : 0.0;
         }
-        return round((($current - $previous) / $previous) * 100, 1);
+
+        return (float) round((($current - $previous) / $previous) * 100, 1);
     }
 
     public function getStats(Request $request): JsonResponse
