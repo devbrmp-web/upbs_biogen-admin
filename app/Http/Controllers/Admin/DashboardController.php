@@ -163,6 +163,37 @@ class DashboardController extends Controller
             // 6. Low Stock Alert (Row 4)
             $lowStock = Variety::needsRestock()->withStockCalculations()->get();
 
+            // 7. Growth Analytics (MoM MTD)
+            $now = Carbon::now();
+            $currStart = $now->copy()->startOfMonth();
+            $currEnd = $now->copy();
+            
+            $prevStart = $now->copy()->subMonth()->startOfMonth();
+            $prevEnd = $now->copy()->subMonth();
+            
+            $validStatuses = [
+                Order::STATUS_PAID,
+                Order::STATUS_PROCESSING,
+                Order::STATUS_PICKUP_READY,
+                Order::STATUS_COMPLETED,
+            ];
+            
+            // Revenue Growth
+            $currRev = Order::whereIn('status', $validStatuses)
+                ->whereBetween('created_at', [$currStart, $currEnd])
+                ->sum('total_amount');
+            $prevRev = Order::whereIn('status', $validStatuses)
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->sum('total_amount');
+            
+            // Completed Growth
+            $currComp = Order::where('status', Order::STATUS_COMPLETED)
+                ->whereBetween('created_at', [$currStart, $currEnd])
+                ->count();
+            $prevComp = Order::where('status', Order::STATUS_COMPLETED)
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->count();
+
             return [
                 'countPending' => $pending,
                 'countProcessing' => $processing,
@@ -180,6 +211,8 @@ class DashboardController extends Controller
                 'tableData' => $geoData['table_data'] ?? [],
                 'summaryStats' => $geoData['summary'] ?? ['jangkauan' => 0, 'market_leader' => 'N/A', 'volume' => 0, 'omzet' => 0],
                 'lowStock' => $lowStock,
+                'revenueGrowth' => $this->calculateDetailedGrowth($currRev, $prevRev),
+                'completedGrowth' => $this->calculateDetailedGrowth($currComp, $prevComp),
                 'last_updated' => Carbon::now()->format('d M Y, H:i')
             ];
         });
@@ -188,6 +221,17 @@ class DashboardController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate
         ]));
+    }
+
+    /**
+     * Calculate MoM growth for a specific metric
+     */
+    private function calculateDetailedGrowth($current, $previous)
+    {
+        if ($previous == 0) {
+            return $current > 0 ? 100.0 : 0.0;
+        }
+        return round((($current - $previous) / $previous) * 100, 1);
     }
 
     public function getStats(Request $request): JsonResponse

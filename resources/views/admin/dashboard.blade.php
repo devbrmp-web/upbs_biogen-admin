@@ -100,6 +100,25 @@
                     <div class="flex-grow-1">
                         <p class="text-muted mb-1 fs-12 fw-semibold text-uppercase ls-1">Total Penjualan</p>
                         <h3 class="mb-0 fw-bold">Rp {{ number_format($summaryStats['omzet'], 0, ',', '.') }}</h3>
+                        <div class="mt-1">
+                            @if($revenueGrowth > 0)
+                                <span class="text-success fs-12 fw-bold">
+                                    <iconify-icon icon="solar:alt-arrow-up-bold-duotone" class="align-middle"></iconify-icon> 
+                                    {{ number_format($revenueGrowth, 1) }}%
+                                    <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
+                                </span>
+                            @elseif($revenueGrowth < 0)
+                                <span class="text-danger fs-12 fw-bold">
+                                    <iconify-icon icon="solar:alt-arrow-down-bold-duotone" class="align-middle"></iconify-icon> 
+                                    {{ number_format(abs($revenueGrowth), 1) }}%
+                                    <span class="text-muted fw-normal ms-1">vs bulan lalu</span>
+                                </span>
+                            @else
+                                <span class="text-muted fs-12 fw-normal">
+                                    0% <span class="ms-1">vs bulan lalu</span>
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,6 +170,19 @@
                     <div class="flex-grow-1">
                         <p class="text-muted mb-1 fs-12 fw-medium">Completed</p>
                         <h4 class="mb-0 fw-bold">{{ $countCompleted }}</h4>
+                        <div class="mt-1">
+                            @if($completedGrowth > 0)
+                                <span class="text-success fs-11 fw-bold">
+                                    <iconify-icon icon="solar:alt-arrow-up-bold-duotone" class="align-middle"></iconify-icon> 
+                                    {{ number_format($completedGrowth, 1) }}%
+                                </span>
+                            @elseif($completedGrowth < 0)
+                                <span class="text-danger fs-11 fw-bold">
+                                    <iconify-icon icon="solar:alt-arrow-down-bold-duotone" class="align-middle"></iconify-icon> 
+                                    {{ number_format(abs($completedGrowth), 1) }}%
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
