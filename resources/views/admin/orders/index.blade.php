@@ -79,18 +79,12 @@
                                 <span class="text-muted me-3">
                                     <span id="selectedCount">0</span> orders selected
                                 </span>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-warning" id="bulkCancelBtn">
-                                        <i class="bx bx-x-circle me-1"></i>Cancel Selected
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-info" id="bulkUpdateStatusBtn">
-                                        <i class="bx bx-edit me-1"></i>Update Status
-                                    </button>
+                                <div class="d-flex gap-2" role="group">
                                     <button type="button" class="btn btn-sm btn-success" id="bulkExportBtn">
-                                        <i class="bx bx-download me-1"></i>Export Selected
+                                        <i class="bx bx-spreadsheet me-1"></i>Export Excel
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-primary" id="bulkInvoiceBtn">
-                                        <i class="bx bx-file-blank me-1"></i>Download Invoices (PDF)
+                                    <button type="button" class="btn btn-sm btn-danger" id="bulkInvoiceBtn">
+                                        <i class="bx bx-file-blank me-1"></i>Export Invoice (PDF)
                                     </button>
                                 </div>
                             </div>
@@ -108,78 +102,7 @@
                     @include('admin.orders.partials.table-content', ['orders' => $orders])
                 </div>
 
-                <!-- Bulk Cancel Confirm Modal -->
-                <div class="modal fade" id="bulkCancelConfirmModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Cancel Selected Orders</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Cancel selected orders? This will restore stock where applicable.</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-warning" id="confirmBulkCancelBtn">Confirm</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- No Selection Modal -->
-                <div class="modal fade" id="noSelectionModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">No Orders Selected</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Please select at least one order to perform bulk actions.</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bulk Update Status Modal -->
-                <div class="modal fade" id="bulkUpdateStatusModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Update Status for Selected Orders</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="bulkNewStatus" class="form-label">New Status</label>
-                                    <select class="form-select" id="bulkNewStatus" name="status" required>
-                                        <option value="">Select new status...</option>
-                                        <option value="paid">Paid</option>
-                                        <option value="processing">Processing</option>
-                                        <option value="pickup_ready">Ready for Pickup</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="bulkStatusNotes" class="form-label">Notes (Optional)</label>
-                                    <textarea class="form-control" id="bulkStatusNotes" name="notes" rows="3" placeholder="Add any notes about this status change..."></textarea>
-                                </div>
-                                <div class="alert alert-info">
-                                    <i class="bx bx-info-circle me-2"></i>
-                                    Only orders that can transition to the selected status will be updated.
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="confirmBulkUpdateBtn">Update Status</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Toast Container -->
                 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
@@ -191,17 +114,101 @@
                     </div>
                 </div>
 
+                @push('modals')
+                <!-- Update Status Modal -->
+                <div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="updateStatusModalLabel">Update Order Status</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="updateStatusForm" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <div class="modal-body">
+                                    <div class="alert alert-danger d-none" id="updateStatusError"></div>
+                                    <p class="mb-2">Update status for order <strong id="updateStatusOrderCode"></strong></p>
+
+                                    <div class="mb-3">
+                                        <label for="newStatusSelect" class="form-label">Next Status</label>
+                                        <select class="form-select" id="newStatusSelect" name="status" required>
+                                            <option value="">Select next status</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="updateStatusSubmitBtn">Update Status</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancel Order Modal -->
+                <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="cancelOrderModalLabel">Confirm Cancellation</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="cancelOrderForm" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <div class="modal-body">
+                                    <div class="alert alert-danger d-none" id="cancelOrderError"></div>
+                                    <p class="mb-2">Are you sure you want to cancel order <strong id="cancelOrderCode"></strong>?</p>
+
+                                    <div class="mb-3">
+                                        <label for="cancellationReason" class="form-label">Reason for cancellation</label>
+                                        <textarea class="form-control" id="cancellationReason" name="cancellation_reason" rows="3" required placeholder="Provide a reason..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
+                                    <button type="submit" class="btn btn-danger" id="cancelOrderSubmitBtn">Confirm Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Order Modal -->
+                <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-labelledby="deleteOrderModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteOrderModalLabel">Confirm Permanent Delete</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="deleteOrderForm" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <div class="modal-body">
+                                    <div class="alert alert-danger d-none" id="deleteOrderError"></div>
+                                    <p>Are you sure you want to delete order <strong id="deleteOrderCodeDisplay"></strong>?</p>
+
+                                    <p class="text-danger"><small><i class="bx bx-info-circle"></i> This action is irreversible and cannot be undone.</small></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger" id="deleteOrderSubmitBtn">Delete Permanently</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endpush
+
                 @push('scripts')
+
                 <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const form = document.getElementById('ordersFilterForm');
                     const container = document.getElementById('ordersTableContainer');
-                    const bulkConfirmModalEl = document.getElementById('bulkCancelConfirmModal');
-                    const bulkConfirmModal = bulkConfirmModalEl ? new bootstrap.Modal(bulkConfirmModalEl) : null;
-                    const noSelectionModalEl = document.getElementById('noSelectionModal');
-                    const noSelectionModal = noSelectionModalEl ? new bootstrap.Modal(noSelectionModalEl) : null;
-                    const bulkUpdateModalEl = document.getElementById('bulkUpdateStatusModal');
-                    const bulkUpdateModal = bulkUpdateModalEl ? new bootstrap.Modal(bulkUpdateModalEl) : null;
+
                     
                     // Bulk actions toolbar elements
                     const bulkToolbar = document.getElementById('bulkActionsToolbar');
@@ -349,139 +356,12 @@
                         fetchOrders(params);
                     });
 
-                    // Bulk cancel
-                    document.addEventListener('click', async (e) => {
-                        const btn = e.target.closest('#bulkCancelBtn');
-                        if (!btn) return;
-                        const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked'))
-                            .map(cb => cb.value);
-                        if (checked.length === 0) {
-                            if (noSelectionModal) noSelectionModal.show();
-                            return;
-                        }
-                        if (bulkConfirmModal) bulkConfirmModal.show();
-
-                        const doCancel = async () => {
-                            try {
-                                const res = await fetch('{{ route('admin.orders.bulk-cancel') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    },
-                                    body: JSON.stringify({ ids: checked })
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                    const params = buildParams();
-                                    fetchOrders(params);
-                                    if (toast) {
-                                        toastBodyEl.textContent = 'Selected orders have been cancelled.';
-                                        toast.show();
-                                    }
-                                } else {
-                                    if (toast) {
-                                        toastBodyEl.textContent = data.message || 'Bulk cancel failed.';
-                                        toast.show();
-                                    }
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                if (toast) {
-                                    toastBodyEl.textContent = 'Network error.';
-                                    toast.show();
-                                }
-                            }
-                        };
-
-                        const confirmBtn = document.getElementById('confirmBulkCancelBtn');
-                        if (confirmBtn) {
-                            const handler = () => {
-                                confirmBtn.removeEventListener('click', handler);
-                                bulkConfirmModal.hide();
-                                doCancel();
-                            };
-                            confirmBtn.addEventListener('click', handler);
-                        }
-                    });
-
-                    // Bulk Update Status handler
-                    document.addEventListener('click', function(e) {
-                        if (e.target.id === 'bulkUpdateStatusBtn') {
-                            const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked')).map(cb => cb.value);
-                            if (checked.length === 0) {
-                                if (noSelectionModal) noSelectionModal.show();
-                                return;
-                            }
-                            if (bulkUpdateModal) bulkUpdateModal.show();
-                        }
-                    });
-
-                    // Confirm bulk update status
-                    document.addEventListener('click', async function(e) {
-                        if (e.target.id === 'confirmBulkUpdateBtn') {
-                            const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked')).map(cb => cb.value);
-                            const newStatus = document.getElementById('bulkNewStatus').value;
-                            const notes = document.getElementById('bulkStatusNotes').value;
-
-                            if (!newStatus) {
-                                alert('Please select a status');
-                                return;
-                            }
-
-                            try {
-                                const res = await fetch('{{ route('admin.orders.bulk-update-status') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    },
-                                    body: JSON.stringify({ 
-                                        ids: checked, 
-                                        status: newStatus,
-                                        notes: notes 
-                                    })
-                                });
-                                const data = await res.json();
-                                
-                                if (bulkUpdateModal) bulkUpdateModal.hide();
-                                
-                                if (data.success) {
-                                    const params = buildParams();
-                                    fetchOrders(params);
-                                    updateBulkToolbar();
-                                    if (toast) {
-                                        toastBodyEl.textContent = `${data.updated_count} orders updated successfully.`;
-                                        toast.show();
-                                    }
-                                } else {
-                                    if (toast) {
-                                        toastBodyEl.textContent = data.message || 'Bulk update failed.';
-                                        toast.show();
-                                    }
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                if (toast) {
-                                    toastBodyEl.textContent = 'Network error.';
-                                    toast.show();
-                                }
-                            }
-                        }
-                    });
-
-                    // Bulk Export handler
+                    // Bulk Export Excel (CSV)
                     document.addEventListener('click', function(e) {
                         if (e.target.id === 'bulkExportBtn') {
                             const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked')).map(cb => cb.value);
-                            if (checked.length === 0) {
-                                if (noSelectionModal) noSelectionModal.show();
-                                return;
-                            }
+                            if (checked.length === 0) return;
                             
-                            // Create form and submit for CSV export
                             const form = document.createElement('form');
                             form.method = 'POST';
                             form.action = '{{ route('admin.orders.export') }}';
@@ -505,24 +385,21 @@
                             form.submit();
                             document.body.removeChild(form);
                             
-                            
                             if (toast) {
-                                toastBodyEl.textContent = 'Export started. Download will begin shortly.';
+                                toastBodyEl.textContent = 'Generating Excel/CSV export...';
                                 toast.show();
                             }
                         }
                     });
 
+                    // Bulk Export PDF (REMOVED REDUNDANCY)
+
                     // Bulk Invoice PDF handler
                     document.addEventListener('click', function(e) {
                         if (e.target.id === 'bulkInvoiceBtn') {
                             const checked = Array.from(document.querySelectorAll('input[name="selected_orders[]"]:checked')).map(cb => cb.value);
-                            if (checked.length === 0) {
-                                if (noSelectionModal) noSelectionModal.show();
-                                return;
-                            }
+                            if (checked.length === 0) return;
                             
-                            // Create form and submit for PDF ZIP export
                             const form = document.createElement('form');
                             form.method = 'POST';
                             form.action = '{{ route('admin.orders.invoice.bulk') }}';
@@ -547,12 +424,11 @@
                             document.body.removeChild(form);
                             
                             if (toast) {
-                                toastBodyEl.textContent = 'Memproses ' + checked.length + ' invoice PDF...';
+                                toastBodyEl.textContent = 'Processing ' + checked.length + ' invoices (PDF ZIP)...';
                                 toast.show();
                             }
                         }
                     });
-
                     // Copy order code action
                     document.addEventListener('click', async (e) => {
                         const btn = e.target.closest('.copy-order-code');
@@ -593,7 +469,6 @@
                         setTimeout(() => {
                             menu.style.setProperty('display', 'block', 'important');
                             menu.style.setProperty('position', 'absolute', 'important');
-                            menu.style.setProperty('z-index', '9999', 'important');
                             menu.style.setProperty('margin', '0', 'important');
                             menu.style.setProperty('transform', 'none', 'important'); // Kill the transform!
                             
@@ -631,32 +506,170 @@
                         trigger._detachedMenu = menu;
                     }, true);
 
+                    // Row-Level Action Handlers (Native Bootstrap Modals)
+                    window.updateOrderStatus = function(orderId, orderCode, nextStatuses) {
+                        const select = document.getElementById('newStatusSelect');
+                        const displayCode = document.getElementById('updateStatusOrderCode');
+                        const form = document.getElementById('updateStatusForm');
+                        
+                        if (!select || !displayCode || !form) return;
+
+                        // Reset and populate select
+                        select.innerHTML = '<option value="">Select next status</option>';
+                        
+                        if (!Array.isArray(nextStatuses) || nextStatuses.length === 0) {
+                            console.warn('No further status transitions available.');
+                            return;
+                        }
+
+                        nextStatuses.forEach(status => {
+                            const option = document.createElement('option');
+                            option.value = status;
+                            // Format status for display (e.g., 'paid' -> 'Paid')
+                            option.textContent = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            select.appendChild(option);
+                        });
+
+
+                        displayCode.textContent = orderCode;
+                        form.action = `{{ url('admin/orders') }}/${orderId}/status`;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+                        modal.show();
+                    };
+
+                    window.cancelOrder = function(orderId, orderCode) {
+                        const displayCode = document.getElementById('cancelOrderCode');
+                        const form = document.getElementById('cancelOrderForm');
+                        const reasonInput = document.getElementById('cancellationReason');
+                        
+                        if (!displayCode || !form) return;
+
+                        displayCode.textContent = orderCode;
+                        if (reasonInput) reasonInput.value = '';
+                        form.action = `{{ url('admin/orders') }}/${orderId}/cancel`;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+                        modal.show();
+                    };
+
+                    window.deleteOrder = function(orderId, orderCode) {
+                        const displayCode = document.getElementById('deleteOrderCodeDisplay');
+                        const form = document.getElementById('deleteOrderForm');
+                        
+                        if (!displayCode || !form) return;
+
+                        displayCode.textContent = orderCode;
+                        form.action = `{{ url('admin/orders') }}/${orderId}`;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('deleteOrderModal'));
+                        modal.show();
+                    };
+
+                    // Handle Modal Form Submissions via AJAX
+                    const attachAjaxModalHandler = (formId, modalId, loadingText, errorId) => {
+                        const form = document.getElementById(formId);
+                        const errorDiv = document.getElementById(errorId);
+                        if (!form) return;
+
+                        form.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            if (errorDiv) {
+                                errorDiv.classList.add('d-none');
+                                errorDiv.textContent = '';
+                            }
+                            
+                            const submitBtn = form.querySelector('button[type="submit"]');
+                            const originalText = submitBtn.textContent;
+                            
+                            submitBtn.disabled = true;
+                            submitBtn.textContent = loadingText || 'Processing...';
+
+                            const formData = new FormData(this);
+                            const url = this.action;
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                            fetch(url, {
+                                method: formData.get('_method') || 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken || '{{ csrf_token() }}',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(Object.fromEntries(formData))
+                            })
+                            .then(async response => {
+                                const isJson = response.headers.get('content-type')?.includes('application/json');
+                                const data = isJson ? await response.json() : null;
+                                
+                                if (!response.ok) {
+                                    const errorText = data?.message || data?.error || await response.text();
+                                    throw new Error(errorText || 'Server error occurred');
+                                }
+                                return data;
+                            })
+                            .then(data => {
+                                if (data && data.success) {
+                                    const modalEl = document.getElementById(modalId);
+                                    const modal = bootstrap.Modal.getInstance(modalEl);
+                                    if (modal) modal.hide();
+                                    window.location.reload();
+                                } else {
+                                    throw new Error(data?.message || 'Action failed');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('AJAX Error:', error);
+                                if (errorDiv) {
+                                    errorDiv.textContent = error.message;
+                                    errorDiv.classList.remove('d-none');
+                                } else {
+                                    // Fallback to console if no error div exists
+                                    console.error('Final Fallback Error:', error.message);
+                                }
+                            })
+                            .finally(() => {
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = originalText;
+                            });
+                        });
+                    };
+
+                    attachAjaxModalHandler('updateStatusForm', 'updateStatusModal', 'Updating...', 'updateStatusError');
+                    attachAjaxModalHandler('cancelOrderForm', 'cancelOrderModal', 'Cancelling...', 'cancelOrderError');
+                    attachAjaxModalHandler('deleteOrderForm', 'deleteOrderModal', 'Deleting...', 'deleteOrderError');
+
+
+
                     document.addEventListener('hide.bs.dropdown', function (e) {
                         const trigger = e.target;
                         if (trigger._detachedMenu) {
                             const menu = trigger._detachedMenu;
                             
-                            // Put it back in place
-                            trigger.after(menu);
-                            
-                            // Remove all enforced styles
-                            menu.style.removeProperty('display');
-                            menu.style.removeProperty('position');
-                            menu.style.removeProperty('top');
-                            menu.style.removeProperty('left');
-                            menu.style.removeProperty('z-index');
-                            menu.style.removeProperty('transform');
-                            menu.style.removeProperty('margin');
-                            menu.style.removeProperty('min-width');
-                            menu.style.removeProperty('width');
-                            
-                            // Reset item padding
-                             menu.querySelectorAll('.dropdown-item').forEach(item => {
-                                item.style.removeProperty('padding-left');
-                                item.style.removeProperty('padding-right');
-                            });
-                            
-                            delete trigger._detachedMenu;
+                            // Fix Race Condition: Small delay before re-attaching to allow clicks to process
+                            setTimeout(() => {
+                                trigger.after(menu);
+                                
+                                // Remove all enforced styles
+                                menu.style.removeProperty('display');
+                                menu.style.removeProperty('position');
+                                menu.style.removeProperty('top');
+                                menu.style.removeProperty('left');
+                                menu.style.removeProperty('z-index');
+                                menu.style.removeProperty('transform');
+                                menu.style.removeProperty('margin');
+                                menu.style.removeProperty('min-width');
+                                menu.style.removeProperty('width');
+                                
+                                // Reset item padding
+                                 menu.querySelectorAll('.dropdown-item').forEach(item => {
+                                    item.style.removeProperty('padding-left');
+                                    item.style.removeProperty('padding-right');
+                                });
+                                
+                                delete trigger._detachedMenu;
+                            }, 150);
                         }
                     }, true);
 
@@ -678,6 +691,8 @@
                 });
                 </script>
                 @endpush
+
+
             </div>
         </div>
     </div>

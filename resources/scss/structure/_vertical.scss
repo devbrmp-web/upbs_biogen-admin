@@ -60,7 +60,7 @@
     .main-nav {
         top: 0;
         bottom: 0;
-        z-index: 1060; // Increased to be above topbar (1050)
+        z-index: 1040; // Reduced to be below Bootstrap Modals (1050) and allow backdrop overlay
         margin-left: 0;
         position: fixed;
         transition: all 0.3s ease-in-out;
