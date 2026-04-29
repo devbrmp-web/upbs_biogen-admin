@@ -241,7 +241,8 @@ class VarietyController extends Controller
                         $q->orderBy('order')->orderBy('id');
                     }
                 ])
-                ->select(['id','commodity_id','name','slug','sku','minimum_limit','image_path'])
+                ->withStockCalculations()
+                ->withPriceRange()
                 ->orderBy('name')
                 ->get()
                 ->map(function (Variety $v) use ($seedLots, $id) {
@@ -267,6 +268,13 @@ class VarietyController extends Controller
                             'name' => optional($v->commodity)->name,
                             'slug' => optional($v->commodity)->slug,
                         ],
+                        'stock' => [
+                            'total_weight_kg' => (float) $v->total_stock,
+                            'total_unit_qty' => (float) ($v->total_unit_stock_calculated ?? 0),
+                            'status' => $v->stock_status,
+                            'details' => $v->getStocksByClass(),
+                        ],
+                        'price_range_text' => $v->price_range,
                         'stock_by_class' => [
                             'class_id' => $id,
                             'total' => $stockForClass,
