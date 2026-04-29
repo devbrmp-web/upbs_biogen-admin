@@ -160,13 +160,9 @@ class OrderController extends Controller
         // Restore seed lot quantities when order is cancelled
         // ============================================
         if ($newStatus === Order::STATUS_CANCELLED && $oldStatus !== Order::STATUS_CANCELLED) {
-            $order->load('orderItems.seedLot');
-            foreach ($order->orderItems as $item) {
-                if ($item->seedLot) {
-                    $item->seedLot->increment('quantity', $item->quantity);
-                }
-            }
+            $this->restoreStock($order);
         }
+
 
         // Create audit log
         AuditLog::create([
@@ -197,6 +193,14 @@ class OrderController extends Controller
             }
         }
 
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order status updated successfully.',
+                'new_status' => $newStatus
+            ]);
+        }
+
         return back()->with('success', 'Order status updated successfully.');
     }
 
@@ -216,6 +220,10 @@ class OrderController extends Controller
         }
 
         $oldStatus = $order->status;
+        
+        // Eager load relationships to prevent N+1 during restoration
+        $order->load('orderItems.seedLot');
+
 
         // Transactional cancel + stock restore
         DB::transaction(function () use ($order, $request) {
@@ -226,11 +234,8 @@ class OrderController extends Controller
             ]);
 
             // Restore stock for cancelled orders
-            foreach ($order->orderItems as $item) {
-                if ($item->seedLot) {
-                    $item->seedLot->increment('quantity', $item->quantity);
-                }
-            }
+            $this->restoreStock($order);
+
         });
 
         // Create audit log
@@ -265,6 +270,13 @@ class OrderController extends Controller
             }
         }
 
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully and stock restored.'
+            ]);
+        }
+
         return back()->with('success', 'Order cancelled successfully and stock restored.');
     }
 
@@ -279,6 +291,7 @@ class OrderController extends Controller
         ]);
 
         $orders = Order::with(['orderItems.seedLot'])->whereIn('id', $validated['ids'])->get();
+
         $result = DB::transaction(function () use ($orders, $request) {
             $cancelled = [];
             $failed = [];
@@ -299,11 +312,8 @@ class OrderController extends Controller
                     'notes' => 'Cancelled via bulk action',
                 ]);
 
-                foreach ($order->orderItems as $item) {
-                    if ($item->seedLot) {
-                        $item->seedLot->increment('quantity', $item->quantity);
-                    }
-                }
+                $this->restoreStock($order);
+
 
                 AuditLog::create([
                     'user_id' => Auth::id(),
@@ -339,11 +349,8 @@ class OrderController extends Controller
      */
     public function destroy(Request $request, Order $order)
     {
-        $request->validate([
-            'deletion_reason' => 'required|string|max:500'
-        ]);
-
         // Only allow deletion of cancelled orders
+
         if ($order->status !== Order::STATUS_CANCELLED) {
             abort(403, 'Only cancelled orders can be deleted.');
         }
@@ -356,8 +363,9 @@ class OrderController extends Controller
             'record_id' => $order->id,
             'category' => AuditLog::CATEGORY_ORDER_MANAGEMENT,
             'old_data' => array_merge($order->toArray(), [
-                'deletion_reason' => $request->deletion_reason
+                'deletion_reason' => 'Permanent Delete (Administrative)'
             ]),
+
             'new_data' => null,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent()
@@ -365,6 +373,13 @@ class OrderController extends Controller
 
         // Delete the order (cascade will handle order_items)
         $order->delete();
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Order deleted successfully.'
+            ]);
+        }
 
         return back()->with('success', 'Order deleted successfully.');
     }
@@ -409,13 +424,9 @@ class OrderController extends Controller
                 // STOCK RESTORATION FOR CANCELLED ORDERS  
                 // ============================================
                 if ($request->status === Order::STATUS_CANCELLED && $oldStatus !== Order::STATUS_CANCELLED) {
-                    $order->load('orderItems.seedLot');
-                    foreach ($order->orderItems as $item) {
-                        if ($item->seedLot) {
-                            $item->seedLot->increment('quantity', $item->quantity);
-                        }
-                    }
+                    $this->restoreStock($order);
                 }
+
 
                 // Create audit log
                 AuditLog::create([
@@ -684,4 +695,25 @@ class OrderController extends Controller
         
         return back()->with('error', 'Gagal membuat archive PDF');
     }
+
+    /**
+     * Optimized stock restoration logic.
+     * Batches increments by SeedLot ID to minimize DB I/O.
+     */
+    private function restoreStock(Order $order): void
+    {
+        $order->load('orderItems');
+        
+        $increments = [];
+        foreach ($order->orderItems as $item) {
+            if ($item->seed_lot_id) {
+                $increments[$item->seed_lot_id] = ($increments[$item->seed_lot_id] ?? 0) + $item->quantity;
+            }
+        }
+
+        foreach ($increments as $lotId => $quantity) {
+            \App\Models\SeedLot::where('id', $lotId)->increment('quantity', $quantity);
+        }
+    }
 }
+
