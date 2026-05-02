@@ -136,28 +136,21 @@ class Variety extends Model
     }
 
     /**
-     * Get the total stock from sellable seed lots with unit kg only.
-     */
-    /**
-     * Get the total stock from sellable seed lots with 'weight' category (kg).
+     * Get the total stock from all sellable seed lots.
      */
     public function getTotalStockAttribute(): float
     {
         // Use pre-calculated value if available from selectRaw (via withStockCalculations scope)
-        if (isset($this->attributes['total_weight_stock_calculated'])) {
-            return (float) $this->attributes['total_weight_stock_calculated'];
+        if (isset($this->attributes['total_stock_calculated'])) {
+            return (float) $this->attributes['total_stock_calculated'];
         }
 
         // Use cached value if available
-        $cacheKey = "variety_total_stock_weight_{$this->id}";
+        $cacheKey = "variety_total_stock_all_{$this->id}";
 
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
-            return $this->seedLots()
+            return (float) $this->seedLots()
                 ->where('is_sellable', true)
-                ->whereHas('seedClass', function ($query) {
-                    $query->where('stock_category', 'weight');
-                })
-                ->where('unit', 'kg')
                 ->sum('quantity');
         });
     }
@@ -260,7 +253,7 @@ class Variety extends Model
      */
     public function clearStockCache(): void
     {
-        cache()->forget("variety_total_stock_weight_{$this->id}");
+        cache()->forget("variety_total_stock_all_{$this->id}");
         cache()->forget("variety_stock_status_{$this->id}");
     }
 
@@ -335,15 +328,12 @@ class Variety extends Model
      */
     public function scopeWithAvailableStock($query)
     {
-        // Available means: total sellable stock in weight (kg) is strictly greater than minimum_limit
+        // Available means: total sellable stock (any unit) is strictly greater than minimum_limit
         return $query->whereRaw("(
             SELECT COALESCE(SUM(quantity), 0)
             FROM seed_lots sl
-            JOIN seed_classes sc ON sl.seed_class_id = sc.id
             WHERE sl.variety_id = varieties.id 
             AND sl.is_sellable = true 
-            AND sl.unit = 'kg'
-            AND sc.stock_category = 'weight'
         ) > COALESCE(varieties.minimum_limit, 0)");
     }
 
@@ -352,10 +342,13 @@ class Variety extends Model
      */
     public function scopeOutOfStock($query)
     {
-        return $query->whereDoesntHave('seedLots', function ($seedLots) {
-            $seedLots->where('is_sellable', true)
-                ->where('quantity', '>', 0);
-        });
+        // Out of Stock means: total sellable stock (any unit) is exactly 0
+        return $query->whereRaw("(
+            SELECT COALESCE(SUM(quantity), 0)
+            FROM seed_lots sl
+            WHERE sl.variety_id = varieties.id 
+            AND sl.is_sellable = true 
+        ) = 0");
     }
 
     /**
@@ -363,19 +356,16 @@ class Variety extends Model
      */
     public function scopeNeedsRestock($query)
     {
-        // Restock means: total sellable stock in weight category is > 0 AND <= minimum_limit
-        $weightSubquery = "(
+        // Restock means: total sellable stock is > 0 AND <= minimum_limit
+        $totalSubquery = "(
             SELECT COALESCE(SUM(quantity), 0)
             FROM seed_lots sl
-            JOIN seed_classes sc ON sl.seed_class_id = sc.id
             WHERE sl.variety_id = varieties.id 
             AND sl.is_sellable = true 
-            AND sl.unit = 'kg'
-            AND sc.stock_category = 'weight'
         )";
 
-        return $query->whereRaw("$weightSubquery > 0")
-            ->whereRaw("$weightSubquery <= COALESCE(varieties.minimum_limit, 0)");
+        return $query->whereRaw("$totalSubquery > 0")
+            ->whereRaw("$totalSubquery <= COALESCE(varieties.minimum_limit, 0)");
     }
 
     public function scopeWithStockCalculations($query)
@@ -384,20 +374,9 @@ class Variety extends Model
             COALESCE((
                 SELECT SUM(quantity) 
                 FROM seed_lots sl 
-                JOIN seed_classes sc ON sl.seed_class_id = sc.id 
                 WHERE sl.variety_id = varieties.id 
                 AND sl.is_sellable = true 
-                AND sl.unit = 'kg' 
-                AND sc.stock_category = 'weight'
-            ), 0) as total_weight_stock_calculated,
-            COALESCE((
-                SELECT SUM(quantity) 
-                FROM seed_lots sl 
-                JOIN seed_classes sc ON sl.seed_class_id = sc.id 
-                WHERE sl.variety_id = varieties.id 
-                AND sl.is_sellable = true 
-                AND sc.stock_category = 'unit'
-            ), 0) as total_unit_stock_calculated");
+            ), 0) as total_stock_calculated");
     }
 
     public function scopeWithPriceRange($query)

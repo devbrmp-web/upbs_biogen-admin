@@ -21,7 +21,7 @@ class VarietyController extends Controller
     public function index(Request $request)
     {
         $query = Variety::with(['commodity', 'images', 'seedLots' => function ($query) {
-            $query->where('is_sellable', true)->where('unit', 'kg');
+            $query->where('is_sellable', true);
         }])
             ->withCount(['seedLots as seed_lots_count'])
             ->withStockCalculations()
