@@ -24,7 +24,7 @@ class VarietyController extends Controller
                         $q->select('id', 'name', 'slug');
                     },
                     // Hindari LIMIT pada eager loading untuk kompatibilitas luas MySQL
-                    'images' => function($q) {
+                    'images' => function ($q) {
                         $q->orderBy('order')->orderBy('id');
                     }
                 ])
@@ -100,18 +100,35 @@ class VarietyController extends Controller
                         $q->orderBy('order')->orderBy('id');
                     },
                     'seedLots' => function ($q) {
-                        $q->select('id', 'variety_id', 'seed_class_id', 'lot_code', 'price_per_unit',
-                            'quantity', 'unit', 'is_sellable', 'production_year')
-                          ->where('is_sellable', true)
-                          ->where('quantity', '>', 0);
+                        $q->select(
+                            'id',
+                            'variety_id',
+                            'seed_class_id',
+                            'lot_code',
+                            'price_per_unit',
+                            'quantity',
+                            'unit',
+                            'is_sellable',
+                            'production_year'
+                        )
+                            ->where('is_sellable', true)
+                            ->where('quantity', '>', 0);
                     },
                     // Eager-load semua kolom seed_class agar price & step tersedia
                     'seedLots.seedClass',
                 ])
                 ->where('is_active', true)
                 ->where('slug', $slug)
-                ->select(['id', 'commodity_id', 'name', 'slug', 'sku',
-                    'minimum_limit', 'image_path', 'description'])
+                ->select([
+                    'id',
+                    'commodity_id',
+                    'name',
+                    'slug',
+                    'sku',
+                    'minimum_limit',
+                    'image_path',
+                    'description'
+                ])
                 ->firstOrFail();
 
             // ── Mapping Seed Lots (sertakan seed_class.id agar view bisa filter) ──
@@ -135,9 +152,9 @@ class VarietyController extends Controller
 
             // ── Group stok per kelas benih (kode → total qty) ─────────────────
             $stockByClass = $v->seedLots
-                ->filter(fn ($sl) => $sl->is_sellable && $sl->quantity > 0)
-                ->groupBy(fn ($sl) => optional($sl->seedClass)->code)
-                ->map(fn ($items) => $items->sum('quantity'));
+                ->filter(fn($sl) => $sl->is_sellable && $sl->quantity > 0)
+                ->groupBy(fn($sl) => optional($sl->seedClass)->code)
+                ->map(fn($items) => $items->sum('quantity'));
 
             // ── Stock details (getStocksByClass + enriched dengan price & step) ─
             //
@@ -149,10 +166,11 @@ class VarietyController extends Controller
 
                 // Ambil harga terendah dari lots yang tersedia untuk kelas ini
                 $lowestPriceLot = $v->seedLots
-                    ->filter(fn ($sl) =>
+                    ->filter(
+                        fn($sl) =>
                         optional($sl->seedClass)->id == $seedClassId
-                        && $sl->is_sellable
-                        && $sl->quantity > 0
+                            && $sl->is_sellable
+                            && $sl->quantity > 0
                     )
                     ->sortBy('price_per_unit')
                     ->first();
@@ -236,8 +254,10 @@ class VarietyController extends Controller
             $varieties = Variety::query()
                 ->whereIn('id', $varietyIds)
                 ->with([
-                    'commodity' => function ($q) { $q->select('id','name','slug'); },
-                    'images' => function($q) {
+                    'commodity' => function ($q) {
+                        $q->select('id', 'name', 'slug');
+                    },
+                    'images' => function ($q) {
                         $q->orderBy('order')->orderBy('id');
                     }
                 ])
@@ -255,6 +275,7 @@ class VarietyController extends Controller
                         'slug' => $v->slug,
                         'sku' => $v->sku,
                         'minimum_limit' => (int) ($v->minimum_limit ?? 0),
+                        'image_path' => $v->image_path,
                         'image_url' => $v->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($v->image_path) : null,
                         'images' => $v->images
                             ->sortBy('order')
