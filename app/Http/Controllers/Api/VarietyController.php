@@ -39,6 +39,23 @@ class VarietyController extends Controller
                 });
             }
 
+            // Optional: deep search
+            if ($search = $request->query('search')) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('primary_trait', 'like', "%{$search}%")
+                      ->orWhere('origin', 'like', "%{$search}%")
+                      ->orWhere('pest_resistance', 'like', "%{$search}%")
+                      ->orWhere('disease_resistance', 'like', "%{$search}%")
+                      ->orWhere('description_summary', 'like', "%{$search}%");
+                });
+            }
+
+            // Optional: exact trait filtering
+            if ($trait = $request->query('trait')) {
+                $query->where('primary_trait', 'like', "%{$trait}%");
+            }
+
             $varieties = $query->get()->map(function (Variety $v) {
                 return [
                     'id' => $v->id,
@@ -282,10 +299,30 @@ class VarietyController extends Controller
                     }
                 ])
                 ->withStockCalculations()
-                ->withPriceRange()
-                ->orderBy('name')
-                ->get()
-                ->map(function (Variety $v) use ($seedLots, $id) {
+                ->withPriceRange();
+
+            if ($search = request()->query('search')) {
+                $varieties->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('primary_trait', 'like', "%{$search}%")
+                      ->orWhere('origin', 'like', "%{$search}%")
+                      ->orWhere('pest_resistance', 'like', "%{$search}%")
+                      ->orWhere('disease_resistance', 'like', "%{$search}%")
+                      ->orWhere('description_summary', 'like', "%{$search}%");
+                });
+            }
+
+            if ($trait = request()->query('trait')) {
+                $varieties->where('primary_trait', 'like', "%{$trait}%");
+            }
+
+            if ($commoditySlug = request()->query('commodity')) {
+                $varieties->whereHas('commodity', function ($q) use ($commoditySlug) {
+                    $q->where('slug', $commoditySlug);
+                });
+            }
+
+            $varieties = $varieties->orderBy('name')->get()->map(function (Variety $v) use ($seedLots, $id) {
                     $lotsForVariety = $seedLots->where('variety_id', $v->id);
                     $stockForClass = (float) $lotsForVariety->sum('quantity');
 
