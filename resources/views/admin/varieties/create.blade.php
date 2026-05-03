@@ -1,7 +1,7 @@
 @extends('layouts.vertical', ['title' => 'Create Variety', 'subTitle' => 'Management'])
 
 @section('css')
-    @vite(['node_modules/dropzone/dist/dropzone.css'])
+@vite(['node_modules/dropzone/dist/dropzone.css'])
 @endsection
 
 @section('content')
@@ -13,13 +13,13 @@
                 <h4 class="card-title mb-3">New Variety</h4>
 
                 @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
                 @endif
 
                 <form action="{{ route('admin.varieties.store') }}" method="POST" enctype="multipart/form-data" id="varietyImageForm">
@@ -31,10 +31,10 @@
                             <!-- Name Field -->
                             <div class="mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                       id="name" name="name" value="{{ old('name') }}" required>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" value="{{ old('name') }}" required>
                                 @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -42,17 +42,17 @@
                             <!-- Commodity Field -->
                             <div class="mb-3">
                                 <label for="commodity_id" class="form-label">Commodity <span class="text-danger">*</span></label>
-                                <select class="form-select @error('commodity_id') is-invalid @enderror" 
-                                        id="commodity_id" name="commodity_id" required>
+                                <select class="form-select @error('commodity_id') is-invalid @enderror"
+                                    id="commodity_id" name="commodity_id" required>
                                     <option value="">Select Commodity</option>
                                     @foreach($commodities as $commodity)
-                                        <option value="{{ $commodity->id }}" @selected(old('commodity_id', request('commodity_id')) == $commodity->id)>
-                                            {{ $commodity->name }}
-                                        </option>
+                                    <option value="{{ $commodity->id }}" @selected(old('commodity_id', request('commodity_id'))==$commodity->id)>
+                                        {{ $commodity->name }}
+                                    </option>
                                     @endforeach
                                 </select>
                                 @error('commodity_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -66,28 +66,25 @@
                             <!-- Minimum Limit Field -->
                             <div class="mb-3">
                                 <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
-                                <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
-                                       id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit') }}" step="1" min="0" inputmode="numeric">
+                                <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror"
+                                    id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit') }}" step="1" min="0" inputmode="numeric">
                                 @error('minimum_limit')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-lg-6">
                             <!-- Status Field -->
                             <div class="mb-3">
                                 <label for="status" class="form-label">Status</label>
-                                <select class="form-select @error('status') is-invalid @enderror" 
-                                        id="status" name="status">
+                                <select class="form-select @error('status') is-invalid @enderror"
+                                    id="status" name="status">
                                     <option value="available" {{ old('status', 'available') == 'available' ? 'selected' : '' }}>Available</option>
                                     <option value="out_of_stock" {{ old('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                                     <option value="discontinued" {{ old('status') == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
                                 </select>
                                 @error('status')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -98,10 +95,10 @@
                             <!-- Description Field -->
                             <div class="mb-3">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" 
-                                          id="description" name="description" rows="3">{{ old('description') }}</textarea>
+                                <textarea class="form-control @error('description') is-invalid @enderror"
+                                    id="description" name="description" rows="3">{{ old('description') }}</textarea>
                                 @error('description')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -112,6 +109,93 @@
                         <i class="bx bx-info-circle me-2"></i>
                         <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Starters are not counted in total kg as they are measured per bottle.
                     </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3"><i class="bx bx-leaf text-success me-1"></i> Karakteristik & Pelepasan Varietas</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="decree_number" class="form-label">Nomor SK Pelepasan</label>
+                            <input type="text" class="form-control @error('decree_number') is-invalid @enderror"
+                                id="decree_number" name="decree_number" value="{{ old('decree_number') }}">
+                            @error('decree_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="decree_date" class="form-label">Tanggal Pelepasan</label>
+                            <input type="text" class="form-control datepicker @error('decree_date') is-invalid @enderror"
+                                id="decree_date" name="decree_date" value="{{ old('decree_date') }}">
+                            @error('decree_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="origin" class="form-label">Asal/Silsilah</label>
+                            <input type="text" class="form-control @error('origin') is-invalid @enderror"
+                                id="origin" name="origin" value="{{ old('origin') }}">
+                            @error('origin') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="planting_age" class="form-label">Umur Panen</label>
+                            <input type="text" class="form-control @error('planting_age') is-invalid @enderror"
+                                id="planting_age" name="planting_age" value="{{ old('planting_age') }}">
+                            @error('planting_age') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="yield_potential" class="form-label">Potensi Hasil</label>
+                            <input type="text" class="form-control @error('yield_potential') is-invalid @enderror"
+                                id="yield_potential" name="yield_potential" value="{{ old('yield_potential') }}">
+                            @error('yield_potential') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="average_yield" class="form-label">Rata-rata Hasil</label>
+                            <input type="text" class="form-control @error('average_yield') is-invalid @enderror"
+                                id="average_yield" name="average_yield" value="{{ old('average_yield') }}">
+                            @error('average_yield') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="primary_trait" class="form-label">Karakteristik Utama</label>
+                            <input type="text" class="form-control @error('primary_trait') is-invalid @enderror"
+                                id="primary_trait" name="primary_trait" value="{{ old('primary_trait') }}">
+                            <small class="form-text text-muted">Contoh: 'Pulen' untuk Padi, 'Biji Besar' untuk Kedelai.</small>
+                            @error('primary_trait') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="pest_resistance" class="form-label">Ketahanan Hama</label>
+                            <textarea class="form-control @error('pest_resistance') is-invalid @enderror"
+                                id="pest_resistance" name="pest_resistance" rows="3">{{ old('pest_resistance') }}</textarea>
+                            @error('pest_resistance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="disease_resistance" class="form-label">Ketahanan Penyakit</label>
+                            <textarea class="form-control @error('disease_resistance') is-invalid @enderror"
+                                id="disease_resistance" name="disease_resistance" rows="3">{{ old('disease_resistance') }}</textarea>
+                            @error('disease_resistance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="description_summary" class="form-label">Ringkasan Deskripsi/Keunggulan</label>
+                            <textarea class="form-control @error('description_summary') is-invalid @enderror"
+                                id="description_summary" name="description_summary" rows="3">{{ old('description_summary') }}</textarea>
+                            @error('description_summary') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
 
                     <div class="row">
                         <div class="col-lg-12">
@@ -153,7 +237,7 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('varietyImageForm');
         const input = document.getElementById('varietyImageInput');
         const preview = document.getElementById('imagePreview');
@@ -170,7 +254,10 @@
             if (existingAlert) existingAlert.remove();
             const html = '<div class="alert alert-danger">' + message + '</div>';
             form.insertAdjacentHTML('afterbegin', html);
-            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            form.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         };
 
         const resetButton = function() {
@@ -211,15 +298,15 @@
 
         // Integer-only guard for numeric inputs (minimum_limit only)
         const integerIds = ['minimum_limit'];
-        integerIds.forEach(function(id){
+        integerIds.forEach(function(id) {
             const el = document.getElementById(id);
             if (!el) return;
-            const sanitize = function(val){
+            const sanitize = function(val) {
                 // Only digits (0-9), remove dots/commas/other characters
-                const digits = String(val).replace(/[^0-9]/g,'');
+                const digits = String(val).replace(/[^0-9]/g, '');
                 return digits;
             };
-            const applySanitize = function(){
+            const applySanitize = function() {
                 const clean = sanitize(el.value);
                 el.value = clean;
             };
@@ -227,7 +314,7 @@
             el.addEventListener('change', applySanitize);
             el.addEventListener('blur', applySanitize);
             // Prevent enter decimal separators
-            el.addEventListener('keypress', function(e){
+            el.addEventListener('keypress', function(e) {
                 const ch = e.key;
                 if (!/[0-9]/.test(ch)) {
                     e.preventDefault();
@@ -255,7 +342,7 @@
                 dictFileTooBig: 'File terlalu besar (Maks 10MB).'
             });
 
-            dz.on('addedfile', function(file){
+            dz.on('addedfile', function(file) {
                 if (tempInput) tempInput.value = '';
                 if (submitBtn && !submitInProgress) {
                     submitBtn.disabled = true;
@@ -266,13 +353,13 @@
                 }
             });
 
-            dz.on('sending', function(){
+            dz.on('sending', function() {
                 if (submitBtn && !submitInProgress) {
                     submitBtn.disabled = true;
                 }
             });
 
-            dz.on('success', function(file, response){
+            dz.on('success', function(file, response) {
                 if (response && response.path && tempInput) {
                     tempInput.value = response.path;
                 }
@@ -281,7 +368,7 @@
                 }
             });
 
-            dz.on('error', function(file, message, xhr){
+            dz.on('error', function(file, message, xhr) {
                 let msg = 'Gagal upload gambar.';
                 if (typeof message === 'string') {
                     msg = message;
@@ -302,7 +389,7 @@
                 }
             });
 
-            dz.on('removedfile', function(){
+            dz.on('removedfile', function() {
                 if (tempInput) tempInput.value = '';
                 if (preview && container) {
                     preview.src = '#';
@@ -370,7 +457,7 @@
         });
 
         if (input && preview && container) {
-            input.addEventListener('change', function(e){
+            input.addEventListener('change', function(e) {
                 const file = e.target.files && e.target.files[0];
                 if (file && dz) {
                     dz.removeAllFiles(true);
@@ -390,7 +477,7 @@
         }
 
         if (form) {
-            form.addEventListener('submit', async function(e){
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 if (submitInProgress) {
                     return;
@@ -457,7 +544,7 @@
                             showAlert('Terjadi kesalahan. Silakan coba lagi.');
                         }
                     }
-                } catch(err) {
+                } catch (err) {
                     if (err && err.name === 'AbortError') {
                         showAlert('Koneksi terlalu lama. Silakan coba lagi.');
                     } else {
@@ -469,6 +556,13 @@
                     disarmWatchdog();
                     resetButton();
                 }
+            });
+        }
+
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr('.datepicker', {
+                dateFormat: "Y-m-d",
+                allowInput: true
             });
         }
     });

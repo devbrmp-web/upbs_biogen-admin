@@ -70,28 +70,33 @@
                             @enderror
                         </div>
 
-                        <!-- Minimum Limit Field -->
-                        <div class="mb-3">
-                            <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
-                            <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
-                                   id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit', $variety->minimum_limit ?? '') }}" step="1" min="0" inputmode="numeric">
-                            @error('minimum_limit')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <!-- Status Field -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select @error('status') is-invalid @enderror" 
-                                    id="status" name="status">
-                                <option value="available" {{ old('status', $variety->status) == 'available' ? 'selected' : '' }}>Available</option>
-                                <option value="out_of_stock" {{ old('status', $variety->status) == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
-                                <option value="discontinued" {{ old('status', $variety->status) == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
-                            </select>
-                            @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <!-- Minimum Limit Field -->
+                                <div class="mb-3">
+                                    <label for="minimum_limit" class="form-label">Minimum Stock Limit (kg)</label>
+                                    <input type="number" class="form-control @error('minimum_limit') is-invalid @enderror" 
+                                        id="minimum_limit" name="minimum_limit" value="{{ old('minimum_limit', $variety->minimum_limit ?? '') }}" step="1" min="0" inputmode="numeric">
+                                    @error('minimum_limit')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <!-- Status Field -->
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select @error('status') is-invalid @enderror" 
+                                            id="status" name="status">
+                                        <option value="available" {{ old('status', $variety->status) == 'available' ? 'selected' : '' }}>Available</option>
+                                        <option value="out_of_stock" {{ old('status', $variety->status) == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                        <option value="discontinued" {{ old('status', $variety->status) == 'discontinued' ? 'selected' : '' }}>Discontinued</option>
+                                    </select>
+                                    @error('status')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Help Text -->
@@ -99,6 +104,93 @@
                             <i class="bx bx-info-circle me-2"></i>
                             <strong>Stock Management:</strong> Total stock (kg) is automatically calculated from sellable Seed Lots with kg units. Starters are not counted in total kg as they are measured per bottle.
                         </div>
+
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="bx bx-leaf text-success me-1"></i> Karakteristik & Pelepasan Varietas</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="decree_number" class="form-label">Nomor SK Pelepasan</label>
+                                <input type="text" class="form-control @error('decree_number') is-invalid @enderror" 
+                                       id="decree_number" name="decree_number" value="{{ old('decree_number', $variety->decree_number) }}">
+                                @error('decree_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="decree_date" class="form-label">Tanggal Pelepasan</label>
+                                <input type="text" class="form-control datepicker @error('decree_date') is-invalid @enderror" 
+                                       id="decree_date" name="decree_date" value="{{ old('decree_date', $variety->decree_date) }}">
+                                @error('decree_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="origin" class="form-label">Asal/Silsilah</label>
+                                <input type="text" class="form-control @error('origin') is-invalid @enderror" 
+                                       id="origin" name="origin" value="{{ old('origin', $variety->origin) }}">
+                                @error('origin') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="planting_age" class="form-label">Umur Panen</label>
+                                <input type="text" class="form-control @error('planting_age') is-invalid @enderror" 
+                                       id="planting_age" name="planting_age" value="{{ old('planting_age', $variety->planting_age) }}">
+                                @error('planting_age') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="yield_potential" class="form-label">Potensi Hasil</label>
+                                <input type="text" class="form-control @error('yield_potential') is-invalid @enderror" 
+                                       id="yield_potential" name="yield_potential" value="{{ old('yield_potential', $variety->yield_potential) }}">
+                                @error('yield_potential') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="average_yield" class="form-label">Rata-rata Hasil</label>
+                                <input type="text" class="form-control @error('average_yield') is-invalid @enderror" 
+                                       id="average_yield" name="average_yield" value="{{ old('average_yield', $variety->average_yield) }}">
+                                @error('average_yield') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="primary_trait" class="form-label">Karakteristik Utama</label>
+                                <input type="text" class="form-control @error('primary_trait') is-invalid @enderror" 
+                                       id="primary_trait" name="primary_trait" value="{{ old('primary_trait', $variety->primary_trait) }}">
+                                <small class="form-text text-muted">Contoh: 'Pulen' untuk Padi, 'Biji Besar' untuk Kedelai.</small>
+                                @error('primary_trait') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="pest_resistance" class="form-label">Ketahanan Hama</label>
+                                <textarea class="form-control @error('pest_resistance') is-invalid @enderror" 
+                                          id="pest_resistance" name="pest_resistance" rows="3">{{ old('pest_resistance', $variety->pest_resistance) }}</textarea>
+                                @error('pest_resistance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="disease_resistance" class="form-label">Ketahanan Penyakit</label>
+                                <textarea class="form-control @error('disease_resistance') is-invalid @enderror" 
+                                          id="disease_resistance" name="disease_resistance" rows="3">{{ old('disease_resistance', $variety->disease_resistance) }}</textarea>
+                                @error('disease_resistance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="description_summary" class="form-label">Ringkasan Deskripsi/Keunggulan</label>
+                                <textarea class="form-control @error('description_summary') is-invalid @enderror" 
+                                          id="description_summary" name="description_summary" rows="3">{{ old('description_summary', $variety->description_summary) }}</textarea>
+                                @error('description_summary') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="{{ sanitizeReturnUrl(request()->input('return'), route('admin.varieties.index')) }}" class="btn btn-light">Cancel</a>
@@ -229,6 +321,13 @@
                         window.toast('Error', "Gagal mengunggah: " + (message.message || message), 'error');
                     });
                 }
+            });
+        }
+
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr('.datepicker', {
+                dateFormat: "Y-m-d",
+                allowInput: true
             });
         }
     });

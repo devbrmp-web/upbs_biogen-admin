@@ -18,22 +18,26 @@ class Variety extends Model
         'slug',
         'sku',
         'description',
-        'price',
-        'stock',
-        'stock_bs_kg',
-        'stock_fs_kg',
         'minimum_limit',
         'status',
         'is_active',
         'image_path',
+
+        // Agricultural metadata
+        'decree_number',
+        'decree_date',
+        'origin',
+        'planting_age',
+        'yield_potential',
+        'average_yield',
+        'primary_trait',
+        'pest_resistance',
+        'disease_resistance',
+        'description_summary',
     ];
 
     protected $casts = [
-        'price' => 'integer',
         'minimum_limit' => 'integer',
-        'stock' => 'integer',
-        'stock_bs_kg' => 'integer',
-        'stock_fs_kg' => 'integer',
         'is_active' => 'boolean',
     ];
 

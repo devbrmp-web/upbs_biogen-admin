@@ -88,6 +88,18 @@ class VarietyController extends Controller
             'status' => 'nullable|in:available,out_of_stock,discontinued',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'temp_image_path' => 'nullable|string',
+
+            // Agricultural metadata
+            'decree_number' => 'nullable|string|max:500',
+            'decree_date' => 'nullable|string|max:255',
+            'origin' => 'nullable|string|max:500',
+            'planting_age' => 'nullable|string|max:255',
+            'yield_potential' => 'nullable|string|max:500',
+            'average_yield' => 'nullable|string|max:500',
+            'primary_trait' => 'nullable|string|max:255',
+            'pest_resistance' => 'nullable|string|max:2000',
+            'disease_resistance' => 'nullable|string|max:2000',
+            'description_summary' => 'nullable|string|max:2000',
         ], [
             'image.max' => 'File terlalu besar (Maks 10MB).',
             'image.required' => 'Gambar wajib diunggah.',
@@ -262,6 +274,18 @@ class VarietyController extends Controller
             'minimum_limit' => 'nullable|integer|min:0',
             'status' => 'nullable|in:available,out_of_stock,discontinued',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+
+            // Agricultural metadata
+            'decree_number' => 'nullable|string|max:500',
+            'decree_date' => 'nullable|string|max:255',
+            'origin' => 'nullable|string|max:500',
+            'planting_age' => 'nullable|string|max:255',
+            'yield_potential' => 'nullable|string|max:500',
+            'average_yield' => 'nullable|string|max:500',
+            'primary_trait' => 'nullable|string|max:255',
+            'pest_resistance' => 'nullable|string|max:2000',
+            'disease_resistance' => 'nullable|string|max:2000',
+            'description_summary' => 'nullable|string|max:2000',
         ]);
 
         if ($request->hasFile('image')) {
