@@ -3,330 +3,696 @@
 namespace Database\Seeders;
 
 use App\Models\Commodity;
-use App\Models\SeedClass;
 use App\Models\Variety;
-use App\Models\SeedLot;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class VarietySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * Data varietas & harga riil bersumber dari:
-     *  - Buku Saku BSIP Biogen 2024
-     *  - Penetapan PNBP PPHP BRMP Biogen (PNBP 2026)
-     *  - Rekapitulasi Pelayanan Publik 2026
-     *
-     * Harga = price_per_unit pada seed_lots (bukan di varieties).
-     * image = null (produksi-ready, tanpa gambar dummy).
-     */
     public function run(): void
     {
-        // ────────────────────────────────────────────────────────────────────
-        // Ambil kelas benih sekali
-        // ────────────────────────────────────────────────────────────────────
-        $sc = SeedClass::all()->keyBy('code');
+        $varieties = [
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Bioni 63 Ciherang',
+                'slug' => 'bioni-63-ciherang',
+                'sku' => 'PADI-BIONI-63-CIHERANG',
+                'description' => 'Varietas padi Bioni 63 Ciherang unggul BSIP Biogen — adaptif sawah irigasi, produktivitas tinggi, rasa nasi pulen.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '721/HK.540/C/04/2020',
+                'decree_date' => '30 April 2020',
+                'origin' => 'Ciherang/Swarnalata//3*Ciherang',
+                'planting_age' => '119',
+                'yield_potential' => '7 ton/ha',
+                'average_yield' => '5.7 ton/ha',
+                'primary_trait' => 'Pulen',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1,2,3; tahan populasi S1 Bekasi & JWDL Klaten; rentan penggerek batang kuning',
+                'disease_resistance' => 'Agak rentan HDB patotipe III (veg & gen), tahan IV, rentan VIII; agak tahan blas 173/073/133/033; tahan tungro',
+                'description_summary' => 'Produktivitas stabil, tahan tungro
+Musim hujan/kemarau, ≤500 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Bioprima Agritan',
+                'slug' => 'bioprima-agritan',
+                'sku' => 'PADI-BIOPRIMA-AGRITAN',
+                'description' => 'Varietas padi Bioprima unggul BSIP Biogen — tahan wereng batang coklat biotipe 1, 2, dan 3.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '172/HK.540/C/09/2021',
+                'decree_date' => '20 September 2021',
+                'origin' => 'Inpari 18/B12825E-TB-1-25//Limboto',
+                'planting_age' => '118',
+                'yield_potential' => '9.4 ton/ha',
+                'average_yield' => '8.64 ton/ha',
+                'primary_trait' => 'Sedang',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1 & 2; agak rentan biotipe 3',
+                'disease_resistance' => 'Tahan HDB patotipe III & IV (veg); tahan III/IV/VIII (gen); moderat tahan tungro; tahan blas 033, agak tahan 133/173',
+                'description_summary' => 'Moderat toleran kekeringan
+Sawah irigasi/tadah hujan, ≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Bioryza Agritan',
+                'slug' => 'bioryza-agritan',
+                'sku' => 'PADI-BIORYZA-AGRITAN',
+                'description' => 'Varietas padi Bioryza unggul BSIP Biogen — tahan penyakit hawar daun bakteri, potensi hasil tinggi.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '1059/HK.540/C/03/2023',
+                'decree_date' => '28 Maret 2023',
+                'origin' => 'Conde/Angke//Ciherang/IRBB21///Ciherang*3',
+                'planting_age' => '113',
+                'yield_potential' => '7.3 ton/ha',
+                'average_yield' => '5.8 ton/ha',
+                'primary_trait' => 'Pulen',
+                'pest_resistance' => 'Agak tahan WBC biotipe 3; rentan penggerek batang kuning',
+                'disease_resistance' => 'Sangat tahan HDB III/IV/VIII (veg); tahan IV, agak tahan III/VIII (gen); tahan blas 033, agak tahan 173/073/133; tahan tungro; alel Xa4/xa5/Xa7/Xa21',
+                'description_summary' => 'Memiliki banyak alel ketahanan HDB
+≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Biomonas Agritan',
+                'slug' => 'biomonas-agritan',
+                'sku' => 'PADI-BIOMONAS-AGRITAN',
+                'description' => 'Varietas padi Biomonas unggul BSIP Biogen — tahan blast, adaptif lahan pasang surut.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '1060/HK.540/C/03/2023',
+                'decree_date' => '28 Maret 2023',
+                'origin' => 'Conde/Angke//Inpari13/IRBB21///Inpari13*3',
+                'planting_age' => '109',
+                'yield_potential' => '6.9 ton/ha',
+                'average_yield' => '5.3 ton/ha',
+                'primary_trait' => 'Pulen',
+                'pest_resistance' => 'Tahan WBC biotipe 2; agak tahan biotipe 1/3 & populasi lapang; rentan penggerek batang kuning',
+                'disease_resistance' => 'Sangat tahan HDB III/IV/VIII (veg); sangat tahan VIII, tahan IV, agak tahan III (gen); tahan blas 173/033; tahan tungro; alel Xa4/xa5/Xa7/Xa21',
+                'description_summary' => 'Gen ketahanan lengkap
+≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Inpari Blas',
+                'slug' => 'inpari-blas',
+                'sku' => 'PADI-INPARI-BLAS',
+                'description' => 'Inpari Blas — varietas padi inbrida sawah irigasi tahan penyakit blas dengan produktivitas optimal.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '3916/Kpts/SR.120/3/2013',
+                'decree_date' => '26 Maret 2013',
+                'origin' => 'IR64/Oryza rufipogon',
+                'planting_age' => '111',
+                'yield_potential' => '9.0 ton/ha GKG',
+                'average_yield' => '6.3 ton/ha GKG',
+                'primary_trait' => 'Sedang',
+                'pest_resistance' => 'Agak tahan WBC Jawa Barat & Jawa Tengah, biotipe 1 & 2; agak rentan biotipe 3',
+                'disease_resistance' => 'Tahan blas ras 173 & 101; agak tahan HDB patotipe III & IV; tahan tungro Cipeles/Tomo/Sumedang',
+                'description_summary' => 'Potensi hasil tinggi, agak tahan WBC & HDB, tahan blas & tungro
+Lahan sawah, ≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Inpari HDB',
+                'slug' => 'inpari-hdb',
+                'sku' => 'PADI-INPARI-HDB',
+                'description' => 'Inpari HDB — varietas padi inbrida sawah irigasi tahan hawar daun bakteri (HDB).',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '3920/Kpts/SR.120/3/2013',
+                'decree_date' => '26 Maret 2013',
+                'origin' => 'IR64/Oryza rufipogon',
+                'planting_age' => '115',
+                'yield_potential' => '9.3 ton/ha GKG',
+                'average_yield' => '6.1 ton/ha GKG',
+                'primary_trait' => 'Sedang',
+                'pest_resistance' => 'Agak tahan WBC Jawa Barat & Jawa Tengah, biotipe 1 & 2; agak rentan biotipe 3',
+                'disease_resistance' => 'Tahan HDB patotipe III; agak tahan IV & VIII; tahan tungro Cipeles/Tomo/Sumedang',
+                'description_summary' => 'Potensi hasil tinggi, tahan HDB & tungro, agak tahan WBC
+Lahan sawah, ≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Inpari 40',
+                'slug' => 'inpari-40',
+                'sku' => 'PADI-INPARI-40',
+                'description' => 'Inpari 40 — varietas padi inbrida sawah irigasi adaptif dengan umur panen genjah.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '713/Kpts/TP.030/12/2015',
+                'decree_date' => '15 Desember 2015',
+                'origin' => 'NSIC RC138 × IR123',
+                'planting_age' => '116',
+                'yield_potential' => '9.6 ton/ha',
+                'average_yield' => '5.79 ton/ha',
+                'primary_trait' => 'Sedang',
+                'pest_resistance' => 'Agak rentan WBC biotipe 1,2,3',
+                'disease_resistance' => 'Agak tahan HDB strain III; agak rentan IV & VII; tahan blas ras 073',
+                'description_summary' => 'Potensi hasil tinggi, tahan blas
+Tadah hujan, ≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Biosalin 1',
+                'slug' => 'biosalin-1',
+                'sku' => 'PADI-BIOSALIN-1',
+                'description' => 'Biosalin 1 — varietas padi toleran salinitas untuk lahan rawa/pasang surut pesisir.',
+                'minimum_limit' => 30,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '894/HK.540/C/06/2020',
+                'decree_date' => '30 Juni 2020',
+                'origin' => 'Iradiansi gamma Ciherang',
+                'planting_age' => '113',
+                'yield_potential' => '8.75 ton/ha',
+                'average_yield' => '7.16 ton/ha',
+                'primary_trait' => 'Pulen',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1; agak rentan biotipe 2 & 3',
+                'disease_resistance' => 'Agak tahan HDB strain IV, agak tahan blas ras 033 & 133',
+                'description_summary' => 'Toleran salinitas (skor 3.33)
+Lahan salin, irigasi/tadah hujan',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Biosalin 2',
+                'slug' => 'biosalin-2',
+                'sku' => 'PADI-BIOSALIN-2',
+                'description' => 'Biosalin 2 — varietas padi toleran salinitas generasi kedua, lebih adaptif pada berbagai tingkat salinitas.',
+                'minimum_limit' => 30,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '895/HK.540/C/06/2020',
+                'decree_date' => '30 Juni 2020',
+                'origin' => 'Iradiansi gamma Inpari 13',
+                'planting_age' => '107',
+                'yield_potential' => '9.06 ton/ha',
+                'average_yield' => '7.62 ton/ha',
+                'primary_trait' => 'Medium',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1,2,3',
+                'disease_resistance' => 'Agak tahan HDB strain IV; tahan blas ras 073, agak tahan ras 033',
+                'description_summary' => 'Toleran salinitas (skor 3.00)
+Lahan salin, irigasi/tadah hujan',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Bio Patenggang',
+                'slug' => 'bio-patenggang',
+                'sku' => 'PADI-BIO-PATENGGANG',
+                'description' => 'Bio Patenggang — varietas padi unggul toleran kekeringan, cocok untuk lahan sawah tadah hujan.',
+                'minimum_limit' => 40,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '255/HK.340/C/05/2019',
+                'decree_date' => '24 Mei 2019',
+                'origin' => 'Situ Patenggang/IRBLta2-Re',
+                'planting_age' => '120-125',
+                'yield_potential' => '6.0 ton/ha',
+                'average_yield' => '4.7 ton/ha',
+                'primary_trait' => 'Pulen',
+                'pest_resistance' => 'Agak rentan WBC biotipe 1,2,3',
+                'disease_resistance' => 'Agak tahan HDB strain III; tahan blas ras 033/073/173/001/040/253',
+                'description_summary' => 'Agak toleran Al 40 ppm & kekeringan; bersifat ampibi
+Lahan kering, tadah hujan, irigasi',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Biobestari',
+                'slug' => 'biobestari',
+                'sku' => 'PADI-BIOBESTARI',
+                'description' => 'Biobestari — varietas padi premium BSIP Biogen dengan penampilan gabah bening dan rasa nasi istimewa.',
+                'minimum_limit' => 40,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '952/HK.540/C/08/2020',
+                'decree_date' => '3 Agustus 2020',
+                'origin' => 'IR64 (iradiasi gamma 50 Gy)',
+                'planting_age' => '109',
+                'yield_potential' => '7.46 ton/ha',
+                'average_yield' => '5.84 ton/ha',
+                'primary_trait' => 'Medium',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1,2,3',
+                'disease_resistance' => 'Tahan HDB patotipe III & IV (veg); tahan III/IV (gen); tahan blas 133/013/041/131/053; agak tahan 073/173; agak tahan tungro',
+                'description_summary' => 'Toleran Al 40 ppm & agak toleran kekeringan
+Lahan kering ≤600 mdpl, PTT Padi Gogo',
+            ],
+            [
+                'commodity_slug' => 'padi',
+                'name' => 'Bioemas',
+                'slug' => 'bioemas',
+                'sku' => 'PADI-BIOEMAS',
+                'description' => 'Bioemas — varietas padi aromatik unggul dengan tekstur nasi pulen dan aroma harum khas.',
+                'minimum_limit' => 40,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '171/HK.540/C/09/2021',
+                'decree_date' => '20 September 2021',
+                'origin' => 'Inpari 18/IR87705-14-11-B-SKI-12//Limboto',
+                'planting_age' => '115',
+                'yield_potential' => '10.09 ton/ha',
+                'average_yield' => '8.5 ton/ha',
+                'primary_trait' => 'Sedang',
+                'pest_resistance' => 'Agak tahan WBC biotipe 1,2,3',
+                'disease_resistance' => 'Agak tahan HDB patotipe III (veg), tahan IV (veg); tahan III/IV/VIII (gen); tahan blas ras 133, agak tahan 033',
+                'description_summary' => 'Moderat toleran kekeringan, hasil tinggi
+Sawah irigasi/tadah hujan, ≤600 mdpl',
+            ],
+            [
+                'commodity_slug' => 'kedelai',
+                'name' => 'Biosoy 1',
+                'slug' => 'biosoy-1',
+                'sku' => 'KEDELAI-BIOSOY-1',
+                'description' => 'Biosoy 1 — varietas kedelai/edamame unggul BSIP Biogen, biji besar, protein tinggi.',
+                'minimum_limit' => 15,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '343/Kpts/TP.010/05/2018',
+                'decree_date' => '7 Mei 2018',
+                'origin' => 'Mutasi 250 Gy (Cina-Jepang)',
+                'planting_age' => '83',
+                'yield_potential' => '3.3 ton/ha',
+                'average_yield' => '2.71 ton/ha',
+                'primary_trait' => NULL,
+                'pest_resistance' => 'Tahan karat daun, pengisap & penggerek polong',
+                'disease_resistance' => NULL,
+                'description_summary' => 'Produktivitas stabil',
+            ],
+            [
+                'commodity_slug' => 'kedelai',
+                'name' => 'Biosoy 2',
+                'slug' => 'biosoy-2',
+                'sku' => 'KEDELAI-BIOSOY-2',
+                'description' => 'Biosoy 2 — varietas kedelai unggul BSIP Biogen, tahan penyakit karat daun, produktif.',
+                'minimum_limit' => 15,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '344/Kpts/TP.010/05/2018',
+                'decree_date' => '7 Mei 2018',
+                'origin' => 'Mutasi 250 Gy (Cina-Jepang)',
+                'planting_age' => '84',
+                'yield_potential' => '3.55 ton/ha',
+                'average_yield' => '2.63 ton/ha',
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => 'Kandungan protein & lemak tinggi',
+            ],
+            [
+                'commodity_slug' => 'kedelai',
+                'name' => 'Biomax 1',
+                'slug' => 'biomax-1',
+                'sku' => 'KEDELAI-BIOMAX-1',
+                'description' => 'Biomax 1 — varietas edamame premium BSIP Biogen, biji hijau besar, kadar gula tinggi.',
+                'minimum_limit' => 15,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '344/Kpts/SR.130/D/IV/2021',
+                'decree_date' => '26 April 2021',
+                'origin' => 'Aksesi Cina 05003-04452',
+                'planting_age' => '46-48 hst',
+                'yield_potential' => '10.35-14.65 t/ha (polong muda)',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => 'Polong besar (332–396 g/100 polong), biji lonjong
+Dataran menengah',
+            ],
+            [
+                'commodity_slug' => 'kedelai',
+                'name' => 'Biomax 2',
+                'slug' => 'biomax-2',
+                'sku' => 'KEDELAI-BIOMAX-2',
+                'description' => 'Biomax 2 — varietas edamame unggul BSIP Biogen generasi kedua, adaptif dataran menengah.',
+                'minimum_limit' => 15,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '345/Kpts/SR.130/D/IV/2021',
+                'decree_date' => '26 April 2021',
+                'origin' => 'Aksesi Taiwan 05003-04446',
+                'planting_age' => '71-72 hst',
+                'yield_potential' => '8.51-16.39 t/ha (polong muda)',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => 'Produktivitas polong muda tinggi
+Dataran menengah',
+            ],
+            [
+                'commodity_slug' => 'sorgum',
+                'name' => 'Bioguma 1',
+                'slug' => 'bioguma-1',
+                'sku' => 'SORGUM-BIOGUMA-1',
+                'description' => 'Bioguma 1 — varietas sorgum unggul BSIP Biogen, tinggi produksi biomassa untuk pakan ternak.',
+                'minimum_limit' => 20,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '191/HK.540/C/04/2019',
+                'decree_date' => '5 April 2019',
+                'origin' => 'Iradiansi gamma Numbu (50 Gy)',
+                'planting_age' => '105',
+                'yield_potential' => '9.26 ton/ha biji, 46.08 ton/ha biomassa',
+                'average_yield' => '7.0 ton/ha',
+                'primary_trait' => 'Pera',
+                'pest_resistance' => 'Tahan karat & bercak daun; agak tahan antraknosa; sangat tahan busuk batang',
+                'disease_resistance' => 'Adaptif luas, bahan baku energi',
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'sorgum',
+                'name' => 'Bioguma 2',
+                'slug' => 'bioguma-2',
+                'sku' => 'SORGUM-BIOGUMA-2',
+                'description' => 'Bioguma 2 — varietas sorgum manis BSIP Biogen, kadar brix tinggi, cocok untuk bioetanol.',
+                'minimum_limit' => 20,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '192/HK.540/C/04/2019',
+                'decree_date' => '5 April 2019',
+                'origin' => 'Iradiansi gamma Numbu (50 Gy)',
+                'planting_age' => '105',
+                'yield_potential' => '9.33 ton/ha biji, 54.3 ton/ha biomassa',
+                'average_yield' => '7.11 ton/ha',
+                'primary_trait' => 'Pera',
+                'pest_resistance' => 'Tahan karat & bercak daun; agak tahan antraknosa; sangat tahan busuk batang',
+                'disease_resistance' => 'Adaptif optimal, potensi bioenergi',
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'sorgum',
+                'name' => 'Bioguma 3',
+                'slug' => 'bioguma-3',
+                'sku' => 'SORGUM-BIOGUMA-3',
+                'description' => 'Bioguma 3 — varietas sorgum biji putih unggul, potensi hasil biji tinggi, toleran kekeringan.',
+                'minimum_limit' => 20,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '193/HK.540/C/04/2019',
+                'decree_date' => '5 April 2019',
+                'origin' => 'Iradiansi gamma Numbu (70 Gy)',
+                'planting_age' => '105',
+                'yield_potential' => '8.33 ton/ha biji, 44.23 ton/ha biomassa',
+                'average_yield' => '6.98 ton/ha',
+                'primary_trait' => 'Pera',
+                'pest_resistance' => 'Tahan karat & bercak daun; agak tahan antraknosa; sangat tahan busuk batang',
+                'disease_resistance' => NULL,
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'cabai-merah-besar',
+                'name' => 'Carvi Agrihorti',
+                'slug' => 'carvi-agrihorti',
+                'sku' => 'CABAI-CARVI-AGRIHORTI',
+                'description' => 'Carvi Agrihorti — varietas cabai merah keriting unggul Balithorti, buah panjang, produktif, tahan layu Fusarium.',
+                'minimum_limit' => 10,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '051/Kpts/SR.120/D.2.7/5/2018',
+                'decree_date' => '23 Mei 2018',
+                'origin' => 'Mutasi EMS var. Gelora',
+                'planting_age' => NULL,
+                'yield_potential' => '21-23 ton',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => 'Agak toleran trips',
+                'disease_resistance' => 'Tahan ChiVMV (virus belang)',
+                'description_summary' => 'Tahan virus, produksi tinggi
+Dataran tinggi, musim hujan',
+            ],
+            [
+                'commodity_slug' => 'kentang',
+                'name' => 'Bio Granola',
+                'slug' => 'bio-granola',
+                'sku' => 'KENTANG-BIO-GRANOLA',
+                'description' => 'Bio Granola — varietas kentang unggul BSIP Biogen adaptif dataran tinggi, umbi besar seragam, tahan penyakit hawar daun (P. infestans).',
+                'minimum_limit' => 10,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '548/Kpts/SR.130/D/VII/2021',
+                'decree_date' => '12 Juli 2021',
+                'origin' => 'Granola × PRG Katahdin SP951',
+                'planting_age' => NULL,
+                'yield_potential' => '21.67-29.25 ton/ha',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => 'Tahan hawar daun (90 hari)',
+                'description_summary' => 'Daya hasil tinggi, tahan hawar
+Dataran tinggi (Kab. Bandung)',
+            ],
+            [
+                'commodity_slug' => 'rumput-gajah',
+                'name' => 'Biograss Agrinak',
+                'slug' => 'biograss-agrinak',
+                'sku' => 'RUMPUT-GAJAH-BIOGRASS-AGRINAK',
+                'description' => 'Biograss Agrinak — varietas rumput gajah unggul BSIP Agrinak, produksi biomassa super tinggi, cocok untuk silase pakan ternak.',
+                'minimum_limit' => 50,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '11726/KPTS/PK.120/F/08/2021',
+                'decree_date' => '30 Agustus 2021',
+                'origin' => 'Mutan Ciawi Dua (in vitro)',
+                'planting_age' => NULL,
+                'yield_potential' => '319.15 ton/ha/tahun',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => 'Toleran kekeringan',
+                'description_summary' => 'Belum berbunga umur 1 tahun; palatabilitas baik (94.5%)',
+            ],
+            [
+                'commodity_slug' => 'anggrek',
+                'name' => 'Phalaenopsis',
+                'slug' => 'anggrek-phalaenopsis',
+                'sku' => 'ANGGREK-PHALAENOPSIS',
+                'description' => 'Phalaenopsis (Anggrek Bulan) — planlet anggrek bulan unggul hasil kultur jaringan BSIP Biogen, bunga besar, tahan lama.',
+                'minimum_limit' => 5,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => NULL,
+                'decree_date' => NULL,
+                'origin' => NULL,
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'anggrek',
+                'name' => 'Dendrobium',
+                'slug' => 'anggrek-dendrobium',
+                'sku' => 'ANGGREK-DENDROBIUM',
+                'description' => 'Dendrobium — planlet anggrek Dendrobium unggul hasil kultur jaringan BSIP Biogen, bunga lebat, siklus berbunga pendek.',
+                'minimum_limit' => 5,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => NULL,
+                'decree_date' => NULL,
+                'origin' => NULL,
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'jeruk',
+                'name' => 'Jeruk Keprok SoE',
+                'slug' => 'jeruk-keprok-soe',
+                'sku' => 'JERUK-JERUK-KEPROK-SOE',
+                'description' => 'Jeruk Keprok SoE — varietas jeruk unggul nasional asal NTT, rasa manis segar dengan aroma khas, warna oranye menarik.',
+                'minimum_limit' => 10,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => NULL,
+                'decree_date' => NULL,
+                'origin' => NULL,
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'aren',
+                'name' => 'Aren Akel',
+                'slug' => 'aren-akel',
+                'sku' => 'AREN-AREN-AKEL',
+                'description' => 'Aren Akel — varietas aren unggul dengan potensi produksi nira tinggi, adaptif di berbagai ekosistem lahan kering.',
+                'minimum_limit' => 10,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => 'varieties/MfU72DfdZItYsW2EF5VlYF7rxMG6UzmUDiL7o1sx.jpg',
+                'decree_number' => NULL,
+                'decree_date' => NULL,
+                'origin' => NULL,
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => NULL,
+            ],
+            [
+                'commodity_slug' => 'cabai-merah-besar',
+                'name' => 'Biocarpa Agrihorti',
+                'slug' => 'biocarpa-agrihorti',
+                'sku' => 'CABAI-MERAH-BESAR-BIOCARPA-AGRIHORTI',
+                'description' => NULL,
+                'minimum_limit' => 0,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '55/Kpts/SR.15G/0/111/2621',
+                'decree_date' => '26 Maret 2021',
+                'origin' => 'Kencana × AVPP0207',
+                'planting_age' => NULL,
+                'yield_potential' => '9.45-18.16 ton',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => 'Tahan antraknos',
+                'description_summary' => 'Tahan antraknos, produktivitas tinggi
+Dataran tinggi (Pacet, Cianjur), musim kemarau',
+            ],
+            [
+                'commodity_slug' => 'cabai-merah-besar',
+                'name' => 'Biocalya-Agrihorti',
+                'slug' => 'biocalya-agrihorti',
+                'sku' => 'CABAI-MERAH-BESAR-BIOCALYA-AGRIHORTI',
+                'description' => NULL,
+                'minimum_limit' => 0,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '448/Kpts/PV.240/D/X11/2022',
+                'decree_date' => '13 Desember 2022',
+                'origin' => 'Kencana × AVPP0207',
+                'planting_age' => NULL,
+                'yield_potential' => '12.08-18.25 ton',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => 'Tahan antraknos',
+                'description_summary' => 'Tahan antraknos
+Dataran menengah-tinggi, musim hujan',
+            ],
+            [
+                'commodity_slug' => 'cabai-merah-besar',
+                'name' => 'Biocarning-Agrihorti',
+                'slug' => 'biocarning-agrihorti',
+                'sku' => 'CABAI-MERAH-BESAR-BIOCARNING-AGRIHORTI',
+                'description' => NULL,
+                'minimum_limit' => 0,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '79/Kpts/PV.240/D/11I/2023',
+                'decree_date' => '13 Februari 2023',
+                'origin' => 'Mutasi EMS var. Gelora',
+                'planting_age' => NULL,
+                'yield_potential' => '12.34-40.37 ton',
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => 'Agak toleran trips',
+                'disease_resistance' => 'Tahan PepYLCV (virus kuning)',
+                'description_summary' => 'Hasil tinggi, tahan virus kuning
+Dataran medium-tinggi, musim hujan',
+            ],
+            [
+                'commodity_slug' => 'cabai-merah-besar',
+                'name' => 'Proksi 1 Agrihorti',
+                'slug' => 'proksi-1-agrihorti',
+                'sku' => 'CABAI-MERAH-BESAR-PROKSI-1-AGRIHORTI',
+                'description' => NULL,
+                'minimum_limit' => 0,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '123/Kpts/SR.130/D/VIII/2020',
+                'decree_date' => '24 Agustus 2022',
+                'origin' => 'Fusi somatik Siam Madu × Satsuma',
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => '58.72-84.0 kg/pohon/tahun',
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => 'Manis-asam
+Berbuah sepanjang tahun; kombinasi sifat Siam & Keprok',
+            ],
+            [
+                'commodity_slug' => 'aren',
+                'name' => 'Smulen ST1',
+                'slug' => 'smulen-st1',
+                'sku' => 'AREN-SMULEN-ST1',
+                'description' => NULL,
+                'minimum_limit' => 0,
+                'status' => 'available',
+                'is_active' => true,
+                'image_path' => NULL,
+                'decree_number' => '44/KPTS/KB.020/2/2019',
+                'decree_date' => '1 Februari 2019',
+                'origin' => 'Seleksi aren lokal Rejang Lebong',
+                'planting_age' => NULL,
+                'yield_potential' => NULL,
+                'average_yield' => NULL,
+                'primary_trait' => NULL,
+                'pest_resistance' => NULL,
+                'disease_resistance' => NULL,
+                'description_summary' => '15.4 l/mayang/hari, kadar gula 13%
+Lahan kering, iklim basah, >500 mdpl',
+            ],
+        ];
 
-        // ─── PADI ────────────────────────────────────────────────────────────
-        // Harga BS: 40.000/kg | FS: 14.000/kg | SS: 12.000/kg
-        $padi = Commodity::where('slug', 'padi')->first();
-        if ($padi) {
-            $padiVarieties = [
-                [
-                    'name'        => 'Bioni 63 Ciherang',
-                    'description' => 'Varietas padi Bioni 63 Ciherang unggul BSIP Biogen — adaptif sawah irigasi, produktivitas tinggi, rasa nasi pulen.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Bioprima Agritan',
-                    'description' => 'Varietas padi Bioprima unggul BSIP Biogen — tahan wereng batang coklat biotipe 1, 2, dan 3.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Bioryza Agritan',
-                    'description' => 'Varietas padi Bioryza unggul BSIP Biogen — tahan penyakit hawar daun bakteri, potensi hasil tinggi.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Biomonas Agritan',
-                    'description' => 'Varietas padi Biomonas unggul BSIP Biogen — tahan blast, adaptif lahan pasang surut.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Inpari Blas',
-                    'description' => 'Inpari Blas — varietas padi inbrida sawah irigasi tahan penyakit blas dengan produktivitas optimal.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Inpari HDB',
-                    'description' => 'Inpari HDB — varietas padi inbrida sawah irigasi tahan hawar daun bakteri (HDB).',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Inpari 40',
-                    'description' => 'Inpari 40 — varietas padi inbrida sawah irigasi adaptif dengan umur panen genjah.',
-                    'min_limit'   => 50,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Biosalin 1',
-                    'description' => 'Biosalin 1 — varietas padi toleran salinitas untuk lahan rawa/pasang surut pesisir.',
-                    'min_limit'   => 30,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Biosalin 2',
-                    'description' => 'Biosalin 2 — varietas padi toleran salinitas generasi kedua, lebih adaptif pada berbagai tingkat salinitas.',
-                    'min_limit'   => 30,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Bio Patenggang',
-                    'description' => 'Bio Patenggang — varietas padi unggul toleran kekeringan, cocok untuk lahan sawah tadah hujan.',
-                    'min_limit'   => 40,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Biobestari',
-                    'description' => 'Biobestari — varietas padi premium BSIP Biogen dengan penampilan gabah bening dan rasa nasi istimewa.',
-                    'min_limit'   => 40,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-                [
-                    'name'        => 'Bioemas',
-                    'description' => 'Bioemas — varietas padi aromatik unggul dengan tekstur nasi pulen dan aroma harum khas.',
-                    'min_limit'   => 40,
-                    'prices'      => ['BS' => 40000, 'FS' => 14000, 'SS' => 12000],
-                ],
-            ];
-
-            foreach ($padiVarieties as $vd) {
-                $variety = Variety::updateOrCreate(
-                    ['name' => $vd['name'], 'commodity_id' => $padi->id],
-                    [
-                        'slug'          => Str::slug($vd['name']),
-                        'description'   => $vd['description'],
-                        'minimum_limit' => $vd['min_limit'],
-                        'status'        => 'available',
-                        'is_active'     => true,
-                        'image_path'    => null,
-                    ]
-                );
-                // Simpan harga pada variety data untuk digunakan SeedLotSeeder
-                $variety->_prices = $vd['prices'];
+        foreach ($varieties as $data) {
+            $commodity = Commodity::where('slug', $data['commodity_slug'])->first();
+            if ($commodity) {
+                $insertData = $data;
+                unset($insertData['commodity_slug']);
+                $insertData['commodity_id'] = $commodity->id;
+                Variety::updateOrCreate(['name' => $data['name']], $insertData);
             }
         }
-
-        // ─── KEDELAI / EDAMAME ───────────────────────────────────────────────
-        // Harga BS: 70.000/kg
-        $kedelai = Commodity::where('slug', 'kedelai')->first();
-        if ($kedelai) {
-            $kedelaiVarieties = [
-                [
-                    'name'        => 'Biosoy 1',
-                    'description' => 'Biosoy 1 — varietas kedelai/edamame unggul BSIP Biogen, biji besar, protein tinggi.',
-                    'min_limit'   => 15,
-                    'prices'      => ['BS' => 70000],
-                ],
-                [
-                    'name'        => 'Biosoy 2',
-                    'description' => 'Biosoy 2 — varietas kedelai unggul BSIP Biogen, tahan penyakit karat daun, produktif.',
-                    'min_limit'   => 15,
-                    'prices'      => ['BS' => 70000],
-                ],
-                [
-                    'name'        => 'Biomax 1',
-                    'description' => 'Biomax 1 — varietas edamame premium BSIP Biogen, biji hijau besar, kadar gula tinggi.',
-                    'min_limit'   => 15,
-                    'prices'      => ['BS' => 70000],
-                ],
-                [
-                    'name'        => 'Biomax 2',
-                    'description' => 'Biomax 2 — varietas edamame unggul BSIP Biogen generasi kedua, adaptif dataran menengah.',
-                    'min_limit'   => 15,
-                    'prices'      => ['BS' => 70000],
-                ],
-            ];
-
-            foreach ($kedelaiVarieties as $vd) {
-                Variety::updateOrCreate(
-                    ['name' => $vd['name'], 'commodity_id' => $kedelai->id],
-                    [
-                        'slug'          => Str::slug($vd['name']),
-                        'description'   => $vd['description'],
-                        'minimum_limit' => $vd['min_limit'],
-                        'status'        => 'available',
-                        'is_active'     => true,
-                        'image_path'    => null,
-                    ]
-                );
-            }
-        }
-
-        // ─── SORGUM ──────────────────────────────────────────────────────────
-        // Harga BS: 35.000/kg
-        $sorgum = Commodity::where('slug', 'sorgum')->first();
-        if ($sorgum) {
-            $sorgumVarieties = [
-                [
-                    'name'        => 'Bioguma 1',
-                    'description' => 'Bioguma 1 — varietas sorgum unggul BSIP Biogen, tinggi produksi biomassa untuk pakan ternak.',
-                    'min_limit'   => 20,
-                    'prices'      => ['BS' => 35000],
-                ],
-                [
-                    'name'        => 'Bioguma 2',
-                    'description' => 'Bioguma 2 — varietas sorgum manis BSIP Biogen, kadar brix tinggi, cocok untuk bioetanol.',
-                    'min_limit'   => 20,
-                    'prices'      => ['BS' => 35000],
-                ],
-                [
-                    'name'        => 'Bioguma 3',
-                    'description' => 'Bioguma 3 — varietas sorgum biji putih unggul, potensi hasil biji tinggi, toleran kekeringan.',
-                    'min_limit'   => 20,
-                    'prices'      => ['BS' => 35000],
-                ],
-            ];
-
-            foreach ($sorgumVarieties as $vd) {
-                Variety::updateOrCreate(
-                    ['name' => $vd['name'], 'commodity_id' => $sorgum->id],
-                    [
-                        'slug'          => Str::slug($vd['name']),
-                        'description'   => $vd['description'],
-                        'minimum_limit' => $vd['min_limit'],
-                        'status'        => 'available',
-                        'is_active'     => true,
-                        'image_path'    => null,
-                    ]
-                );
-            }
-        }
-
-        // ─── CABAI ───────────────────────────────────────────────────────────
-        // Harga BS: 3.000/gram (disimpan sebagai 3000, unit = gram)
-        $cabai = Commodity::where('slug', 'cabai')->first();
-        if ($cabai) {
-            Variety::updateOrCreate(
-                ['name' => 'Carvi Agrihorti', 'commodity_id' => $cabai->id],
-                [
-                    'slug'          => 'carvi-agrihorti',
-                    'description'   => 'Carvi Agrihorti — varietas cabai merah keriting unggul Balithorti, buah panjang, produktif, tahan layu Fusarium.',
-                    'minimum_limit' => 10,
-                    'status'        => 'available',
-                    'is_active'     => true,
-                    'image_path'    => null,
-                ]
-            );
-        }
-
-        // ─── KENTANG ─────────────────────────────────────────────────────────
-        // Harga Starter: 50.000/botol | G0: 2.000/umbi
-        $kentang = Commodity::where('slug', 'kentang')->first();
-        if ($kentang) {
-            Variety::updateOrCreate(
-                ['name' => 'Bio Granola', 'commodity_id' => $kentang->id],
-                [
-                    'slug'          => 'bio-granola',
-                    'description'   => 'Bio Granola — varietas kentang unggul BSIP Biogen adaptif dataran tinggi, umbi besar seragam, tahan penyakit hawar daun (P. infestans).',
-                    'minimum_limit' => 10,
-                    'status'        => 'available',
-                    'is_active'     => true,
-                    'image_path'    => null,
-                ]
-            );
-        }
-
-        // ─── RUMPUT GAJAH ────────────────────────────────────────────────────
-        // Harga BSM (Stek): 500/stek
-        $rumputGajah = Commodity::where('slug', 'rumput-gajah')->first();
-        if ($rumputGajah) {
-            Variety::updateOrCreate(
-                ['name' => 'Biograss Agrinak', 'commodity_id' => $rumputGajah->id],
-                [
-                    'slug'          => 'biograss-agrinak',
-                    'description'   => 'Biograss Agrinak — varietas rumput gajah unggul BSIP Agrinak, produksi biomassa super tinggi, cocok untuk silase pakan ternak.',
-                    'minimum_limit' => 50,
-                    'status'        => 'available',
-                    'is_active'     => true,
-                    'image_path'    => null,
-                ]
-            );
-        }
-
-        // ─── ANGGREK ─────────────────────────────────────────────────────────
-        // Phalaenopsis: Starter 50.000/botol | Dendrobium: Starter 33.000/botol
-        $anggrek = Commodity::where('slug', 'anggrek')->first();
-        if ($anggrek) {
-            $anggrekVarieties = [
-                [
-                    'name'        => 'Phalaenopsis',
-                    'description' => 'Phalaenopsis (Anggrek Bulan) — planlet anggrek bulan unggul hasil kultur jaringan BSIP Biogen, bunga besar, tahan lama.',
-                    'min_limit'   => 5,
-                ],
-                [
-                    'name'        => 'Dendrobium',
-                    'description' => 'Dendrobium — planlet anggrek Dendrobium unggul hasil kultur jaringan BSIP Biogen, bunga lebat, siklus berbunga pendek.',
-                    'min_limit'   => 5,
-                ],
-            ];
-
-            foreach ($anggrekVarieties as $vd) {
-                Variety::updateOrCreate(
-                    ['name' => $vd['name'], 'commodity_id' => $anggrek->id],
-                    [
-                        'slug'          => 'anggrek-' . Str::slug($vd['name']),
-                        'description'   => $vd['description'],
-                        'minimum_limit' => $vd['min_limit'],
-                        'status'        => 'available',
-                        'is_active'     => true,
-                        'image_path'    => null,
-                    ]
-                );
-            }
-        }
-
-        // ─── JERUK ───────────────────────────────────────────────────────────
-        $jeruk = Commodity::where('slug', 'jeruk')->first();
-        if ($jeruk) {
-            Variety::updateOrCreate(
-                ['name' => 'Jeruk Keprok SoE', 'commodity_id' => $jeruk->id],
-                [
-                    'slug'          => 'jeruk-keprok-soe',
-                    'description'   => 'Jeruk Keprok SoE — varietas jeruk unggul nasional asal NTT, rasa manis segar dengan aroma khas, warna oranye menarik.',
-                    'minimum_limit' => 10,
-                    'status'        => 'available',
-                    'is_active'     => true,
-                    'image_path'    => null,
-                ]
-            );
-        }
-
-        // ─── AREN ────────────────────────────────────────────────────────────
-        $aren = Commodity::where('slug', 'aren')->first();
-        if ($aren) {
-            Variety::updateOrCreate(
-                ['name' => 'Aren Akel', 'commodity_id' => $aren->id],
-                [
-                    'slug'          => 'aren-akel',
-                    'description'   => 'Aren Akel — varietas aren unggul dengan potensi produksi nira tinggi, adaptif di berbagai ekosistem lahan kering.',
-                    'minimum_limit' => 10,
-                    'status'        => 'available',
-                    'is_active'     => true,
-                    'image_path'    => null,
-                ]
-            );
-        }
-
-        $total = Variety::count();
-        $this->command->info("✅ VarietySeeder: {$total} varietas riil BSIP Biogen berhasil di-seed.");
     }
 }
