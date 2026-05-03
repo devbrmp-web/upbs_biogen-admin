@@ -127,7 +127,17 @@ class VarietyController extends Controller
                     'sku',
                     'minimum_limit',
                     'image_path',
-                    'description'
+                    'description',
+                    'decree_number',
+                    'decree_date',
+                    'origin',
+                    'planting_age',
+                    'yield_potential',
+                    'average_yield',
+                    'primary_trait',
+                    'pest_resistance',
+                    'disease_resistance',
+                    'description_summary'
                 ])
                 ->firstOrFail();
 
@@ -197,15 +207,25 @@ class VarietyController extends Controller
             });
 
             $payload = [
-                'id'             => $v->id,
-                'name'           => $v->name,
-                'slug'           => $v->slug,
-                'sku'            => $v->sku,
-                'description'    => $v->description,
-                'image_path'     => $v->image_path,
-                'image_url'      => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
-                'images'         => $images,
-                'minimum_limit'  => (int) ($v->minimum_limit ?? 0),
+                'id'                  => $v->id,
+                'name'                => $v->name,
+                'slug'                => $v->slug,
+                'sku'                 => $v->sku,
+                'description'         => $v->description,
+                'decree_number'       => $v->decree_number,
+                'decree_date'         => $v->decree_date,
+                'origin'              => $v->origin,
+                'planting_age'        => $v->planting_age,
+                'yield_potential'     => $v->yield_potential,
+                'average_yield'       => $v->average_yield,
+                'primary_trait'       => $v->primary_trait,
+                'pest_resistance'     => $v->pest_resistance,
+                'disease_resistance'  => $v->disease_resistance,
+                'description_summary' => $v->description_summary,
+                'image_path'          => $v->image_path,
+                'image_url'           => $v->image_path ? Storage::disk('public')->url($v->image_path) : null,
+                'images'              => $images,
+                'minimum_limit'       => (int) ($v->minimum_limit ?? 0),
                 'commodity' => [
                     'name' => optional($v->commodity)->name,
                     'slug' => optional($v->commodity)->slug,
