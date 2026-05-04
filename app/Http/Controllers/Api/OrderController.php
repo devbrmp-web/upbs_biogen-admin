@@ -302,16 +302,24 @@ class OrderController extends Controller
                     'payment_method' => Payment::METHOD_BANK_TRANSFER,
                     'amount' => $order->total_amount,
                     'status' => Payment::STATUS_PENDING,
+                    'transaction_id' => $order->order_code,
                 ]);
             }
 
             $payment->update([
+                'payment_method' => Payment::METHOD_BANK_TRANSFER,
+                'transaction_id' => $order->order_code,
                 'payment_proof_path' => str_replace('public/', 'storage/', $path),
                 'proof_uploaded_at' => now(),
             ]);
 
-            // Update order status to pending verification
-            $order->markAsPendingVerification();
+            // Update order status to pending verification and inject fallback data for receipt
+            $order->update([
+                'status' => Order::STATUS_PENDING_VERIFICATION,
+                'payment_type' => 'Bank Transfer',
+                'transaction_id' => $order->order_code,
+                'transaction_status' => 'pending',
+            ]);
 
             \Log::info('Payment proof uploaded successfully', [
                 'order_code' => $order->order_code,
