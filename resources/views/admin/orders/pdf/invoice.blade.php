@@ -387,7 +387,7 @@
         <div class="slogan">"Benih Berkualitas untuk Kedaulatan Pangan Bangsa"</div>
         <p style="margin: 8px 0 2px 0;">Dokumen ini dihasilkan secara otomatis oleh Sistem E-Commerce UPBS BRMP Biogen</p>
         <div class="qr-image">
-            {!! QrCode::size(70)->margin(0)->format('svg')->generate(route('orders.track.alias', $order->order_code)) !!}
+            <img src="data:image/svg+xml;base64,{{ base64_encode(QrCode::format('svg')->size(70)->margin(0)->generate(route('orders.track.alias', $order->order_code))) }}" style="width: 70px; height: 70px;">
         </div>
         <div class="qr-text">Scan untuk verifikasi:<br>{{ route('orders.track.alias', $order->order_code) }}</div>
     </div>
