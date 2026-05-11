@@ -12,11 +12,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 text-center">
-                        <div class="mb-4">
-                            <img src="/images/users/avatar-1.jpg" 
-                                 alt="Profile Picture" 
-                                 class="rounded-circle img-thumbnail" 
-                                 width="150" height="150">
+                        <div class="avatar-xl mx-auto mb-4">
+                            <span class="avatar-title bg-primary text-white rounded-circle fs-1">
+                                {{ $user->initials }}
+                            </span>
                         </div>
                     </div>
                     <div class="col-md-8">

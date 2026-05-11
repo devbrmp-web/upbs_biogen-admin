@@ -61,12 +61,11 @@
                         aria-expanded="false"
                     >
                         <span class="d-flex align-items-center">
-                            <img
-                                class="rounded-circle"
-                                width="32"
-                                src="/images/users/avatar-1.jpg"
-                                alt="avatar-3"
-                            />
+                            <div class="avatar-sm flex-shrink-0">
+                                <span class="avatar-title bg-primary text-white rounded-circle fs-13">
+                                    {{ auth()->user()->initials }}
+                                </span>
+                            </div>
                         </span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">

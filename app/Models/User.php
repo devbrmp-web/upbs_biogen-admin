@@ -26,6 +26,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'initials',
+    ];
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>
@@ -75,5 +84,25 @@ class User extends Authenticatable
     public function getAuthPassword(): string
     {
         return $this->password;
+    }
+
+    /**
+     * Get the initials for the user.
+     *
+     * @return string
+     */
+    public function getInitialsAttribute(): string
+    {
+        $words = preg_split("/\s+/", trim($this->name));
+        $initials = '';
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= mb_substr($word, 0, 1);
+            }
+            if (mb_strlen($initials) >= 2) {
+                break;
+            }
+        }
+        return mb_strtoupper($initials ?: mb_substr($this->name, 0, 2));
     }
 }
