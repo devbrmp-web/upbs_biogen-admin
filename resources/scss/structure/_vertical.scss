@@ -9,44 +9,108 @@
     /* overflow: hidden; Removed to prevent tight clipping */
     white-space: nowrap;
     transition: all 0.3s ease-in-out;
-    padding: 0 calc($main-nav-width-sm * 0.5 - $logo-sm-height * 0.5);
+    padding: 0 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     height: $topbar-height;
     z-index: 1020;
 
     a {
         display: flex;
         align-items: center;
-        justify-content: center;
         width: 100%;
         height: 100%;
+        text-decoration: none !important;
     }
 
-    img.logo-sm {
-        display: none; // Hidden by default (lg is shown)
-        height: $logo-sm-height !important;
-        width: auto !important;
+    .brand-logo-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        
+        &:hover .logo-glow-effect {
+            opacity: 0.55;
+        }
     }
 
-    img.logo-lg {
-        display: block !important;
-        height: $logo-lg-height !important;
+    .logo-glow-effect {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+        border-radius: 50%;
+        filter: blur(8px);
+        opacity: 0.25;
+        transition: opacity 0.3s ease;
+    }
+
+    .logo-emblem {
+        position: relative;
+        height: 38px !important;
         width: auto !important;
-        max-width: 100%;
         object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        
+        &:hover {
+            transform: scale(1.08);
+        }
+    }
+
+    .brand-text-wrapper {
+        display: flex;
+        flex-direction: column;
+        margin-left: 12px;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .brand-main-title {
+        font-family: 'Outfit', 'Inter', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        
+        &.text-gray-800 {
+            color: #1f2937;
+        }
+        &.text-white {
+            color: #ffffff;
+        }
+    }
+
+    .brand-sub-title {
+        font-family: 'Outfit', 'Inter', sans-serif;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: 0.52em; /* Expand to right */
+        margin-right: -0.52em;  /* Offset spacing to center text under title */
+        margin-top: 2px;
+        white-space: nowrap;
+        
+        &.text-emerald-600 {
+            color: #059669;
+        }
+        &.text-emerald-400 {
+            color: #34d399;
+        }
     }
 
     // Default (Light theme): tampilkan logo-dark (black logo), sembunyikan logo-light (white logo)
     .logo-light { 
-        display: none !important; 
+        display: none; 
     }
     .logo-dark { 
-        display: flex !important; 
-        opacity: 1 !important; 
-        visibility: visible !important;
-        position: relative !important;
+        display: flex; 
         align-items: center;
     }
 }
@@ -60,7 +124,7 @@
     .main-nav {
         top: 0;
         bottom: 0;
-        z-index: 1040; // Reduced to be below Bootstrap Modals (1050) and allow backdrop overlay
+        z-index: 1045; // Above topbar (1040) but below Bootstrap Modals (1050) to allow backdrop overlay
         margin-left: 0;
         position: fixed;
         transition: all 0.3s ease-in-out;
@@ -78,10 +142,10 @@
             background: $main-nav-bg;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             height: $topbar-height;
             transition: all 0.3s ease-in-out;
-            padding: 0 calc($main-nav-width-sm * 0.5 - $logo-sm-height * 0.5);
+            padding: 0 20px;
         }
 
         .scrollbar {
@@ -265,12 +329,13 @@ html[data-menu-size='condensed'] {
             top: 0;
             z-index: 1020 !important;
             background: $main-nav-bg;
+            padding: 0 !important;
+            justify-content: center !important;
 
-            .logo-lg {
+            .brand-text-wrapper {
                 display: none !important;
             }
-            .logo-sm {
-                display: block !important;
+            .brand-logo-wrapper {
                 margin: 0 auto;
             }
         }
@@ -522,8 +587,14 @@ html[data-menu-size='sm-hover'] {
         min-width: $main-nav-width-sm;
 
         .logo-box {
-            .logo-lg {
-                display: none;
+            padding: 0 !important;
+            justify-content: center !important;
+
+            .brand-text-wrapper {
+                display: none !important;
+            }
+            .brand-logo-wrapper {
+                margin: 0 auto;
             }
         }
 
@@ -566,7 +637,12 @@ html[data-menu-size='sm-hover'] {
         min-width: $main-nav-width;
 
         .logo-box {
-            text-align: left;
+            padding: 0 20px !important;
+            justify-content: flex-start !important;
+
+            .brand-text-wrapper {
+                display: flex !important;
+            }
         }
 
         &:hover {
@@ -637,14 +713,11 @@ html[data-menu-color='brand'] {
     .main-nav {
         .logo-box {
             .logo-light { 
-                display: flex !important; 
-                opacity: 1 !important;
-                visibility: visible !important;
-                position: relative !important;
+                display: flex; 
                 align-items: center;
             }
             .logo-dark { 
-                display: none !important; 
+                display: none; 
             }
         }
     }

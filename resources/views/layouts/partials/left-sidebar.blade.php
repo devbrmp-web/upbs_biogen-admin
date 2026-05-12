@@ -1,12 +1,27 @@
 <div class="main-nav">
     <div class="logo-box">
-        <a href="{{ route('admin.dashboard') }}" class="logo-light">
-            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png') }}" class="logo-lg" alt="Logo White Large">
-            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-White.png') }}" class="logo-sm" alt="Logo White Small">
+        <!-- Logo Light (Visible on Dark Sidebar background, e.g. dark/brand menu) -->
+        <a href="{{ route('admin.dashboard') }}" class="logo-light flex items-center gap-3">
+            <div class="brand-logo-wrapper relative group">
+                <div class="logo-glow-effect"></div>
+                <img src="{{ asset('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png') }}" alt="Logo" class="logo-emblem">
+            </div>
+            <div class="brand-text-wrapper flex flex-col">
+                <span class="brand-main-title text-white">UPBS BRMP</span>
+                <span class="brand-sub-title text-emerald-400">BIOGEN</span>
+            </div>
         </a>
-        <a href="{{ route('admin.dashboard') }}" class="logo-dark">
-            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png') }}" class="logo-lg" alt="Logo Black Large">
-            <img src="{{ asset('images/Logo_BB-BIOTEKNOLOGI-BRMP-Black.png') }}" class="logo-sm" alt="Logo Black Small">
+        
+        <!-- Logo Dark (Visible on Light Sidebar background) -->
+        <a href="{{ route('admin.dashboard') }}" class="logo-dark flex items-center gap-3">
+            <div class="brand-logo-wrapper relative group">
+                <div class="logo-glow-effect"></div>
+                <img src="{{ asset('images/Logo_Kementerian_Pertanian_Republik_Indonesia.svg.png') }}" alt="Logo" class="logo-emblem">
+            </div>
+            <div class="brand-text-wrapper flex flex-col">
+                <span class="brand-main-title text-gray-800">UPBS BRMP</span>
+                <span class="brand-sub-title text-emerald-600">BIOGEN</span>
+            </div>
         </a>
     </div>
 
