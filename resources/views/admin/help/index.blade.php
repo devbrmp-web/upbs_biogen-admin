@@ -52,7 +52,7 @@
                                             </div>
                                             <div class="timeline-item mt-3">
                                                 <span class="badge bg-success">2</span>
-                                                <strong>Paid:</strong> Payment confirmed via payment gateway webhook
+                                                <strong>Paid:</strong> Admin manually confirms after verifying uploaded transfer receipt
                                             </div>
                                             <div class="timeline-item mt-3">
                                                 <span class="badge bg-warning">3</span>
@@ -158,16 +158,46 @@
                                         </div>
                                         
                                         <h6 class="mt-4">Payment Processing</h6>
-                                        <p>All payments are processed through secure payment gateways:</p>
+                                        <p>All payments are handled through <strong>manual bank transfer verification</strong>. Customers transfer directly to official BRMP Biogen bank accounts and upload proof of payment through the client portal.</p>
+
+                                        <div class="row mt-3">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card border border-success-subtle">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title text-success"><i class="bx bx-bank me-2"></i>Bank BRI</h6>
+                                                        <ul class="list-unstyled mb-0">
+                                                            <li><i class="bx bx-check text-success"></i> No. Rekening: <strong>0123-01-012345-56-7</strong></li>
+                                                            <li><i class="bx bx-check text-success"></i> A.n.: <strong>Bendahara Pengeluaran BRMP Biogen</strong></li>
+                                                            <li><i class="bx bx-info-circle text-muted"></i> Nominal transfer harus sesuai total pesanan</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card border border-primary-subtle">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title text-primary"><i class="bx bx-bank me-2"></i>Bank Mandiri</h6>
+                                                        <ul class="list-unstyled mb-0">
+                                                            <li><i class="bx bx-check text-success"></i> No. Rekening: <strong>123-00-1234567-8</strong></li>
+                                                            <li><i class="bx bx-check text-success"></i> A.n.: <strong>Bendahara Pengeluaran BRMP Biogen</strong></li>
+                                                            <li><i class="bx bx-info-circle text-muted"></i> Sertakan kode pesanan pada keterangan transfer</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <h6 class="mt-2">Admin Verification Workflow</h6>
                                         <ul>
-                                            <li><strong>Virtual Account:</strong> Bank transfer via virtual account</li>
-                                            <li><strong>QRIS:</strong> QR code payment method</li>
-                                            <li><strong>Bank Transfer:</strong> Direct bank transfer</li>
+                                            <li><strong>Step 1 — Receive Proof:</strong> Customer uploads transfer receipt (bukti transfer) via the order detail page on the client portal.</li>
+                                            <li><strong>Step 2 — Cross-Check:</strong> Admin verifies the uploaded image against the bank's actual transaction record (e-banking or SMS notification).</li>
+                                            <li><strong>Step 3 — Confirm Payment:</strong> If the amount and order code match, admin manually changes order status from <code>Awaiting Payment</code> → <code>Paid</code> via the order Actions menu.</li>
+                                            <li><strong>Step 4 — Release Invoice:</strong> Upon marking as <code>Paid</code>, the system automatically generates and makes the digital invoice/receipt available to the customer.</li>
                                         </ul>
-                                        
-                                        <div class="alert alert-warning">
-                                            <i class="bx bx-warning me-2"></i>
-                                            <strong>Important:</strong> Payment status is automatically updated via webhook. Do not manually change payment status unless absolutely necessary.
+
+                                        <div class="alert alert-info">
+                                            <i class="bx bx-info-circle me-2"></i>
+                                            <strong>Note:</strong> Payment status is updated <strong>manually by the admin</strong> after verifying the uploaded transfer receipt. Do not mark an order as Paid without first confirming the transfer against bank records.
                                         </div>
                                     </div>
                                 </div>
